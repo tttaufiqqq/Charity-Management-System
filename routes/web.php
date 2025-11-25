@@ -4,8 +4,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('welcome');  // This looks for welcome.blade.php
+})->name('welcome');
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');
