@@ -249,11 +249,14 @@
                     <div class="space-y-4">
                         <h3 class="text-xl font-semibold text-gray-900">Quick Actions</h3>
                         <div class="flex flex-wrap gap-3">
-                            <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <a href="{{ route('campaigns.create') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                                 Create Campaign
                             </a>
-                            <a href="{{ route('dashboard') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                                Manage Events
+                            <a href="{{ route('campaigns.index') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                View All Campaigns
+                            </a>
+                            <a href="{{ route('events.create') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                                Create Events
                             </a>
                             <a href="{{ route('dashboard') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                 View Analytics

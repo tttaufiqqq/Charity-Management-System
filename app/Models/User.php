@@ -9,6 +9,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+
     use HasFactory, Notifiable, HasRoles;
 
     protected $fillable = [
@@ -50,6 +51,4 @@ class User extends Authenticatable
     {
         return $this->hasOne(Volunteer::class, 'User_ID');
     }
-
-
 }

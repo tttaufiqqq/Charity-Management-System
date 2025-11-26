@@ -1,47 +1,27 @@
 <?php
 
-namespace App\Models;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Donation extends Model
+return new class extends Migration
 {
-    use HasFactory;
-
-    // Table name (because your table is not plural)
-    protected $table = 'donation';
-
-    // Primary key name
-    protected $primaryKey = 'Donation_ID';
-
-    // Laravel won't auto-increment if PK isn't "id", but yours is still auto-increment
-    public $incrementing = true;
-
-    // PK is integer (important for non-default PKs)
-    protected $keyType = 'int';
-
-    // Mass assignable columns
-    protected $fillable = [
-        'Donor_ID',
-        'Campaign_ID',
-        'Amount',
-        'Donation_Date',
-        'Payment_Method',
-        'Receipt_No',
-    ];
-
-    /**
-     * Relationships
-     */
-
-    public function donor()
+    public function up(): void
     {
-        return $this->belongsTo(Donor::class, 'Donor_ID', 'Donor_ID');
+        Schema::create('donation', function (Blueprint $table) {
+            $table->id('Donation_ID');
+            $table->foreignId('Donor_ID')->constrained('donor', 'Donor_ID')->onDelete('cascade');
+            $table->foreignId('Campaign_ID')->constrained('campaign', 'Campaign_ID')->onDelete('cascade');
+            $table->decimal('Amount', 10, 2);
+            $table->date('Donation_Date');
+            $table->string('Payment_Method', 50);
+            $table->string('Receipt_No', 100)->unique();
+            $table->timestamps();
+        });
     }
 
-    public function campaign()
+    public function down(): void
     {
-        return $this->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
+        Schema::dropIfExists('donation');
     }
-}
+};

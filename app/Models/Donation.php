@@ -35,6 +35,7 @@ class Donation extends Model
      * Relationships
      */
 
+    // Relationships
     public function donor()
     {
         return $this->belongsTo(Donor::class, 'Donor_ID', 'Donor_ID');
