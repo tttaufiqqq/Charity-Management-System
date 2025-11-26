@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventManagementController;
+use App\Http\Controllers\VolunteerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -22,11 +23,20 @@ Route::middleware('auth')->group(function () {
 /*volunteer-management*/
 Route::middleware(['auth'])->group(function () {
     Route::get('/volunteer/dashboard', [App\Http\Controllers\VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
+    Route::get('/volunteer/schedule', [App\Http\Controllers\VolunteerController::class, 'schedule'])->name('volunteer.schedule');
+    Route::get('/volunteer/profile', [App\Http\Controllers\VolunteerController::class, 'profile'])->name('volunteer.profile');
+    Route::get('/volunteer/profile/edit', [App\Http\Controllers\VolunteerController::class, 'editProfile'])->name('volunteer.profile.edit');
+    Route::put('/volunteer/profile', [App\Http\Controllers\VolunteerController::class, 'updateProfile'])->name('volunteer.profile.update');
     Route::get('/volunteer/events', [App\Http\Controllers\VolunteerController::class, 'browseEvents'])->name('volunteer.events.browse');
     Route::get('/volunteer/events/{event}', [App\Http\Controllers\VolunteerController::class, 'showEvent'])->name('volunteer.events.show');
     Route::post('/volunteer/events/{event}/register', [App\Http\Controllers\VolunteerController::class, 'registerForEvent'])->name('volunteer.events.register');
     Route::delete('/volunteer/events/{event}/cancel', [App\Http\Controllers\VolunteerController::class, 'cancelRegistration'])->name('volunteer.events.cancel');
     Route::get('/volunteer/my-events', [App\Http\Controllers\VolunteerController::class, 'myEvents'])->name('volunteer.events.my-events');
+
+    Route::get('/volunteer/skills', [VolunteerController::class, 'showSkills'])->name('volunteer.skills.index');
+    Route::post('/volunteer/skills', [VolunteerController::class, 'storeSkill'])->name('volunteer.skills.store');
+    Route::put('/volunteer/skills/{skillId}', [VolunteerController::class, 'updateSkill'])->name('volunteer.skills.update');
+    Route::delete('/volunteer/skills/{skillId}', [VolunteerController::class, 'deleteSkill'])->name('volunteer.skills.delete');
 });
 
 /*event-management*/
