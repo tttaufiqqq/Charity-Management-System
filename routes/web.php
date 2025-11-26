@@ -20,6 +20,14 @@ Route::middleware('auth')->group(function () {
 });
 
 /*volunteer-management*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/volunteer/dashboard', [App\Http\Controllers\VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
+    Route::get('/volunteer/events', [App\Http\Controllers\VolunteerController::class, 'browseEvents'])->name('volunteer.events.browse');
+    Route::get('/volunteer/events/{event}', [App\Http\Controllers\VolunteerController::class, 'showEvent'])->name('volunteer.events.show');
+    Route::post('/volunteer/events/{event}/register', [App\Http\Controllers\VolunteerController::class, 'registerForEvent'])->name('volunteer.events.register');
+    Route::delete('/volunteer/events/{event}/cancel', [App\Http\Controllers\VolunteerController::class, 'cancelRegistration'])->name('volunteer.events.cancel');
+    Route::get('/volunteer/my-events', [App\Http\Controllers\VolunteerController::class, 'myEvents'])->name('volunteer.events.my-events');
+});
 
 /*event-management*/
 Route::middleware(['auth'])->group(function () {

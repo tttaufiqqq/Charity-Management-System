@@ -1,5 +1,6 @@
 <?php
 
+// File: app/Models/Event.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +29,14 @@ class Event extends Model
         'End_Date' => 'date',
         'Capacity' => 'integer',
     ];
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        return 'Event_ID';
+    }
 
     // Relationships
     public function organization()
