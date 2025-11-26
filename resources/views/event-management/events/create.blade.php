@@ -53,9 +53,9 @@
                 <!-- Capacity -->
                 <div class="mb-6">
                     <label for="goal_amount" class="block text-sm font-medium text-gray-700 mb-2">Capacity *</label>
-                    <input type="number" name="goal_amount" id="goal_amount" value="{{ old('goal_amount') }}" step="0.01" min="0" required
+                    <input type="number" name="capacity" id="capacity" value="{{ old('capacity') }}" min="1" required
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    @error('goal_amount')
+                    @error('capacity')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
