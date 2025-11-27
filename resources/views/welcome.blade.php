@@ -129,13 +129,13 @@
                     <div class="space-y-4">
                         <h3 class="text-xl font-semibold text-gray-900">Quick Actions</h3>
                         <div class="flex flex-wrap gap-3">
-                            <a href="{{ route('dashboard') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            <a href="{{ route('campaigns.browse') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                                 Browse Campaigns
                             </a>
-                            <a href="{{ route('dashboard') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <a href="{{ route('donations.my') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                 View My Donations
                             </a>
-                            <a href="{{ route('dashboard') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                            <a href="{{ route('donations.receipts.all') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                 Download Receipts
                             </a>
                         </div>
@@ -210,7 +210,7 @@
                         </div>
                         <div class="bg-green-50 p-6 rounded-lg">
                             <p class="text-sm text-gray-600 mb-1">Total Raised</p>
-                            <p class="text-2xl font-bold text-gray-900">RM 0.00</p>
+                            <p class="text-2xl font-bold text-gray-900">RM {{ number_format(auth()->user()->organization->campaigns()->sum('Collected_Amount') ?? 0, 2) }}</p>
                         </div>
                         <div class="bg-blue-50 p-6 rounded-lg">
                             <p class="text-sm text-gray-600 mb-1">Upcoming Events</p>

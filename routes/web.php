@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventManagementController;
 use App\Http\Controllers\VolunteerController;
+use App\Http\Controllers\DonationManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,7 +44,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     // Campaign Routes
-    Route::get('/campaigns', [EventManagementController::class, 'indexCampaigns'])->name('campaigns.index');
+    Route::get('/campaigns/all', [EventManagementController::class, 'indexCampaigns'])->name('campaigns.index');
     Route::get('/campaigns/create', [EventManagementController::class, 'createCampaign'])->name('campaigns.create');
     Route::post('/campaigns', [EventManagementController::class, 'storeCampaign'])->name('campaigns.store');
     Route::get('/campaigns/{campaign}', [EventManagementController::class, 'showCampaign'])->name('campaigns.show');
@@ -63,6 +64,23 @@ Route::middleware(['auth'])->group(function () {
 });
 
 /*donation-management*/
+Route::middleware(['auth'])->group(function () {
+    // Browse campaigns
+    Route::get('/campaigns', [DonationManagementController::class, 'browseCampaigns'])->name('campaigns.browse');
+    Route::get('/campaigns/{id}/donate', [DonationManagementController::class, 'showCampaign'])->name('campaigns.show.donate');
+
+    // Donation process
+    Route::get('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'showDonationForm'])->name('campaigns.donate');
+    Route::post('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'processDonation'])->name('campaigns.donate.process');
+    Route::get('/donation/success/{donationId}', [DonationManagementController::class, 'donationSuccess'])->name('donation.success');
+
+    // My donations
+    Route::get('/my-donations', [DonationManagementController::class, 'myDonations'])->name('donations.my');
+
+    // Receipts
+    Route::get('/donation/{donationId}/receipt', [DonationManagementController::class, 'downloadReceipt'])->name('donation.receipt');
+    Route::get('/donations/receipts/all', [DonationManagementController::class, 'downloadAllReceipts'])->name('donations.receipts.all');
+});
 
 /*recipient-management*/
 
