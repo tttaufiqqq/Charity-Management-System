@@ -158,10 +158,13 @@
         <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-900">Skills</h2>
-                <button class="text-sm text-indigo-600 hover:text-indigo-800">+ Add Skill</button>
+                <a href="{{ route('volunteer.skills.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">
+                    + Add Skill
+                </a>
             </div>
 
-            @if($skills->count() > 0)
+
+        @if($skills->count() > 0)
                 <div class="flex flex-wrap gap-2">
                     @foreach($skills as $skill)
                         <span class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
