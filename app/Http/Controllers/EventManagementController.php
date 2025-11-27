@@ -287,4 +287,112 @@ class EventManagementController extends Controller
         return redirect()->route('events.index')
             ->with('success', 'Event deleted successfully!');
     }
+
+    /**
+     * Show volunteers for an event (organizer view)
+     */
+    public function manageVolunteers(Event $event)
+    {
+        // Check if user owns this event
+        if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $volunteers = $event->volunteers()
+            ->withPivot('Status', 'Total_Hours', 'created_at')
+            ->orderBy('event_participation.created_at', 'desc')
+            ->get();
+
+        return view('event-management.events.manage-volunteers', compact('event', 'volunteers'));
+    }
+
+    /**
+     * Update volunteer attendance and hours
+     */
+    public function updateVolunteerHours(Request $request, Event $event, $volunteerId)
+    {
+        // Check if user owns this event
+        if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:Registered,Attended,No-Show,Cancelled'],
+            'total_hours' => ['required', 'numeric', 'min:0', 'max:24'],
+        ]);
+
+        DB::table('event_participation')
+            ->where('Event_ID', $event->Event_ID)
+            ->where('Volunteer_ID', $volunteerId)
+            ->update([
+                'Status' => $validated['status'],
+                'Total_Hours' => $validated['total_hours'],
+                'updated_at' => now(),
+            ]);
+
+        return back()->with('success', 'Volunteer hours updated successfully!');
+    }
+
+    /**
+     * Auto-calculate and update all volunteer hours for completed event
+     */
+    public function autoCalculateHours(Event $event)
+    {
+        // Check if user owns this event
+        if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Can only auto-calculate for completed events
+        if ($event->Status !== 'Completed') {
+            return back()->with('error', 'Can only calculate hours for completed events.');
+        }
+
+        // Calculate event duration in hours
+        $eventHours = $event->Start_Date->diffInHours($event->End_Date);
+
+        // Update all volunteers with "Registered" or "Attended" status
+        $updated = DB::table('event_participation')
+            ->where('Event_ID', $event->Event_ID)
+            ->whereIn('Status', ['Registered', 'Attended'])
+            ->update([
+                'Status' => 'Attended',
+                'Total_Hours' => $eventHours,
+                'updated_at' => now(),
+            ]);
+
+        return back()->with('success', "Auto-calculated {$eventHours} hours for {$updated} volunteers!");
+    }
+
+    /**
+     * Bulk update volunteer statuses
+     */
+    public function bulkUpdateVolunteers(Request $request, Event $event)
+    {
+        // Check if user owns this event
+        if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'volunteer_ids' => ['required', 'array'],
+            'volunteer_ids.*' => ['required', 'integer'],
+            'status' => ['required', 'in:Attended,No-Show'],
+            'hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
+        ]);
+
+        $hours = $validated['hours'] ?? $event->Start_Date->diffInHours($event->End_Date);
+
+        DB::table('event_participation')
+            ->where('Event_ID', $event->Event_ID)
+            ->whereIn('Volunteer_ID', $validated['volunteer_ids'])
+            ->update([
+                'Status' => $validated['status'],
+                'Total_Hours' => $validated['status'] === 'Attended' ? $hours : 0,
+                'updated_at' => now(),
+            ]);
+
+        $count = count($validated['volunteer_ids']);
+        return back()->with('success', "Updated {$count} volunteers!");
+    }
 }

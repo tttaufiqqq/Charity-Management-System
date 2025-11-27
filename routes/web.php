@@ -61,6 +61,12 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/events/{event}', [EventManagementController::class, 'updateEvent'])->name('events.update');
     Route::delete('/events/{event}', [EventManagementController::class, 'destroyEvent'])->name('events.destroy');
 
+    // Volunteer Management for Events
+    Route::get('/events/{event}/volunteers', [EventManagementController::class, 'manageVolunteers'])->name('events.manage-volunteers');
+    Route::post('/events/{event}/volunteers/{volunteer}/hours', [EventManagementController::class, 'updateVolunteerHours'])->name('events.update-volunteer-hours');
+    Route::post('/events/{event}/auto-calculate-hours', [EventManagementController::class, 'autoCalculateHours'])->name('events.auto-calculate-hours');
+    Route::post('/events/{event}/bulk-update-volunteers', [EventManagementController::class, 'bulkUpdateVolunteers'])->name('events.bulk-update-volunteers');
+
 });
 
 /*donation-management*/

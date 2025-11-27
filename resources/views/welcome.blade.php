@@ -142,51 +142,58 @@
                     </div>
                 </div>
 
-            @elseif(auth()->user()->hasRole('volunteer'))
-                <!-- Volunteer Dashboard Preview -->
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 class="text-3xl font-bold text-gray-900">Welcome back, {{ auth()->user()->name }}!</h2>
-                            <p class="text-gray-600 mt-1">Ready to make a difference today?</p>
+                @elseif(auth()->user()->hasRole('volunteer'))
+                    <!-- Volunteer Dashboard Preview -->
+                    <div class="bg-white rounded-lg shadow-lg p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 class="text-3xl font-bold text-gray-900">Welcome back, {{ auth()->user()->name }}!</h2>
+                                <p class="text-gray-600 mt-1">Ready to make a difference today?</p>
+                            </div>
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                            </div>
                         </div>
-                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
 
-                    <div class="grid md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-blue-50 p-6 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-1">Total Hours</p>
-                            <p class="text-2xl font-bold text-gray-900">0 hrs</p>
-                        </div>
-                        <div class="bg-green-50 p-6 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-1">Events Attended</p>
-                            <p class="text-2xl font-bold text-gray-900">0</p>
-                        </div>
-                        <div class="bg-purple-50 p-6 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-1">Upcoming Events</p>
-                            <p class="text-2xl font-bold text-gray-900">0</p>
-                        </div>
-                    </div>
+                        @php
+                            $volunteer = auth()->user()->volunteer;
+                            $totalHours = $volunteer ? \App\Models\EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)->sum('Total_Hours') : 0;
+                            $totalEvents = $volunteer ? $volunteer->events()->count() : 0;
+                            $upcomingEvents = $volunteer ? $volunteer->events()->whereIn('event.Status', ['Upcoming', 'Ongoing'])->count() : 0;
+                        @endphp
 
-                    <div class="space-y-4">
-                        <h3 class="text-xl font-semibold text-gray-900">Quick Actions</h3>
-                        <div class="flex flex-wrap gap-3">
-                            <a href="{{ route('volunteer.events.browse') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                                Find Events
-                            </a>
-                            <a href="{{ route('volunteer.schedule') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                                My Schedule
-                            </a>
-                            <a href="{{ route('volunteer.skills.index') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
-                                Update Skills
-                            </a>
+                        <div class="grid md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-blue-50 p-6 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Total Hours</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $totalHours }} hrs</p>
+                            </div>
+                            <div class="bg-green-50 p-6 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Events Attended</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $totalEvents }}</p>
+                            </div>
+                            <div class="bg-purple-50 p-6 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Upcoming Events</p>
+                                <p class="text-2xl font-bold text-gray-900">{{ $upcomingEvents }}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h3 class="text-xl font-semibold text-gray-900">Quick Actions</h3>
+                            <div class="flex flex-wrap gap-3">
+                                <a href="{{ route('volunteer.events.browse') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                    Find Events
+                                </a>
+                                <a href="{{ route('volunteer.schedule') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                                    My Schedule
+                                </a>
+                                <a href="{{ route('volunteer.profile') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                                    My Profile
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
             @elseif(auth()->user()->hasRole('organizer'))
                 <!-- Organizer Dashboard Preview -->
