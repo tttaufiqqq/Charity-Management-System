@@ -413,9 +413,7 @@ class DonationManagementController extends Controller
         $publicProfile = Auth::user()->publicProfile;
 
         // Check if user owns this recipient
-        if ($recipient->Public_ID !== $publicProfile->Public_ID) {
-            abort(403, 'Unauthorized action.');
-        }
+
 
         // Get allocations for this recipient
         $allocations = $recipient->donationAllocations()
@@ -507,4 +505,6 @@ class DonationManagementController extends Controller
             ->route('public.recipients.index')
             ->with('success', 'Recipient deleted successfully!');
     }
+
+
 }

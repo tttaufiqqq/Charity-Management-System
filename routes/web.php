@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventManagementController;
 use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\DonationManagementController;
+use App\Http\Controllers\RecipientManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -101,6 +102,25 @@ Route::middleware(['auth'])->group(function () {
 });
 
 /*recipient-management*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/campaigns/{campaignId}/allocate', [RecipientManagementController::class, 'showRecipients'])->name('recipients.allocate');
+    Route::post('/campaigns/{campaignId}/allocate', [RecipientManagementController::class, 'allocateFunds'])->name('recipients.allocate.store');
+    Route::get('/campaigns/{campaignId}/allocations/history', [RecipientManagementController::class, 'allocationHistory'])->name('recipients.allocations.history');
+    Route::delete('/campaigns/{campaignId}/allocations/{recipientId}', [RecipientManagementController::class, 'removeAllocation'])->name('recipients.allocations.remove');
+
+    Route::get('/recipients/{recipientId}/allocations', [RecipientManagementController::class, 'recipientAllocations'])->name('recipients.allocations.view');
+    Route::get('/organizer/campaigns', [RecipientManagementController::class, 'myCampaigns'])->name('organizer.campaigns');
+
+    Route::get('/recipients/pending', [RecipientManagementController::class, 'pendingRecipients'])->name('admin.recipients.pending');
+    Route::get('/recipients/all', [RecipientManagementController::class, 'allRecipients'])->name('admin.recipients.all');
+    Route::get('/recipients/{id}', [RecipientManagementController::class, 'adminShowRecipient'])->name('admin.recipients.show');
+
+    // Approval Actions
+    Route::post('/recipients/{id}/approve', [RecipientManagementController::class, 'approveRecipient'])->name('admin.recipients.approve');
+    Route::post('/recipients/{id}/reject', [RecipientManagementController::class, 'rejectRecipient'])->name('admin.recipients.reject');
+    Route::put('/recipients/{id}/status', [RecipientManagementController::class, 'updateRecipientStatus'])->name('admin.recipients.status');
+    Route::delete('/recipients/{id}', [RecipientManagementController::class, 'adminDeleteRecipient'])->name('admin.recipients.delete');
+});
 
 /*reporting*/
 
