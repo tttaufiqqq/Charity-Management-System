@@ -47,8 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/campaigns/all', [EventManagementController::class, 'indexCampaigns'])->name('campaigns.index');
     Route::get('/campaigns/create', [EventManagementController::class, 'createCampaign'])->name('campaigns.create');
     Route::post('/campaigns', [EventManagementController::class, 'storeCampaign'])->name('campaigns.store');
-    Route::get('/campaigns/{campaign}', [EventManagementController::class, 'showCampaign'])->name('campaigns.show');
-    Route::get('/campaigns/{campaign}/edit', [EventManagementController::class, 'editCampaign'])->name('campaigns.edit');
+    Route::get('/campaigns/{campaign}', [EventManagementController::class, 'showCampaign'])->whereNumber('campaign')->name('campaigns.show');    Route::get('/campaigns/{campaign}/edit', [EventManagementController::class, 'editCampaign'])->name('campaigns.edit');
     Route::put('/campaigns/{campaign}', [EventManagementController::class, 'updateCampaign'])->name('campaigns.update');
     Route::delete('/campaigns/{campaign}', [EventManagementController::class, 'destroyCampaign'])->name('campaigns.destroy');
 
@@ -73,8 +72,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     // Browse campaigns
     Route::get('/campaigns', [DonationManagementController::class, 'browseCampaigns'])->name('campaigns.browse');
-    Route::get('/campaigns/{id}/donate', [DonationManagementController::class, 'showCampaign'])->name('campaigns.show.donate');
-
+    Route::get('/campaigns/donate/{id}', [DonationManagementController::class, 'showCampaign'])->name('campaigns.show.donate');
     // Donation process
     Route::get('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'showDonationForm'])->name('campaigns.donate');
     Route::post('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'processDonation'])->name('campaigns.donate.process');
@@ -86,6 +84,20 @@ Route::middleware(['auth'])->group(function () {
     // Receipts
     Route::get('/donation/{donationId}/receipt', [DonationManagementController::class, 'downloadReceipt'])->name('donation.receipt');
     Route::get('/donations/receipts/all', [DonationManagementController::class, 'downloadAllReceipts'])->name('donations.receipts.all');
+
+    Route::get('/public/campaigns', [App\Http\Controllers\DonationManagementController::class, 'publicBrowseCampaigns'])->name('public.campaigns.browse');
+    Route::get('/public/campaigns/{campaign}', [App\Http\Controllers\DonationManagementController::class, 'publicShowCampaign'])->name('public.campaigns.show');
+    Route::get('/public/events', [App\Http\Controllers\DonationManagementController::class, 'publicBrowseEvents'])->name('public.events.browse');
+    Route::get('/public/events/{event}', [App\Http\Controllers\DonationManagementController::class, 'publicShowEvent'])->name('public.events.show');
+
+    // Recipient Management
+    Route::get('/public/recipients', [App\Http\Controllers\DonationManagementController::class, 'publicIndexRecipients'])->name('public.recipients.index');
+    Route::get('/public/recipients/create', [App\Http\Controllers\DonationManagementController::class, 'publicCreateRecipient'])->name('public.recipients.create');
+    Route::post('/public/recipients', [App\Http\Controllers\DonationManagementController::class, 'publicStoreRecipient'])->name('public.recipients.store');
+    Route::get('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicShowRecipient'])->name('public.recipients.show');
+    Route::get('/public/recipients/{recipient}/edit', [App\Http\Controllers\DonationManagementController::class, 'publicEditRecipient'])->name('public.recipients.edit');
+    Route::put('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicUpdateRecipient'])->name('public.recipients.update');
+    Route::delete('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicDestroyRecipient'])->name('public.recipients.destroy');
 });
 
 /*recipient-management*/

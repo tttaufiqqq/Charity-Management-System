@@ -7,6 +7,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Donation;
+use App\Models\PublicProfile;
+use App\Models\Event;
+use App\Models\Recipient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -86,7 +89,7 @@ class DonationManagementController extends Controller
                 ->exists();
         }
 
-        return view('donation-management.campaign-detail', compact(
+        return view('donation-management.campaign.show', compact(
             'campaign',
             'progressPercentage',
             'recentDonations',
@@ -273,5 +276,235 @@ class DonationManagementController extends Controller
         return $pdf->download('all-receipts-' . date('Y-m-d') . '.pdf');
     }
 
+    /**
+     * Browse campaigns (Public view)
+     */
+    public function publicBrowseCampaigns()
+    {
+        $campaigns = Campaign::where('Status', 'Active')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
 
+        return view('donation-management.public-user.campaign-browse', compact('campaigns'));
+    }
+
+    /**
+     * Show campaign details (Public view)
+     */
+    public function publicShowCampaign(Campaign $campaign)
+    {
+        // Calculate progress
+        $progress = $campaign->Goal_Amount > 0
+            ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100
+            : 0;
+
+        // Get recent donations
+        $recentDonations = $campaign->donations()
+            ->with('donor')
+            ->orderBy('Donation_Date', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('donation-management.public-user.campaign-detail', compact('campaign', 'progress', 'recentDonations'));
+    }
+
+    /**
+     * Browse events (Public view)
+     */
+    public function publicBrowseEvents()
+    {
+        $events = Event::whereIn('Status', ['Upcoming', 'Ongoing'])
+            ->orderBy('Start_Date', 'asc')
+            ->paginate(12);
+
+        return view('donation-management.public-user.event-browse', compact('events'));
+    }
+
+    /**
+     * Show event details (Public view)
+     */
+    public function publicShowEvent(Event $event)
+    {
+        $volunteerCount = $event->volunteers()->count();
+        $spotsLeft = $event->Capacity ? ($event->Capacity - $volunteerCount) : null;
+
+        return view('donation-management.public-user.event-detail', compact('event', 'volunteerCount', 'spotsLeft'));
+    }
+
+    /**
+     * Show recipient registration form
+     */
+    public function publicCreateRecipient()
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        if (!$publicProfile) {
+            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+        }
+
+        return view('donation-management.public-user.recipient-create');
+    }
+
+    /**
+     * Store new recipient
+     */
+    public function publicStoreRecipient(Request $request)
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        if (!$publicProfile) {
+            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string'],
+            'contact' => ['required', 'string', 'max:20'],
+            'need_description' => ['required', 'string'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            Recipient::create([
+                'Public_ID' => $publicProfile->Public_ID,
+                'Name' => $validated['name'],
+                'Address' => $validated['address'],
+                'Contact' => $validated['contact'],
+                'Need_Description' => $validated['need_description'],
+                'Status' => 'Pending',
+                'Approved_At' => null,
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('public.recipients.index')
+                ->with('success', 'Recipient registered successfully! Pending review.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to register recipient. Please try again.'])->withInput();
+        }
+    }
+
+    /**
+     * Show all recipients registered by this public user
+     */
+    public function publicIndexRecipients()
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        if (!$publicProfile) {
+            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+        }
+
+        $recipients = Recipient::where('Public_ID', $publicProfile->Public_ID)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('donation-management.public-user.recipient-index', compact('recipients'));
+    }
+
+    /**
+     * Show recipient details
+     */
+    public function publicShowRecipient(Recipient $recipient)
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        // Check if user owns this recipient
+        if ($recipient->Public_ID !== $publicProfile->Public_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Get allocations for this recipient
+        $allocations = $recipient->donationAllocations()
+            ->with('campaign')
+            ->orderBy('Allocated_At', 'desc')
+            ->get();
+
+        $totalAllocated = $allocations->sum('Amount_Allocated');
+
+        return view('donation-management.public-user.recipient-detail', compact('recipient', 'allocations', 'totalAllocated'));
+    }
+
+    /**
+     * Edit recipient
+     */
+    public function publicEditRecipient(Recipient $recipient)
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        // Check if user owns this recipient
+        if ($recipient->Public_ID !== $publicProfile->Public_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Can only edit pending recipients
+        if ($recipient->Status !== 'Pending') {
+            return back()->with('error', 'Cannot edit recipients that are already approved or rejected.');
+        }
+
+        return view('donation-management.public-user.recipient-edit', compact('recipient'));
+    }
+
+    /**
+     * Update recipient
+     */
+    public function publicUpdateRecipient(Request $request, Recipient $recipient)
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        // Check if user owns this recipient
+        if ($recipient->Public_ID !== $publicProfile->Public_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Can only edit pending recipients
+        if ($recipient->Status !== 'Pending') {
+            return back()->with('error', 'Cannot edit recipients that are already approved or rejected.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string'],
+            'contact' => ['required', 'string', 'max:20'],
+            'need_description' => ['required', 'string'],
+        ]);
+
+        $recipient->update([
+            'Name' => $validated['name'],
+            'Address' => $validated['address'],
+            'Contact' => $validated['contact'],
+            'Need_Description' => $validated['need_description'],
+        ]);
+
+        return redirect()
+            ->route('public.recipients.show', $recipient->Recipient_ID)
+            ->with('success', 'Recipient updated successfully!');
+    }
+
+    /**
+     * Delete recipient
+     */
+    public function publicDestroyRecipient(Recipient $recipient)
+    {
+        $publicProfile = Auth::user()->publicProfile;
+
+        // Check if user owns this recipient
+        if ($recipient->Public_ID !== $publicProfile->Public_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Can only delete pending recipients
+        if ($recipient->Status !== 'Pending') {
+            return back()->with('error', 'Cannot delete recipients that are already approved.');
+        }
+
+        $recipient->delete();
+
+        return redirect()
+            ->route('public.recipients.index')
+            ->with('success', 'Recipient deleted successfully!');
+    }
 }

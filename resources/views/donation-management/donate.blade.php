@@ -36,7 +36,7 @@
                 <!-- Campaign Information -->
                 <div class="bg-white rounded-lg shadow-xl p-8">
                     <div class="mb-6">
-                        <a href="{{ route('campaigns.show', $campaign->Campaign_ID) }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center mb-4">
+                        <a href="{{ route('campaigns.show.donate', $campaign->Campaign_ID) }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center mb-4">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                             </svg>
@@ -65,7 +65,7 @@
 
                         <!-- Progress -->
                         @php
-                            $progress = $campaign->Goal_Amount > 0 ? min(($campaign->Total_Collected / $campaign->Goal_Amount) * 100, 100) : 0;
+                            $progress = $campaign->Goal_Amount > 0 ? min(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 100) : 0;
                         @endphp
                         <div class="border-t border-gray-200 pt-4">
                             <div class="mb-2">
@@ -229,7 +229,7 @@
 
                         <!-- Submit Buttons -->
                         <div class="flex gap-3">
-                            <a href="{{ route('campaigns.show', $campaign->Campaign_ID) }}"
+                            <a href="{{ url()->previous() }}"
                                class="flex-1 text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
                                 Cancel
                             </a>

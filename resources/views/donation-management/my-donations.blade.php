@@ -158,7 +158,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <div class="flex gap-2">
-                                        <a href="{{ route('campaigns.show', $donation->Campaign_ID) }}"
+                                        <a href="{{ route('campaigns.show.donate', $donation->Campaign_ID) }}"
                                            class="text-indigo-600 hover:text-indigo-900 font-medium">
                                             View Campaign
                                         </a>

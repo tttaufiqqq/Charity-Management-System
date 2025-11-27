@@ -31,6 +31,9 @@
                     </span>
                 </div>
                 <div class="flex space-x-3">
+                    <a href="{{ route('events.manage-volunteers', $event->Event_ID) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Manage Volunteers
+                    </a>
                     <a href="{{ route('events.edit', $event->Event_ID) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         Edit
                     </a>

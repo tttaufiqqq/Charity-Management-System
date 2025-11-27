@@ -263,11 +263,11 @@
                         <div>
                             <h3 class="text-xl font-semibold text-gray-900 mb-4">Explore CharityHub</h3>
                             <div class="grid md:grid-cols-2 gap-4">
-                                <a href="{{ route('dashboard') }}" class="block p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:shadow-md transition-shadow">
+                                <a href="{{ route('public.campaigns.browse') }}" class="block p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:shadow-md transition-shadow">
                                     <h4 class="font-semibold text-gray-900 mb-2">Browse Campaigns</h4>
                                     <p class="text-sm text-gray-600">Discover active campaigns and causes</p>
                                 </a>
-                                <a href="{{ route('dashboard') }}" class="block p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-shadow">
+                                <a href="{{ route('public.events.browse') }}" class="block p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:shadow-md transition-shadow">
                                     <h4 class="font-semibold text-gray-900 mb-2">Find Events</h4>
                                     <p class="text-sm text-gray-600">See upcoming charity events</p>
                                 </a>
@@ -275,11 +275,11 @@
                         </div>
 
                         <div class="bg-indigo-50 p-6 rounded-lg">
-                            <h4 class="font-semibold text-gray-900 mb-2">Want to do more?</h4>
-                            <p class="text-sm text-gray-600 mb-4">Consider becoming a donor or volunteer to make a bigger impact!</p>
+                            <h4 class="font-semibold text-gray-900 mb-2">Suggest recipients to receive donation.</h4>
+                            <p class="text-sm text-gray-600 mb-4">Help is find those who are in need of donations by suggesting them below.</p>
                             <div class="flex gap-3">
-                                <a href="{{ route('dashboard') }}" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
-                                    Learn More →
+                                <a href="{{ route('public.recipients.create') }}" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">
+                                    Register recipients
                                 </a>
                             </div>
                         </div>

@@ -31,6 +31,12 @@ class Donation extends Model
         'Receipt_No',
     ];
 
+    protected $casts = [
+        'Donation_Date' => 'datetime',
+        'Amount' => 'decimal:2',
+    ];
+
+
     /**
      * Relationships
      */
