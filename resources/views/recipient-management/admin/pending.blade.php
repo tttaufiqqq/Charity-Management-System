@@ -80,8 +80,8 @@
                                         <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">Pending</span>
                                     </div>
                                     <p class="text-sm text-gray-600">
-                                        Registered by: <strong>{{ $recipient->publicUser->user->name ?? 'N/A' }}</strong>
-                                        ({{ $recipient->publicUser->user->email ?? 'N/A' }})
+                                        Registered by: <strong>{{ $recipient->publicProfile->user->name }}</strong>
+                                        ({{ $recipient->publicProfile->user->email ?? 'N/A' }})
                                     </p>
                                     <p class="text-sm text-gray-500">
                                         Submitted: {{ \Carbon\Carbon::parse($recipient->created_at)->format('M d, Y h:i A') }}

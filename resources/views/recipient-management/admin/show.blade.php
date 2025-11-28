@@ -101,8 +101,8 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="text-sm font-medium text-gray-600">Registered By</label>
-                                <p class="text-gray-900">{{ $recipient->publicUser->user->name ?? 'N/A' }}</p>
-                                <p class="text-sm text-gray-500">{{ $recipient->publicUser->user->email ?? '' }}</p>
+                                <p class="text-gray-900">{{ $recipient->publicProfile->user->name ?? 'N/A' }}</p>
+                                <p class="text-sm text-gray-500">{{ $recipient->publicProfile->user->email ?? 'N/A' }}</p>
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-gray-600">Submission Date</label>
@@ -122,13 +122,13 @@
                 </div>
 
                 <!-- Allocations (if any) -->
-                @if($recipient->allocations->count() > 0)
+                @if($recipient->donationAllocations->count() > 0)
                     <div class="border-t border-gray-200 pt-8 mb-8">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">Received Allocations</h2>
                         <div class="bg-blue-50 rounded-lg p-6">
                             <p class="text-sm text-gray-600 mb-4">Total Received: <strong class="text-lg text-green-600">RM {{ number_format($recipient->allocations->sum('Amount_Allocated'), 2) }}</strong></p>
                             <div class="space-y-2">
-                                @foreach($recipient->allocations as $allocation)
+                                @foreach($recipient->donationAllocations as $allocation)
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-700">{{ $allocation->campaign->Title }}</span>
                                         <span class="font-semibold text-gray-900">RM {{ number_format($allocation->Amount_Allocated, 2) }}</span>
@@ -175,7 +175,7 @@
                     @endif
 
                     <!-- Delete Button -->
-                    @if($recipient->allocations->count() === 0)
+                    @if($recipient->donationAllocations->count() === 0)
                         <div class="mt-4">
                             <button onclick="confirmDelete()" class="text-red-600 hover:text-red-700 text-sm font-medium">
                                 Delete Recipient

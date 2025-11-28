@@ -180,6 +180,9 @@
                             <div class="space-y-4">
                                 <h3 class="text-xl font-semibold text-gray-900">Quick Actions</h3>
                                 <div class="flex flex-wrap gap-3">
+                                    <a href="{{ route('admin.analytics.dashboard') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        Dashboard
+                                    </a>
                                     <a href="{{ route('admin.recipients.pending') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                                         Review Recipients
                                     </a>

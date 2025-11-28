@@ -262,7 +262,7 @@ class RecipientManagementController extends Controller
      */
     public function adminShowRecipient($id)
     {
-        $recipient = Recipient::with(['publicProfile.user', 'allocations.campaign.organization'])->findOrFail($id);
+        $recipient = Recipient::with(['publicProfile.user', 'donationAllocations.campaign.organization'])->findOrFail($id);
 
         return view('recipient-management.admin.show', compact('recipient'));
     }

@@ -11,19 +11,10 @@
 
             <!-- Navigation Links -->
             <div class="flex items-center space-x-4">
-                <!-- Public Links -->
-                <a href="{{ route('campaigns.index') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Campaigns
-                </a>
-                <a href="{{ route('events.index') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                    Events
-                </a>
+
 
                 <!-- Authenticated / Guest Links -->
                 @auth
-                    <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
-                        Dashboard
-                    </a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">

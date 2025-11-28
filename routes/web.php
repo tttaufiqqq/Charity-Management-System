@@ -135,5 +135,22 @@ Route::middleware(['auth'])->group(function () {
 });
 
 /*reporting*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/analytics', function () {
+        return view('reporting.dashboard');
+    })->name('admin.analytics.dashboard');
+
+    Route::get('/admin/analytics/campaigns', function () {
+        return view('reporting.campaigns');
+    })->name('admin.analytics.campaigns');
+
+    Route::get('/admin/analytics/events', function () {
+        return view('reporting.events');
+    })->name('admin.analytics.events');
+
+    Route::get('/admin/analytics/donors', function () {
+        return view('reporting.donors');
+    })->name('admin.analytics.donors');
+});
 
 require __DIR__.'/auth.php';
