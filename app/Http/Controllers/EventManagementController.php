@@ -28,6 +28,7 @@ class EventManagementController extends Controller
         }
 
         $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
+            ->where('Status', 'Active')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -69,10 +70,10 @@ class EventManagementController extends Controller
             'Collected_Amount' => 0,
             'Start_Date' => $validated['start_date'],
             'End_Date' => $validated['end_date'],
-            'Status' => 'Active',
+            'Status' => 'Pending',
         ]);
 
-        return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully!');
+        return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully! It will be visible once admin approved it.');
     }
 
     /**
@@ -165,6 +166,7 @@ class EventManagementController extends Controller
         }
 
         $events = Event::where('Organizer_ID', $organization->Organization_ID)
+            ->where('Status', 'Upcoming')
             ->orderBy('Start_Date', 'desc')
             ->paginate(10);
 
@@ -207,10 +209,10 @@ class EventManagementController extends Controller
             'Start_Date' => $validated['start_date'],
             'End_Date' => $validated['end_date'],
             'Capacity' => $validated['capacity'],
-            'Status' => 'Upcoming',
+            'Status' => 'Pending',
         ]);
 
-        return redirect()->route('events.index')->with('success', 'Event created successfully!');
+        return redirect()->route('events.index')->with('success', 'Event created successfully! It will be visible once admin approve it');
     }
 
     /**
@@ -294,6 +296,9 @@ class EventManagementController extends Controller
     /**
      * Show volunteers for an event (organizer view)
      */
+    /**
+     * Show volunteers for an event (organizer view)
+     */
     public function manageVolunteers(Event $event)
     {
         // Check if user owns this event
@@ -324,16 +329,32 @@ class EventManagementController extends Controller
             'total_hours' => ['required', 'numeric', 'min:0', 'max:24'],
         ]);
 
-        DB::table('event_participation')
-            ->where('Event_ID', $event->Event_ID)
-            ->where('Volunteer_ID', $volunteerId)
-            ->update([
-                'Status' => $validated['status'],
-                'Total_Hours' => $validated['total_hours'],
-                'updated_at' => now(),
-            ]);
+        DB::beginTransaction();
 
-        return back()->with('success', 'Volunteer hours updated successfully!');
+        try {
+            // Update volunteer participation
+            DB::table('event_participation')
+                ->where('Event_ID', $event->Event_ID)
+                ->where('Volunteer_ID', $volunteerId)
+                ->update([
+                    'Status' => $validated['status'],
+                    'Total_Hours' => $validated['total_hours'],
+                    'updated_at' => now(),
+                ]);
+
+            // Check if event should be marked as completed
+            // If event end date has passed and we're updating volunteer hours, mark as completed
+            if ($event->End_Date < now() && $event->Status !== 'Completed') {
+                $event->update(['Status' => 'Completed']);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Volunteer hours updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to update volunteer hours.');
+        }
     }
 
     /**
@@ -397,5 +418,121 @@ class EventManagementController extends Controller
 
         $count = count($validated['volunteer_ids']);
         return back()->with('success', "Updated {$count} volunteers!");
+    }
+
+    // ========================================
+    // ADMIN APPROVAL METHODS
+    // ========================================
+
+    /**
+     * Display pending campaigns for admin approval
+     */
+    public function adminPendingCampaigns()
+    {
+        $campaigns = Campaign::where('Status', 'Pending')
+            ->with('organization.user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('event-management.admin.campaigns-pending', compact('campaigns'));
+    }
+
+    /**
+     * Display pending events for admin approval
+     */
+    public function adminPendingEvents()
+    {
+        $events = Event::where('Status', 'Pending')
+            ->with('organization.user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('event-management.admin.events-pending', compact('events'));
+    }
+
+    /**
+     * Approve a campaign
+     */
+    public function adminApproveCampaign(Campaign $campaign)
+    {
+        if ($campaign->Status !== 'Pending') {
+            return back()->with('error', 'Campaign is not pending approval.');
+        }
+
+        $campaign->update(['Status' => 'Active']);
+
+        return back()->with('success', 'Campaign approved successfully!');
+    }
+
+    /**
+     * Reject a campaign
+     */
+    public function adminRejectCampaign(Request $request, Campaign $campaign)
+    {
+        if ($campaign->Status !== 'Pending') {
+            return back()->with('error', 'Campaign is not pending approval.');
+        }
+
+        $campaign->update(['Status' => 'Rejected']);
+
+        return back()->with('success', 'Campaign rejected.');
+    }
+
+    /**
+     * Approve an event
+     */
+    public function adminApproveEvent(Event $event)
+    {
+        if ($event->Status !== 'Pending') {
+            return back()->with('error', 'Event is not pending approval.');
+        }
+
+        $event->update(['Status' => 'Upcoming']);
+
+        return back()->with('success', 'Event approved successfully!');
+    }
+
+    /**
+     * Reject an event
+     */
+    public function adminRejectEvent(Request $request, Event $event)
+    {
+        if ($event->Status !== 'Pending') {
+            return back()->with('error', 'Event is not pending approval.');
+        }
+
+        $event->update(['Status' => 'Rejected']);
+
+        return back()->with('success', 'Event rejected.');
+    }
+
+    /**
+     * Admin dashboard - overview of pending items
+     */
+    public function adminDashboard()
+    {
+        $pendingCampaigns = Campaign::where('Status', 'Pending')->count();
+        $pendingEvents = Event::where('Status', 'Pending')->count();
+        $pendingRecipients = \App\Models\Recipient::where('Status', 'Pending')->count();
+
+        $recentCampaigns = Campaign::where('Status', 'Pending')
+            ->with('organization.user')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        $recentEvents = Event::where('Status', 'Pending')
+            ->with('organization.user')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('event-management.admin.dashboard', compact(
+            'pendingCampaigns',
+            'pendingEvents',
+            'pendingRecipients',
+            'recentCampaigns',
+            'recentEvents'
+        ));
     }
 }

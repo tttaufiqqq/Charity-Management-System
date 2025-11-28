@@ -67,6 +67,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/events/{event}/auto-calculate-hours', [EventManagementController::class, 'autoCalculateHours'])->name('events.auto-calculate-hours');
     Route::post('/events/{event}/bulk-update-volunteers', [EventManagementController::class, 'bulkUpdateVolunteers'])->name('events.bulk-update-volunteers');
 
+    Route::get('/admin/dashboard', [EventManagementController::class, 'adminDashboard'])->name('admin.dashboard');
+
+    // Campaign Approval
+    Route::get('/admin/campaigns/pending', [EventManagementController::class, 'adminPendingCampaigns'])->name('admin.campaigns.pending');
+    Route::post('/admin/campaigns/{campaign}/approve', [EventManagementController::class, 'adminApproveCampaign'])->name('admin.campaigns.approve');
+    Route::post('/admin/campaigns/{campaign}/reject', [EventManagementController::class, 'adminRejectCampaign'])->name('admin.campaigns.reject');
+
+    // Event Approval
+    Route::get('/admin/events/pending', [EventManagementController::class, 'adminPendingEvents'])->name('admin.events.pending');
+    Route::post('/admin/events/{event}/approve', [EventManagementController::class, 'adminApproveEvent'])->name('admin.events.approve');
+    Route::post('/admin/events/{event}/reject', [EventManagementController::class, 'adminRejectEvent'])->name('admin.events.reject');
+
 });
 
 /*donation-management*/

@@ -183,6 +183,9 @@
                                     <a href="{{ route('admin.recipients.pending') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
                                         Review Recipients
                                     </a>
+                                    <a href="{{ route('admin.dashboard') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                        Events and Campaigns
+                                    </a>
                                     <a href="{{ route('dashboard') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                         Manage Users
                                     </a>
