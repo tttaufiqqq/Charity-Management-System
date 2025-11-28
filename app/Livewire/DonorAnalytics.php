@@ -2,12 +2,9 @@
 
 namespace App\Livewire;
 
-namespace App\Http\Livewire;
-
 use Livewire\Component;
 use App\Models\Donor;
 use App\Models\Donation;
-use Illuminate\Support\Facades\DB;
 
 class DonorAnalytics extends Component
 {
@@ -24,21 +21,27 @@ class DonorAnalytics extends Component
 
     public function loadAnalytics()
     {
-        // Top donors
-        $this->topDonors = Donor::orderBy('Total_Donated', 'desc')
+        // Top donors - using orderByDesc for better readability
+        $this->topDonors = Donor::orderByDesc('Total_Donated')
             ->limit(10)
             ->get();
 
-        // Donations by payment method
-        $this->donationsByMethod = Donation::select('Payment_Method', DB::raw('COUNT(*) as count'))
+        // Donations by payment method - using Laravel's query builder
+        $donationGroups = Donation::select('Payment_Method')
             ->groupBy('Payment_Method')
             ->get()
-            ->pluck('count', 'Payment_Method')
+            ->countBy('Payment_Method')
             ->toArray();
+
+        $this->donationsByMethod = $donationGroups;
 
         // Statistics
         $this->totalDonors = Donor::count();
+
+        // Active donors - using where clause that works across all RDBMS
         $this->activeDonors = Donor::where('Total_Donated', '>', 0)->count();
+
+        // Average donation - using Laravel's avg() method which handles null and cross-database compatibility
         $this->averageDonation = Donation::avg('Amount') ?? 0;
     }
 

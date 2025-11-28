@@ -18,7 +18,6 @@
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('volunteer.events.browse') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Browse Events</a>
                     <a href="{{ route('volunteer.events.my-events') }}" class="text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">My Events</a>
-                    <a href="{{ route('dashboard') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Logout</button>

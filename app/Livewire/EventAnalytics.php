@@ -24,22 +24,35 @@ class EventAnalytics extends Component
     {
         // Top events by volunteer count
         $this->topEvents = Event::withCount('volunteers')
-            ->orderBy('volunteers_count', 'desc')
+            ->orderByDesc('volunteers_count')
             ->limit(10)
             ->get();
 
-        // Events by status
-        $this->eventsByStatus = Event::select('Status', DB::raw('COUNT(*) as count'))
+        // Events by status - using selectRaw for cross-database compatibility
+        $this->eventsByStatus = Event::select('Status')
+            ->selectRaw('COUNT(*) as count')
             ->groupBy('Status')
             ->get()
             ->pluck('count', 'Status')
             ->toArray();
 
         // Volunteer statistics
-        $this->totalVolunteerHours = EventParticipation::sum('Total_Hours');
+        // Using Laravel's sum() method which handles column names across all RDBMS
+        $this->totalVolunteerHours = EventParticipation::sum('Total_Hours') ?? 0;
+
         $this->totalEventParticipations = EventParticipation::count();
-        $this->averageVolunteersPerEvent = Event::withCount('volunteers')
-            ->avg('volunteers_count') ?? 0;
+
+        // Average volunteers per event - calculate at PHP level for better cross-database compatibility
+        $eventVolunteerCounts = Event::withCount('volunteers')->get();
+
+        if ($eventVolunteerCounts->isNotEmpty()) {
+            $this->averageVolunteersPerEvent = round(
+                $eventVolunteerCounts->avg('volunteers_count'),
+                2
+            );
+        } else {
+            $this->averageVolunteersPerEvent = 0;
+        }
     }
 
     public function render()

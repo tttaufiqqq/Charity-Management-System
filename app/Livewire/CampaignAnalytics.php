@@ -8,7 +8,6 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Campaign;
-use Illuminate\Support\Facades\DB;
 
 class CampaignAnalytics extends Component
 {
@@ -25,21 +24,25 @@ class CampaignAnalytics extends Component
 
     public function loadAnalytics()
     {
-        // Top campaigns by amount raised
-        $this->topCampaigns = Campaign::orderBy('Collected_Amount', 'desc')
+        // Top campaigns by amount raised - using orderByDesc for better readability
+        $this->topCampaigns = Campaign::orderByDesc('Collected_Amount')
             ->limit(10)
             ->get();
 
-        // Campaigns by status
-        $this->campaignsByStatus = Campaign::select('Status', DB::raw('COUNT(*) as count'))
+        // Campaigns by status - using Laravel's query builder
+        $campaignGroups = Campaign::select('Status')
             ->groupBy('Status')
             ->get()
-            ->pluck('count', 'Status')
+            ->countBy('Status')
             ->toArray();
 
-        // Financial summary
-        $this->totalGoal = Campaign::sum('Goal_Amount');
-        $this->totalCollected = Campaign::sum('Collected_Amount');
+        $this->campaignsByStatus = $campaignGroups;
+
+        // Financial summary - using Laravel's sum() method which handles cross-database compatibility
+        $this->totalGoal = Campaign::sum('Goal_Amount') ?? 0;
+        $this->totalCollected = Campaign::sum('Collected_Amount') ?? 0;
+
+        // Calculate average progress
         $this->averageProgress = $this->totalGoal > 0
             ? ($this->totalCollected / $this->totalGoal) * 100
             : 0;

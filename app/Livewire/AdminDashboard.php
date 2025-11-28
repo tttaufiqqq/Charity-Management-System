@@ -11,6 +11,7 @@ use App\Models\Recipient;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AdminDashboard extends Component
 {
@@ -46,33 +47,12 @@ class AdminDashboard extends Component
         $this->loadStatistics();
     }
 
-    private function dbDateCast($column)
-    {
-        $driver = DB::getDriverName();
-
-        return match ($driver) {
-            'pgsql'  => 'CAST("' . $column . '" AS DATE)',
-            'sqlsrv' => 'CAST(' . $column . ' AS DATE)',
-            default  => 'DATE(' . $column . ')',  // MySQL/MariaDB
-        };
-    }
-
-    private function quoteColumn($column)
-    {
-        $driver = DB::getDriverName();
-
-        return match ($driver) {
-            'pgsql'  => '"' . $column . '"',       // PG requires quotes for PascalCase
-            default  => $column,                   // MySQL / SQL Server OK
-        };
-    }
-
     public function loadStatistics()
     {
         $days = (int) $this->dateRange;
         $startDate = now()->subDays($days);
 
-        // Basic Statistics
+        // Basic Statistics - using Laravel's count() method
         $this->totalUsers = User::count();
         $this->totalCampaigns = Campaign::count();
         $this->totalEvents = Event::count();
@@ -80,11 +60,11 @@ class AdminDashboard extends Component
         $this->totalVolunteers = Volunteer::count();
         $this->totalOrganizations = Organization::count();
 
-        // Financial
-        $this->totalRaised = Campaign::sum('Collected_Amount');
-        $this->totalAllocated = DB::table('donation_allocation')->sum('Amount_Allocated');
+        // Financial - using Laravel's sum() method
+        $this->totalRaised = Campaign::sum('Collected_Amount') ?? 0;
+        $this->totalAllocated = DB::table('donation_allocation')->sum('Amount_Allocated') ?? 0;
 
-        // Pending approvals
+        // Pending approvals - using Laravel's where() and count()
         $this->pendingApprovals = [
             'campaigns'  => Campaign::where('Status', 'Pending')->count(),
             'events'     => Event::where('Status', 'Pending')->count(),
@@ -97,63 +77,78 @@ class AdminDashboard extends Component
 
     private function loadChartData($startDate)
     {
-        // Proper cross-DB date casting
-        $donationDateCast = $this->dbDateCast('Donation_Date');
-        $createdDateCast  = $this->dbDateCast('created_at');
+        // Donations chart - process at PHP level for cross-database compatibility
+        $donations = Donation::where('Donation_Date', '>=', $startDate)
+            ->orderBy('Donation_Date')
+            ->get();
 
-        $amountCol = $this->quoteColumn('Amount');
-
-        // Donations chart
-        $this->donationsChart = Donation::where('Donation_Date', '>=', $startDate)
-            ->selectRaw("$donationDateCast AS date, SUM($amountCol) AS total")
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($row) => [
-                'date'   => $row->date,
-                'amount' => (float) $row->total
-            ])
+        $this->donationsChart = $donations
+            ->groupBy(function ($donation) {
+                return Carbon::parse($donation->Donation_Date)->format('Y-m-d');
+            })
+            ->map(function ($group) {
+                return [
+                    'date' => $group->first()->Donation_Date,
+                    'amount' => (float) $group->sum('Amount')
+                ];
+            })
+            ->values()
             ->toArray();
 
-        // Campaigns chart
-        $countCol = "COUNT(*)";
+        // Campaigns chart - process at PHP level
+        $campaigns = Campaign::where('created_at', '>=', $startDate)
+            ->orderBy('created_at')
+            ->get();
 
-        $this->campaignsChart = Campaign::where('created_at', '>=', $startDate)
-            ->selectRaw("$createdDateCast AS date, $countCol AS count")
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($row) => [
-                'date'  => $row->date,
-                'count' => $row->count
-            ])
+        $this->campaignsChart = $campaigns
+            ->groupBy(function ($campaign) {
+                return Carbon::parse($campaign->created_at)->format('Y-m-d');
+            })
+            ->map(function ($group, $date) {
+                return [
+                    'date' => $date,
+                    'count' => $group->count()
+                ];
+            })
+            ->values()
             ->toArray();
 
-        // Events chart
-        $this->eventsChart = Event::where('created_at', '>=', $startDate)
-            ->selectRaw("$createdDateCast AS date, $countCol AS count")
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($row) => [
-                'date'  => $row->date,
-                'count' => $row->count
-            ])
+        // Events chart - process at PHP level
+        $events = Event::where('created_at', '>=', $startDate)
+            ->orderBy('created_at')
+            ->get();
+
+        $this->eventsChart = $events
+            ->groupBy(function ($event) {
+                return Carbon::parse($event->created_at)->format('Y-m-d');
+            })
+            ->map(function ($group, $date) {
+                return [
+                    'date' => $date,
+                    'count' => $group->count()
+                ];
+            })
+            ->values()
             ->toArray();
 
-        // User growth
-        $this->userGrowthChart = User::where('created_at', '>=', $startDate)
-            ->selectRaw("$createdDateCast AS date, $countCol AS count")
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($row) => [
-                'date'  => $row->date,
-                'count' => $row->count
-            ])
+        // User growth chart - process at PHP level
+        $users = User::where('created_at', '>=', $startDate)
+            ->orderBy('created_at')
+            ->get();
+
+        $this->userGrowthChart = $users
+            ->groupBy(function ($user) {
+                return Carbon::parse($user->created_at)->format('Y-m-d');
+            })
+            ->map(function ($group, $date) {
+                return [
+                    'date' => $date,
+                    'count' => $group->count()
+                ];
+            })
+            ->values()
             ->toArray();
     }
-
 
     public function render()
     {

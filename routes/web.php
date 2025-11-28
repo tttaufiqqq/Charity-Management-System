@@ -24,16 +24,16 @@ Route::middleware('auth')->group(function () {
 
 /*volunteer-management*/
 Route::middleware(['auth'])->group(function () {
-    Route::get('/volunteer/dashboard', [App\Http\Controllers\VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
-    Route::get('/volunteer/schedule', [App\Http\Controllers\VolunteerController::class, 'schedule'])->name('volunteer.schedule');
-    Route::get('/volunteer/profile', [App\Http\Controllers\VolunteerController::class, 'profile'])->name('volunteer.profile');
-    Route::get('/volunteer/profile/edit', [App\Http\Controllers\VolunteerController::class, 'editProfile'])->name('volunteer.profile.edit');
-    Route::put('/volunteer/profile', [App\Http\Controllers\VolunteerController::class, 'updateProfile'])->name('volunteer.profile.update');
-    Route::get('/volunteer/events', [App\Http\Controllers\VolunteerController::class, 'browseEvents'])->name('volunteer.events.browse');
-    Route::get('/volunteer/events/{event}', [App\Http\Controllers\VolunteerController::class, 'showEvent'])->name('volunteer.events.show');
-    Route::post('/volunteer/events/{event}/register', [App\Http\Controllers\VolunteerController::class, 'registerForEvent'])->name('volunteer.events.register');
-    Route::delete('/volunteer/events/{event}/cancel', [App\Http\Controllers\VolunteerController::class, 'cancelRegistration'])->name('volunteer.events.cancel');
-    Route::get('/volunteer/my-events', [App\Http\Controllers\VolunteerController::class, 'myEvents'])->name('volunteer.events.my-events');
+    Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
+    Route::get('/volunteer/schedule', [VolunteerController::class, 'schedule'])->name('volunteer.schedule');
+    Route::get('/volunteer/profile', [VolunteerController::class, 'profile'])->name('volunteer.profile');
+    Route::get('/volunteer/profile/edit', [VolunteerController::class, 'editProfile'])->name('volunteer.profile.edit');
+    Route::put('/volunteer/profile', [VolunteerController::class, 'updateProfile'])->name('volunteer.profile.update');
+    Route::get('/volunteer/events', [VolunteerController::class, 'browseEvents'])->name('volunteer.events.browse');
+    Route::get('/volunteer/events/{event}', [VolunteerController::class, 'showEvent'])->name('volunteer.events.show');
+    Route::post('/volunteer/events/{event}/register', [VolunteerController::class, 'registerForEvent'])->name('volunteer.events.register');
+    Route::delete('/volunteer/events/{event}/cancel', [VolunteerController::class, 'cancelRegistration'])->name('volunteer.events.cancel');
+    Route::get('/volunteer/my-events', [VolunteerController::class, 'myEvents'])->name('volunteer.events.my-events');
 
     Route::get('/volunteer/skills', [VolunteerController::class, 'showSkills'])->name('volunteer.skills.index');
     Route::post('/volunteer/skills', [VolunteerController::class, 'storeSkill'])->name('volunteer.skills.store');
@@ -98,19 +98,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/donation/{donationId}/receipt', [DonationManagementController::class, 'downloadReceipt'])->name('donation.receipt');
     Route::get('/donations/receipts/all', [DonationManagementController::class, 'downloadAllReceipts'])->name('donations.receipts.all');
 
-    Route::get('/public/campaigns', [App\Http\Controllers\DonationManagementController::class, 'publicBrowseCampaigns'])->name('public.campaigns.browse');
-    Route::get('/public/campaigns/{campaign}', [App\Http\Controllers\DonationManagementController::class, 'publicShowCampaign'])->name('public.campaigns.show');
-    Route::get('/public/events', [App\Http\Controllers\DonationManagementController::class, 'publicBrowseEvents'])->name('public.events.browse');
-    Route::get('/public/events/{event}', [App\Http\Controllers\DonationManagementController::class, 'publicShowEvent'])->name('public.events.show');
+    Route::get('/public/campaigns', [DonationManagementController::class, 'publicBrowseCampaigns'])->name('public.campaigns.browse');
+    Route::get('/public/campaigns/{campaign}', [DonationManagementController::class, 'publicShowCampaign'])->name('public.campaigns.show');
+    Route::get('/public/events', [DonationManagementController::class, 'publicBrowseEvents'])->name('public.events.browse');
+    Route::get('/public/events/{event}', [DonationManagementController::class, 'publicShowEvent'])->name('public.events.show');
 
     // Recipient Management
-    Route::get('/public/recipients', [App\Http\Controllers\DonationManagementController::class, 'publicIndexRecipients'])->name('public.recipients.index');
-    Route::get('/public/recipients/create', [App\Http\Controllers\DonationManagementController::class, 'publicCreateRecipient'])->name('public.recipients.create');
-    Route::post('/public/recipients', [App\Http\Controllers\DonationManagementController::class, 'publicStoreRecipient'])->name('public.recipients.store');
-    Route::get('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicShowRecipient'])->name('public.recipients.show');
-    Route::get('/public/recipients/{recipient}/edit', [App\Http\Controllers\DonationManagementController::class, 'publicEditRecipient'])->name('public.recipients.edit');
-    Route::put('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicUpdateRecipient'])->name('public.recipients.update');
-    Route::delete('/public/recipients/{recipient}', [App\Http\Controllers\DonationManagementController::class, 'publicDestroyRecipient'])->name('public.recipients.destroy');
+    Route::get('/public/recipients', [DonationManagementController::class, 'publicIndexRecipients'])->name('public.recipients.index');
+    Route::get('/public/recipients/create', [DonationManagementController::class, 'publicCreateRecipient'])->name('public.recipients.create');
+    Route::post('/public/recipients', [DonationManagementController::class, 'publicStoreRecipient'])->name('public.recipients.store');
+    Route::get('/public/recipients/{recipient}', [DonationManagementController::class, 'publicShowRecipient'])->name('public.recipients.show');
+    Route::get('/public/recipients/{recipient}/edit', [DonationManagementController::class, 'publicEditRecipient'])->name('public.recipients.edit');
+    Route::put('/public/recipients/{recipient}', [DonationManagementController::class, 'publicUpdateRecipient'])->name('public.recipients.update');
+    Route::delete('/public/recipients/{recipient}', [DonationManagementController::class, 'publicDestroyRecipient'])->name('public.recipients.destroy');
 });
 
 /*recipient-management*/

@@ -19,7 +19,6 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="{{ route('welcome') }}" class="text-2xl font-bold text-indigo-600">CharityHub</a>
-                    <span class="ml-3 px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded">ADMIN</span>
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="{{ route('admin.recipients.pending') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Pending</a>

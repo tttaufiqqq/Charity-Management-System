@@ -311,7 +311,7 @@
                                         <div class="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
                                             <div class="flex-1">
                                                 <h5 class="font-semibold text-gray-900">{{ $campaign->Title }}</h5>
-                                                <p class="text-sm text-gray-600">Raised: RM {{ number_format($campaign->Total_Collected, 2) }}</p>
+                                                <p class="text-sm text-gray-600">Raised: RM {{ number_format($campaign->Collected_Amount, 2) }}</p>
                                             </div>
                                             <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}"
                                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
