@@ -5,7 +5,7 @@ return [
     /*
     |--------------------------------------------------------------------------
     | Application Name
-    |--------------------------------------------------------------------------
+    |--------------------------------------------------------------------cl------
     |
     | This value is the name of your application, which will be used when the
     | framework needs to place the application's name in a notification or
@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Kuala_Lumpur',
 
     /*
     |--------------------------------------------------------------------------
