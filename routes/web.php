@@ -1,16 +1,15 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\EventManagementController;
-use App\Http\Controllers\VolunteerController;
 use App\Http\Controllers\DonationManagementController;
+use App\Http\Controllers\EventManagementController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecipientManagementController;
+use App\Http\Controllers\VolunteerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');  // This looks for welcome.blade.php
 })->name('welcome');
-
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -22,7 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-/*volunteer-management*/
+/* volunteer-management */
 Route::middleware(['auth'])->group(function () {
     Route::get('/volunteer/dashboard', [VolunteerController::class, 'dashboard'])->name('volunteer.dashboard');
     Route::get('/volunteer/schedule', [VolunteerController::class, 'schedule'])->name('volunteer.schedule');
@@ -41,14 +40,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/volunteer/skills/{skillId}', [VolunteerController::class, 'deleteSkill'])->name('volunteer.skills.delete');
 });
 
-/*event-management*/
+/* event-management */
 Route::middleware(['auth'])->group(function () {
 
     // Campaign Routes
     Route::get('/campaigns/all', [EventManagementController::class, 'indexCampaigns'])->name('campaigns.index');
     Route::get('/campaigns/create', [EventManagementController::class, 'createCampaign'])->name('campaigns.create');
     Route::post('/campaigns', [EventManagementController::class, 'storeCampaign'])->name('campaigns.store');
-    Route::get('/campaigns/{campaign}', [EventManagementController::class, 'showCampaign'])->whereNumber('campaign')->name('campaigns.show');    Route::get('/campaigns/{campaign}/edit', [EventManagementController::class, 'editCampaign'])->name('campaigns.edit');
+    Route::get('/campaigns/{campaign}', [EventManagementController::class, 'showCampaign'])->whereNumber('campaign')->name('campaigns.show');
+    Route::get('/campaigns/{campaign}/edit', [EventManagementController::class, 'editCampaign'])->name('campaigns.edit');
     Route::put('/campaigns/{campaign}', [EventManagementController::class, 'updateCampaign'])->name('campaigns.update');
     Route::delete('/campaigns/{campaign}', [EventManagementController::class, 'destroyCampaign'])->name('campaigns.destroy');
 
@@ -81,7 +81,7 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-/*donation-management*/
+/* donation-management */
 Route::middleware(['auth'])->group(function () {
     // Browse campaigns
     Route::get('/campaigns', [DonationManagementController::class, 'browseCampaigns'])->name('campaigns.browse');
@@ -90,6 +90,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'showDonationForm'])->name('campaigns.donate');
     Route::post('/campaigns/{campaignId}/donate', [DonationManagementController::class, 'processDonation'])->name('campaigns.donate.process');
     Route::get('/donation/success/{donationId}', [DonationManagementController::class, 'donationSuccess'])->name('donation.success');
+
+    // ToyyibPay Payment Routes
+    Route::get('/donation/payment/return/{donationId}', [DonationManagementController::class, 'paymentReturn'])->name('donation.payment.return');
 
     // My donations
     Route::get('/my-donations', [DonationManagementController::class, 'myDonations'])->name('donations.my');
@@ -113,7 +116,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/public/recipients/{recipient}', [DonationManagementController::class, 'publicDestroyRecipient'])->name('public.recipients.destroy');
 });
 
-/*recipient-management*/
+/* recipient-management */
 Route::middleware(['auth'])->group(function () {
     Route::get('/campaigns/{campaignId}/allocate', [RecipientManagementController::class, 'showRecipients'])->name('recipients.allocate');
     Route::post('/campaigns/{campaignId}/allocate', [RecipientManagementController::class, 'allocateFunds'])->name('recipients.allocate.store');
@@ -122,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/recipients/{recipientId}/allocations', [RecipientManagementController::class, 'recipientAllocations'])->name('recipients.allocations.view');
     Route::get('/organizer/campaigns', [RecipientManagementController::class, 'myCampaigns'])->name('organizer.campaigns');
+    Route::get('/organizer/allocations', [RecipientManagementController::class, 'allAllocations'])->name('organizer.allocations.all');
 
     Route::get('/recipients/pending', [RecipientManagementController::class, 'pendingRecipients'])->name('admin.recipients.pending');
     Route::get('/recipients/all', [RecipientManagementController::class, 'allRecipients'])->name('admin.recipients.all');
@@ -134,7 +138,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/recipients/{id}', [RecipientManagementController::class, 'adminDeleteRecipient'])->name('admin.recipients.delete');
 });
 
-/*reporting*/
+/* reporting */
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/analytics', function () {
         return view('reporting.dashboard');
@@ -151,6 +155,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/analytics/donors', function () {
         return view('reporting.donors');
     })->name('admin.analytics.donors');
+
+    Route::get('/admin/analytics/donations', function () {
+        return view('reporting.donations');
+    })->name('admin.analytics.donations');
 });
+
+// ToyyibPay Callback (No auth middleware - called by ToyyibPay server)
+Route::post('/donation/payment/callback', [DonationManagementController::class, 'paymentCallback'])->name('donation.payment.callback');
 
 require __DIR__.'/auth.php';

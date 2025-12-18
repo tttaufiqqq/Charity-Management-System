@@ -68,7 +68,7 @@
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Campaign Supported</h3>
                         <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
                             <h4 class="font-semibold text-gray-900 text-lg mb-2">{{ $donation->campaign->Title }}</h4>
-                            <p class="text-sm text-indigo-600 font-medium mb-3">{{ $donation->campaign->organization->Organization_Name }}</p>
+                            <p class="text-sm text-indigo-600 font-medium mb-3">{{ $donation->campaign->organization->user->name ?? 'N/A' }}</p>
                             <p class="text-gray-700 text-sm">{{ Str::limit($donation->campaign->Description, 150) }}</p>
 
                             <div class="mt-4 pt-4 border-t border-indigo-200">

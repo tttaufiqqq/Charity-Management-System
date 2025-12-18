@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $campaign->Title }} - CharityHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50">
 <div class="min-h-screen">
@@ -81,8 +82,13 @@
                         <svg class="w-8 h-8 mx-auto mb-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <p class="text-2xl font-bold text-gray-900">{{ now()->diffInDays($campaign->End_Date) }}</p>
-                        <p class="text-sm text-gray-600">Days Left</p>
+                        @php
+                            $daysLeft = now()->diffInDays($campaign->End_Date, false);
+                            $isExpired = $daysLeft < 0;
+                            $daysLeft = abs($daysLeft);
+                        @endphp
+                        <p class="text-2xl font-bold text-gray-900">{{ $daysLeft }}</p>
+                        <p class="text-sm text-gray-600">{{ $isExpired ? 'Days Ago' : 'Days Left' }}</p>
                     </div>
                 </div>
 

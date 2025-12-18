@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Event;
+use App\Models\EventRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
-
 
 class EventManagementController extends Controller
 {
@@ -23,7 +22,7 @@ class EventManagementController extends Controller
     {
         $organization = Auth::user()->organization;
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
         }
 
@@ -50,7 +49,7 @@ class EventManagementController extends Controller
     {
         $organization = Auth::user()->organization;
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
         }
 
@@ -161,7 +160,7 @@ class EventManagementController extends Controller
     {
         $organization = Auth::user()->organization;
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
         }
 
@@ -188,7 +187,7 @@ class EventManagementController extends Controller
     {
         $organization = Auth::user()->organization;
 
-        if (!$organization) {
+        if (! $organization) {
             return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
         }
 
@@ -199,18 +198,36 @@ class EventManagementController extends Controller
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'capacity' => ['nullable', 'integer', 'min:1'],
+            'roles' => ['required', 'array', 'min:1'],
+            'roles.*.name' => ['required', 'string', 'max:255'],
+            'roles.*.description' => ['nullable', 'string'],
+            'roles.*.volunteers_needed' => ['required', 'integer', 'min:1'],
         ]);
 
-        Event::create([
-            'Organizer_ID' => $organization->Organization_ID,
-            'Title' => $validated['title'],
-            'Description' => $validated['description'],
-            'Location' => $validated['location'],
-            'Start_Date' => $validated['start_date'],
-            'End_Date' => $validated['end_date'],
-            'Capacity' => $validated['capacity'],
-            'Status' => 'Pending',
-        ]);
+        DB::transaction(function () use ($validated, $organization) {
+            // Create the event
+            $event = Event::create([
+                'Organizer_ID' => $organization->Organization_ID,
+                'Title' => $validated['title'],
+                'Description' => $validated['description'],
+                'Location' => $validated['location'],
+                'Start_Date' => $validated['start_date'],
+                'End_Date' => $validated['end_date'],
+                'Capacity' => $validated['capacity'],
+                'Status' => 'Pending',
+            ]);
+
+            // Create roles for the event
+            foreach ($validated['roles'] as $role) {
+                EventRole::create([
+                    'Event_ID' => $event->Event_ID,
+                    'Role_Name' => $role['name'],
+                    'Role_Description' => $role['description'] ?? null,
+                    'Volunteers_Needed' => $role['volunteers_needed'],
+                    'Volunteers_Filled' => 0,
+                ]);
+            }
+        });
 
         return redirect()->route('events.index')->with('success', 'Event created successfully! It will be visible once admin approve it');
     }
@@ -353,6 +370,7 @@ class EventManagementController extends Controller
             return back()->with('success', 'Volunteer hours updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Failed to update volunteer hours.');
         }
     }
@@ -417,6 +435,7 @@ class EventManagementController extends Controller
             ]);
 
         $count = count($validated['volunteer_ids']);
+
         return back()->with('success', "Updated {$count} volunteers!");
     }
 
@@ -527,12 +546,34 @@ class EventManagementController extends Controller
             ->limit(5)
             ->get();
 
+        // Platform overview statistics
+        $stats = [
+            'totalRaised' => DB::table('donation')
+                ->where('Payment_Status', 'Completed')
+                ->sum('Amount'),
+            'totalDonations' => DB::table('donation')
+                ->where('Payment_Status', 'Completed')
+                ->count(),
+            'activeCampaigns' => Campaign::where('Status', 'Active')->count(),
+            'totalCampaigns' => Campaign::count(),
+            'activeEvents' => Event::whereIn('Status', ['Upcoming', 'Ongoing'])->count(),
+            'totalVolunteers' => DB::table('event_participation')
+                ->distinct('Volunteer_ID')
+                ->count(),
+            'recipientsHelped' => DB::table('donation_allocation')
+                ->distinct('Recipient_ID')
+                ->count(),
+            'totalAllocated' => DB::table('donation_allocation')
+                ->sum('Amount_Allocated'),
+        ];
+
         return view('event-management.admin.dashboard', compact(
             'pendingCampaigns',
             'pendingEvents',
             'pendingRecipients',
             'recentCampaigns',
-            'recentEvents'
+            'recentEvents',
+            'stats'
         ));
     }
 }

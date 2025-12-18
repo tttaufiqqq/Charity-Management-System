@@ -31,9 +31,9 @@
                                 </svg>
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <a href="{{ route('admin.recipients.pending') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recipients</a>
-                                <a href="{{ route('admin.campaigns.pending') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Campaigns</a>
-                                <a href="{{ route('admin.events.pending') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Events</a>
+                                <a href="{{ route('admin.recipients.pending') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recipients</a>
+                                <a href="{{ route('admin.campaigns.pending') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Campaigns</a>
+                                <a href="{{ route('admin.events.pending') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Events</a>
                             </div>
                         </div>
 
@@ -50,9 +50,9 @@
                                 </svg>
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <a href="{{ route('campaigns.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Campaigns</a>
-                                <a href="{{ route('campaigns.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create Campaign</a>
-                                <a href="{{ route('campaigns.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">All Campaigns</a>
+                                <a href="{{ route('campaigns.index') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Campaigns</a>
+                                <a href="{{ route('campaigns.create') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create Campaign</a>
+                                <a href="{{ route('campaigns.index') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">All Campaigns</a>
                             </div>
                         </div>
                         <div class="relative" x-data="{ open: false }">
@@ -63,11 +63,11 @@
                                 </svg>
                             </button>
                             <div x-show="open" @click.away="open = false" x-transition class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <a href="{{ route('events.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Events</a>
-                                <a href="{{ route('events.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create Event</a>
+                                <a href="{{ route('events.index') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Events</a>
+                                <a href="{{ route('events.create') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Create Event</a>
                             </div>
                         </div>
-                        <a href="{{ route('public.campaigns.browse') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <a href="{{ route('organizer.allocations.all') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Allocations
                         </a>
 
@@ -124,8 +124,8 @@
                     @endif
 
                     <!-- User Menu Dropdown -->
-                    <div class="relative ml-3" x-data="{ open: false }">
-                        <button @click="open = !open" class="flex items-center gap-2 text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <div class="relative ml-3" x-data="{ open: false }" @click.away="open = false">
+                        <button @click.stop="open = !open" type="button" class="flex items-center gap-2 text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
                                 <span class="text-indigo-600 font-semibold text-xs">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</span>
                             </div>
@@ -134,7 +134,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50">
+                        <div x-show="open" x-transition class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50">
                             <div class="px-4 py-3 border-b border-gray-100">
                                 <p class="text-sm text-gray-900 font-medium">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500 mt-1">{{ auth()->user()->email }}</p>
@@ -152,7 +152,7 @@
                                     @endif
                                 </p>
                             </div>
-                            <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <a href="{{ route('profile.edit') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -161,7 +161,7 @@
                                 </div>
                             </a>
                             @if(auth()->user()->hasRole('volunteer'))
-                                <a href="{{ route('volunteer.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('volunteer.profile') }}" @click="open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
@@ -259,7 +259,7 @@
                     <a href="{{ route('welcome') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Home</a>
                     <a href="{{ route('volunteer.dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Dashboard</a>
                     <a href="{{ route('volunteer.events.browse') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Find Events</a>
-                    <a href="{{ route('volunteer.dashboardcl') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">My Events</a>
+                    <a href="{{ route('volunteer.dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">My Events</a>
                     <a href="{{ route('volunteer.schedule') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">My Schedule</a>
                     <a href="{{ route('volunteer.skills.index') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">My Skills</a>
                     <a href="{{ route('volunteer.profile') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Volunteer Profile</a>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $event->Title }} - CharityHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50">
 <div class="min-h-screen">
@@ -141,28 +142,73 @@
                     </div>
                 @endif
 
+                <!-- Available Roles -->
+                @if(!$isRegistered && ($event->Status === 'Upcoming' || $event->Status === 'Ongoing') && $event->roles->count() > 0)
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Available Volunteer Roles</h3>
+                        <div class="grid gap-4">
+                            @foreach($event->roles as $role)
+                                <div class="border border-gray-300 rounded-lg p-4 {{ $role->isFull() ? 'bg-gray-50' : 'bg-white' }}">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex-1">
+                                            <h4 class="font-semibold text-gray-900">{{ $role->Role_Name }}</h4>
+                                            @if($role->Role_Description)
+                                                <p class="text-sm text-gray-600 mt-1">{{ $role->Role_Description }}</p>
+                                            @endif
+                                        </div>
+                                        <div class="ml-4">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $role->isFull() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
+                                                {{ $role->Volunteers_Filled }} / {{ $role->Volunteers_Needed }} filled
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Action Buttons -->
-                <div class="flex space-x-4">
+                <div class="space-y-4">
                     @if(!$isRegistered)
                         @if($isFull)
-                            <button disabled class="flex-1 px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
+                            <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
                                 Event is Full
                             </button>
                         @elseif($event->Status === 'Upcoming' || $event->Status === 'Ongoing')
-                            <form action="{{ route('volunteer.events.register', $event->Event_ID) }}" method="POST" class="flex-1">
+                            <form action="{{ route('volunteer.events.register', $event->Event_ID) }}" method="POST">
                                 @csrf
+                                @if($event->roles->count() > 0)
+                                    <div class="mb-4">
+                                        <label for="role_id" class="block text-sm font-medium text-gray-700 mb-2">Select Your Role *</label>
+                                        <select name="role_id" id="role_id" required
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="">Choose a role...</option>
+                                            @foreach($event->roles as $role)
+                                                @if(!$role->isFull())
+                                                    <option value="{{ $role->Role_ID }}">
+                                                        {{ $role->Role_Name }} ({{ $role->getAvailableSlots() }} slots available)
+                                                    </option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        @error('role_id')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @endif
                                 <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
                                     Register for This Event
                                 </button>
                             </form>
                         @else
-                            <button disabled class="flex-1 px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
+                            <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
                                 Registration Closed
                             </button>
                         @endif
                     @endif
 
-                    <a href="{{ route('volunteer.events.browse') }}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                    <a href="{{ route('volunteer.events.browse') }}" class="block text-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
                         Back to Events
                     </a>
                 </div>

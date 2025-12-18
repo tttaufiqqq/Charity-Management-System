@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose ps:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(npm run build:*)",
+      "Bash(php artisan:*)",
+      "Bash(curl:*)",
+      "Bash(php:*)",
+      "Bash(move /Y \"C:\\\\php-8.3.12\\\\php.ini.tmp\" \"C:\\\\php-8.3.12\\\\php.ini\")"
+    ]
+  }
+}

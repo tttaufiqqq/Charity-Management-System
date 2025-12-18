@@ -47,7 +47,7 @@
                         <div class="flex items-start justify-between mb-4">
                             <div class="flex-1">
                                 <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ $allocation->campaign->Title }}</h3>
-                                <p class="text-sm text-indigo-600 font-medium">{{ $allocation->campaign->organization->Organization_Name }}</p>
+                                <p class="text-sm text-indigo-600 font-medium">{{ $allocation->campaign->organization->user->name ?? 'N/A' }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-2xl font-bold text-green-600">RM {{ number_format($allocation->Amount_Allocated, 2) }}</p>

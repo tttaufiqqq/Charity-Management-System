@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Volunteer.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\Concerns\AsPivot;
 
 class Volunteer extends Model
 {
-    use HasFactory, AsPivot;
+    use AsPivot, HasFactory;
 
     protected $table = 'volunteer';
+
     protected $primaryKey = 'Volunteer_ID';
 
     protected $fillable = [
@@ -22,7 +24,7 @@ class Volunteer extends Model
         'State',
         'Gender',
         'Phone_Num',
-        'Description'
+        'Description',
     ];
 
     // Relationships
@@ -53,6 +55,6 @@ class Volunteer extends Model
             'event_participation',
             'Volunteer_ID',
             'Event_ID'
-        )->withPivot('Status', 'Total_Hours')->withTimestamps();
+        )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
     }
 }

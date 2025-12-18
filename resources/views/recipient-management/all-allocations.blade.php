@@ -1,10 +1,10 @@
-<!-- resources/views/recipient-management/history.blade.php (For Organizers) -->
+<!-- resources/views/recipient-management/all-allocations.blade.php (For Organizers) -->
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Allocation History - CharityHub</title>
+    <title>All Allocations - CharityHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -17,20 +17,19 @@
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <!-- Header -->
         <div class="mb-8">
-            <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center mb-4">
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Back to Allocate Funds
-            </a>
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Allocation History</h1>
-                    <p class="text-gray-600 mt-1">Campaign: <span class="font-semibold">{{ $campaign->Title }}</span></p>
+                    <h1 class="text-3xl font-bold text-gray-900">All Fund Allocations</h1>
+                    <p class="text-gray-600 mt-1">Overview of all allocations across your campaigns</p>
                 </div>
-                <span class="px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                    {{ $allocations->count() }} Allocations
-                </span>
+                <div class="flex items-center gap-3">
+                    <span class="px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                        {{ $allocations->total() }} Total Allocations
+                    </span>
+                    <span class="px-4 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
+                        {{ $campaigns->count() }} Campaigns
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -53,7 +52,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($campaign->Collected_Amount, 2) }}</p>
+                <p class="text-2xl font-bold text-gray-900">RM {{ number_format($totalCollected, 2) }}</p>
+                <p class="text-xs text-gray-500 mt-1">Across {{ $campaigns->count() }} campaigns</p>
             </div>
 
             <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
@@ -64,7 +64,7 @@
                     </svg>
                 </div>
                 <p class="text-2xl font-bold text-orange-600">RM {{ number_format($totalAllocated, 2) }}</p>
-                <p class="text-xs text-gray-500 mt-1">{{ $allocations->count() }} recipients</p>
+                <p class="text-xs text-gray-500 mt-1">{{ $allocations->total() }} allocations</p>
             </div>
 
             <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
@@ -85,9 +85,6 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                     </svg>
                 </div>
-                @php
-                    $allocationRate = $campaign->Collected_Amount > 0 ? ($totalAllocated / $campaign->Collected_Amount) * 100 : 0;
-                @endphp
                 <p class="text-2xl font-bold text-purple-600">{{ number_format($allocationRate, 1) }}%</p>
                 <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div class="bg-purple-600 h-2 rounded-full transition-all" style="width: {{ min($allocationRate, 100) }}%"></div>
@@ -99,8 +96,8 @@
         @if($allocations->count() > 0)
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h2 class="text-lg font-semibold text-gray-900">Allocation Records</h2>
-                    <p class="text-sm text-gray-600">Track all fund allocations to recipients</p>
+                    <h2 class="text-lg font-semibold text-gray-900">All Allocation Records</h2>
+                    <p class="text-sm text-gray-600">Complete history of fund allocations across all your campaigns</p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -108,6 +105,9 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Date
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Campaign
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Recipient Details
@@ -145,6 +145,15 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-indigo-600">
+                                        {{ Str::limit($allocation->campaign->Title, 30) }}
+                                    </div>
+                                    <a href="{{ route('recipients.allocations.history', $allocation->Campaign_ID) }}"
+                                       class="text-xs text-gray-500 hover:text-indigo-600">
+                                        View campaign history →
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center">
                                             <span class="text-indigo-600 font-semibold text-sm">
@@ -165,7 +174,7 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-600 max-w-xs">
-                                        {{ Str::limit($allocation->recipient->Need_Description, 60) }}
+                                        {{ Str::limit($allocation->recipient->Need_Description, 50) }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -184,13 +193,14 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
-                                    <button onclick="confirmRemove({{ $allocation->Recipient_ID }}, '{{ $allocation->recipient->Name }}', {{ $allocation->Amount_Allocated }})"
-                                            class="inline-flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors font-medium">
+                                    <a href="{{ route('recipients.allocations.history', $allocation->Campaign_ID) }}"
+                                       class="inline-flex items-center px-3 py-1 text-sm text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors font-medium">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                         </svg>
-                                        Remove
-                                    </button>
+                                        View
+                                    </a>
                                 </td>
                             </tr>
                         @endforeach
@@ -211,13 +221,13 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">No allocations yet</h3>
-                <p class="text-gray-600 mb-6">Start allocating funds to approved recipients to help those in need</p>
-                <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}"
+                <p class="text-gray-600 mb-6">Start allocating funds to approved recipients across your campaigns</p>
+                <a href="{{ route('organizer.campaigns') }}"
                    class="inline-flex items-center bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    Allocate Funds Now
+                    View My Campaigns
                 </a>
             </div>
         @endif
@@ -232,75 +242,6 @@
         </div>
     </footer>
 </div>
-
-<!-- Remove Confirmation Modal -->
-<div id="removeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 transform transition-all">
-        <div class="flex items-start mb-4">
-            <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
-                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                </svg>
-            </div>
-            <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 mb-2">Remove Allocation</h3>
-                <p class="text-sm text-gray-600">
-                    Are you sure you want to remove the allocation for <strong id="remove_recipient_name" class="text-gray-900"></strong>?
-                </p>
-                <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p class="text-sm text-blue-800">
-                        <strong>RM <span id="remove_amount"></span></strong> will be returned to your available balance.
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <form id="removeForm" method="POST" action="">
-            @csrf
-            @method('DELETE')
-
-            <div class="flex gap-3 mt-6">
-                <button type="button" onclick="closeRemoveModal()"
-                        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors">
-                    Remove Allocation
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    function confirmRemove(recipientId, recipientName, amount) {
-        document.getElementById('remove_recipient_name').textContent = recipientName;
-        document.getElementById('remove_amount').textContent = new Intl.NumberFormat('en-MY', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
-        document.getElementById('removeForm').action = `/campaigns/{{ $campaign->Campaign_ID }}/allocations/${recipientId}`;
-        document.getElementById('removeModal').classList.remove('hidden');
-    }
-
-    function closeRemoveModal() {
-        document.getElementById('removeModal').classList.add('hidden');
-    }
-
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeRemoveModal();
-        }
-    });
-
-    // Close modal when clicking outside
-    document.getElementById('removeModal').addEventListener('click', function(event) {
-        if (event.target === this) {
-            closeRemoveModal();
-        }
-    });
-</script>
 
 </body>
 </html>

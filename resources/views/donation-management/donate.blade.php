@@ -40,7 +40,7 @@
                     <div class="space-y-4">
                         <div>
                             <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ $campaign->Title }}</h3>
-                            <p class="text-sm text-indigo-600 font-medium">{{ $campaign->organization->Organization_Name }}</p>
+                            <p class="text-sm text-indigo-600 font-medium">{{ $campaign->organization->user->name ?? 'N/A' }}</p>
                         </div>
 
                         <div class="border-t border-gray-200 pt-4">
@@ -50,17 +50,25 @@
                         <!-- Progress -->
                         @php
                             $progress = $campaign->Goal_Amount > 0 ? min(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 100) : 0;
+                            $remainingAmount = max($campaign->Goal_Amount - $campaign->Collected_Amount, 0);
                         @endphp
                         <div class="border-t border-gray-200 pt-4">
                             <div class="mb-2">
                                 <div class="flex justify-between text-sm mb-1">
-                                    <span class="text-gray-600">Raised: RM {{ number_format($campaign->Total_Collected, 2) }}</span>
+                                    <span class="text-gray-600">Raised: RM {{ number_format($campaign->Collected_Amount, 2) }}</span>
                                     <span class="text-gray-600">{{ number_format($progress, 1) }}%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2">
                                     <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Goal: RM {{ number_format($campaign->Goal_Amount, 2) }}</p>
+                                <div class="flex justify-between text-sm mt-1">
+                                    <span class="text-gray-500">Goal: RM {{ number_format($campaign->Goal_Amount, 2) }}</span>
+                                    @if($remainingAmount > 0)
+                                        <span class="text-indigo-600 font-medium">Remaining: RM {{ number_format($remainingAmount, 2) }}</span>
+                                    @else
+                                        <span class="text-green-600 font-medium">Goal Reached!</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -101,6 +109,40 @@
                         </div>
                     @endif
 
+                    @php
+                        $remainingAmount = max($campaign->Goal_Amount - $campaign->Collected_Amount, 0);
+                    @endphp
+
+                    <!-- Warning if campaign is fully funded -->
+                    @if($remainingAmount <= 0)
+                        <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="text-sm text-green-800 font-medium">
+                                        This campaign has reached its funding goal! Thank you for your interest in supporting this cause.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif($remainingAmount < $campaign->Goal_Amount * 0.1)
+                        <!-- Warning if less than 10% remaining -->
+                        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="flex-1">
+                                    <p class="text-sm text-amber-800">
+                                        <strong>Almost there!</strong> This campaign only needs RM {{ number_format($remainingAmount, 2) }} more to reach its goal.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <form method="POST" action="{{ route('campaigns.donate.process', $campaign->Campaign_ID) }}">
                         @csrf
 
@@ -138,12 +180,19 @@
 
                         <!-- Custom Amount Input -->
                         <div class="mb-6">
-                            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Donation Amount (RM)</label>
+                            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+                                Donation Amount (RM)
+                                @if($remainingAmount > 0)
+                                    <span class="text-xs text-gray-500">(Max: RM {{ number_format($remainingAmount, 2) }})</span>
+                                @endif
+                            </label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">RM</span>
-                                <input type="number" id="amount" name="amount" value="{{ old('amount') }}" required min="1" step="0.01"
-                                       class="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                                       placeholder="0.00">
+                                <input type="number" id="amount" name="amount" value="{{ old('amount') }}"
+                                       required min="1" max="{{ $remainingAmount > 0 ? $remainingAmount : 0 }}" step="0.01"
+                                       class="w-full pl-12 pr-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors {{ $remainingAmount <= 0 ? 'bg-gray-100' : '' }}"
+                                       placeholder="0.00"
+                                       {{ $remainingAmount <= 0 ? 'disabled' : '' }}>
                             </div>
                             @error('amount')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -153,14 +202,19 @@
                         <!-- Payment Method -->
                         <div class="mb-6">
                             <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                            <select id="payment_method" name="payment_method" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                                <option value="">Select payment method...</option>
-                                <option value="Credit Card" {{ old('payment_method') == 'Credit Card' ? 'selected' : '' }}>Credit Card</option>
-                                <option value="Debit Card" {{ old('payment_method') == 'Debit Card' ? 'selected' : '' }}>Debit Card</option>
-                                <option value="Online Banking" {{ old('payment_method') == 'Online Banking' ? 'selected' : '' }}>Online Banking</option>
-                                <option value="E-Wallet" {{ old('payment_method') == 'E-Wallet' ? 'selected' : '' }}>E-Wallet</option>
-                            </select>
+                            <div class="relative">
+                                <input type="text" id="payment_method" name="payment_method" value="FPX Online Banking" readonly
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-medium cursor-not-allowed">
+                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-indigo-600 font-semibold">
+                                    Secure FPX Payment
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500">
+                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                Secured payment via ToyyibPay FPX Gateway
+                            </p>
                             @error('payment_method')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -215,10 +269,11 @@
                         <div class="flex gap-3">
                             <a href="{{ url()->previous() }}"
                                class="flex-1 text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
-                                Cancel
+                                {{ $remainingAmount <= 0 ? 'Back' : 'Cancel' }}
                             </a>
                             <button type="submit"
-                                    class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl">
+                                    {{ $remainingAmount <= 0 ? 'disabled' : '' }}
+                                    class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl {{ $remainingAmount <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
                                 Complete Donation
                             </button>
                         </div>

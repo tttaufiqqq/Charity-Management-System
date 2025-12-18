@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Event.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,6 +12,7 @@ class Event extends Model
     use HasFactory;
 
     protected $table = 'event';
+
     protected $primaryKey = 'Event_ID';
 
     protected $fillable = [
@@ -21,7 +23,7 @@ class Event extends Model
         'Start_Date',
         'End_Date',
         'Capacity',
-        'Status'
+        'Status',
     ];
 
     protected $casts = [
@@ -56,7 +58,12 @@ class Event extends Model
             'event_participation',
             'Event_ID',
             'Volunteer_ID'
-        )->withPivot('Status', 'Total_Hours')->withTimestamps();
+        )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
+    }
+
+    public function roles()
+    {
+        return $this->hasMany(EventRole::class, 'Event_ID', 'Event_ID');
     }
 
     // Scopes

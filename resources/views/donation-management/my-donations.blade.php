@@ -129,7 +129,7 @@
                                     <div class="font-medium">{{ $donation->campaign->Title }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $donation->campaign->organization->Organization_Name }}
+                                    {{ $donation->campaign->organization->user->name ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
                                     RM {{ number_format($donation->Amount, 2) }}

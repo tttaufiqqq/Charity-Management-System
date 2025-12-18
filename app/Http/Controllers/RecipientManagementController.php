@@ -1,13 +1,14 @@
 <?php
+
 // ================================
 // RecipientManagementController.php
 // ================================
 
 namespace App\Http\Controllers;
 
-use App\Models\Recipient;
 use App\Models\Campaign;
 use App\Models\DonationAllocation;
+use App\Models\Recipient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class RecipientManagementController extends Controller
 
         // Get approved recipients
         $recipients = Recipient::where('Status', 'Approved')
-            ->with(['donationAllocations' => function($query) use ($campaignId) {
+            ->with(['donationAllocations' => function ($query) use ($campaignId) {
                 $query->where('Campaign_ID', $campaignId);
             }])
             ->paginate(10);
@@ -73,7 +74,7 @@ class RecipientManagementController extends Controller
         // Check if enough funds available
         if ($request->amount > $remainingAmount) {
             return redirect()->back()
-                ->with('error', 'Insufficient funds. Available: RM ' . number_format($remainingAmount, 2))
+                ->with('error', 'Insufficient funds. Available: RM '.number_format($remainingAmount, 2))
                 ->withInput();
         }
 
@@ -105,10 +106,10 @@ class RecipientManagementController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Allocation failed: ' . $e->getMessage());
+            \Log::error('Allocation failed: '.$e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Allocation failed: ' . $e->getMessage())
+                ->with('error', 'Allocation failed: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -144,7 +145,7 @@ class RecipientManagementController extends Controller
         $recipient = Recipient::with('publicProfile.user')->findOrFail($recipientId);
 
         // Verify user registered this recipient
-        if (!Auth::user()->publicProfile || Auth::user()->publicProfile->Public_ID !== $recipient->Public_ID) {
+        if (! Auth::user()->publicProfile || Auth::user()->publicProfile->Public_ID !== $recipient->Public_ID) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -156,6 +157,43 @@ class RecipientManagementController extends Controller
         $totalReceived = $allocations->sum('Amount_Allocated');
 
         return view('recipient-management.received', compact('recipient', 'allocations', 'totalReceived'));
+    }
+
+    /**
+     * View all allocations across all campaigns for organizer
+     */
+    public function allAllocations()
+    {
+        $organization = Auth::user()->organization;
+
+        if (! $organization) {
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+        }
+
+        // Get all campaigns belonging to this organizer
+        $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)->get();
+        $campaignIds = $campaigns->pluck('Campaign_ID');
+
+        // Get all allocations for these campaigns
+        $allocations = DonationAllocation::whereIn('Campaign_ID', $campaignIds)
+            ->with(['recipient', 'campaign'])
+            ->orderBy('Allocated_At', 'desc')
+            ->paginate(20);
+
+        // Calculate statistics
+        $totalAllocated = DonationAllocation::whereIn('Campaign_ID', $campaignIds)->sum('Amount_Allocated');
+        $totalCollected = $campaigns->sum('Collected_Amount');
+        $remainingAmount = $totalCollected - $totalAllocated;
+        $allocationRate = $totalCollected > 0 ? ($totalAllocated / $totalCollected) * 100 : 0;
+
+        return view('recipient-management.all-allocations', compact(
+            'allocations',
+            'campaigns',
+            'totalAllocated',
+            'totalCollected',
+            'remainingAmount',
+            'allocationRate'
+        ));
     }
 
     /**
@@ -183,9 +221,11 @@ class RecipientManagementController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->back()->with('error', 'Failed to remove allocation.');
         }
     }
+
     public function myCampaigns(Request $request)
     {
         $query = Auth::user()->organization->campaigns()->with('allocations');
@@ -210,7 +250,7 @@ class RecipientManagementController extends Controller
         // Search filter
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('Name', 'ILIKE', "%{$search}%")
                     ->orWhere('Contact', 'ILIKE', "%{$search}%")
                     ->orWhere('Address', 'ILIKE', "%{$search}%");
@@ -237,7 +277,7 @@ class RecipientManagementController extends Controller
         // Search filter
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('Name', 'ILIKE', "%{$search}%")
                     ->orWhere('Contact', 'ILIKE', "%{$search}%")
                     ->orWhere('Address', 'ILIKE', "%{$search}%");
@@ -311,7 +351,7 @@ class RecipientManagementController extends Controller
         $recipient = Recipient::findOrFail($id);
         $recipient->update(['Status' => $request->status]);
 
-        return redirect()->back()->with('success', 'Recipient status updated to ' . $request->status);
+        return redirect()->back()->with('success', 'Recipient status updated to '.$request->status);
     }
 
     /**

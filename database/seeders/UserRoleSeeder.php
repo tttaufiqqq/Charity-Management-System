@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
+use App\Models\Donor;
+use App\Models\Organization;
+use App\Models\PublicProfile;
+use App\Models\Skill;
+use App\Models\User;
+use App\Models\Volunteer;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use App\Models\Donor;
-use App\Models\PublicProfile;
-use App\Models\Organization;
-use App\Models\Volunteer;
-use App\Models\Skill;
 use Spatie\Permission\Models\Role;
-use Carbon\Carbon;
 
 class UserRoleSeeder extends Seeder
 {
@@ -21,10 +21,14 @@ class UserRoleSeeder extends Seeder
     public function run(): void
     {
         // Create roles if they don't exist
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $donorRole = Role::firstOrCreate(['name' => 'donor']);
         $volunteerRole = Role::firstOrCreate(['name' => 'volunteer']);
         $organizerRole = Role::firstOrCreate(['name' => 'organizer']);
         $publicRole = Role::firstOrCreate(['name' => 'public']);
+
+        // Create Admin account
+        $this->createAdmin($adminRole);
 
         // Create Donor accounts
         $this->createDonors($donorRole);
@@ -44,6 +48,23 @@ class UserRoleSeeder extends Seeder
         return Carbon::now()->subDays(rand(0, 7))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
     }
 
+    private function createAdmin($role)
+    {
+        $createdAt = $this->getRandomCreatedAt();
+
+        $user = User::create([
+            'name' => 'Admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ]);
+
+        $user->assignRole($role);
+
+        $this->command->info('Created admin account');
+    }
+
     private function createDonors($role)
     {
         $donors = [
@@ -52,28 +73,28 @@ class UserRoleSeeder extends Seeder
                 'email' => 'izz@example.com',
                 'Full_Name' => 'Izz Rahman',
                 'Phone_Num' => '+60123456789',
-                'Total_Donated' => 0.00
+                'Total_Donated' => 0.00,
             ],
             [
                 'name' => 'Sashvini',
                 'email' => 'sashvini@example.com',
                 'Full_Name' => 'Sashvini Devi',
                 'Phone_Num' => '+60123456790',
-                'Total_Donated' => 0.00
+                'Total_Donated' => 0.00,
             ],
             [
                 'name' => 'Hannah',
                 'email' => 'hannah@example.com',
                 'Full_Name' => 'Hannah Lee',
                 'Phone_Num' => '+60123456791',
-                'Total_Donated' => 0.00
+                'Total_Donated' => 0.00,
             ],
             [
                 'name' => 'Adam',
                 'email' => 'adam@example.com',
                 'Full_Name' => 'Adam Tan',
                 'Phone_Num' => '+60123456792',
-                'Total_Donated' => 0.00
+                'Total_Donated' => 0.00,
             ],
         ];
 
@@ -115,7 +136,7 @@ class UserRoleSeeder extends Seeder
                 'State' => 'Wilayah Persekutuan',
                 'Gender' => 'Female',
                 'Phone_Num' => '+60123456793',
-                'Description' => 'Passionate about community service and helping others.'
+                'Description' => 'Passionate about community service and helping others.',
             ],
             [
                 'name' => 'Hannah',
@@ -126,7 +147,7 @@ class UserRoleSeeder extends Seeder
                 'State' => 'Negeri Sembilan',
                 'Gender' => 'Female',
                 'Phone_Num' => '+60123456794',
-                'Description' => 'Experienced volunteer with skills in education and mentoring.'
+                'Description' => 'Experienced volunteer with skills in education and mentoring.',
             ],
             [
                 'name' => 'Adam',
@@ -137,7 +158,7 @@ class UserRoleSeeder extends Seeder
                 'State' => 'Selangor',
                 'Gender' => 'Male',
                 'Phone_Num' => '+60123456795',
-                'Description' => 'Enthusiastic about making a positive impact in the community.'
+                'Description' => 'Enthusiastic about making a positive impact in the community.',
             ],
             [
                 'name' => 'Izz',
@@ -148,7 +169,7 @@ class UserRoleSeeder extends Seeder
                 'State' => 'Selangor',
                 'Gender' => 'Male',
                 'Phone_Num' => '+60123456796',
-                'Description' => 'Dedicated volunteer with experience in event coordination.'
+                'Description' => 'Dedicated volunteer with experience in event coordination.',
             ],
         ];
 
@@ -217,7 +238,7 @@ class UserRoleSeeder extends Seeder
                 'Address' => '789 Charity Lane',
                 'State' => 'Selangor',
                 'City' => 'Petaling Jaya',
-                'Description' => 'A non-profit organization dedicated to helping underprivileged communities.'
+                'Description' => 'A non-profit organization dedicated to helping underprivileged communities.',
             ],
             [
                 'name' => 'Care Malaysia',
@@ -228,7 +249,7 @@ class UserRoleSeeder extends Seeder
                 'Address' => '321 NGO Boulevard',
                 'State' => 'Penang',
                 'City' => 'George Town',
-                'Description' => 'Providing education and healthcare support to those in need.'
+                'Description' => 'Providing education and healthcare support to those in need.',
             ],
             [
                 'name' => 'Community Hearts',
@@ -239,7 +260,7 @@ class UserRoleSeeder extends Seeder
                 'Address' => '456 Kindness Avenue',
                 'State' => 'Johor',
                 'City' => 'Johor Bahru',
-                'Description' => 'Empowering communities through sustainable development programs.'
+                'Description' => 'Empowering communities through sustainable development programs.',
             ],
         ];
 
@@ -280,21 +301,21 @@ class UserRoleSeeder extends Seeder
                 'email' => 'sashvini.public@example.com',
                 'Full_Name' => 'Sashvini Kumar',
                 'Phone' => '+60123456800',
-                'Position' => 'Community Member'
+                'Position' => 'Community Member',
             ],
             [
                 'name' => 'Adam',
                 'email' => 'adam.public@example.com',
                 'Full_Name' => 'Adam Wong',
                 'Phone' => '+60123456801',
-                'Position' => 'Local Resident'
+                'Position' => 'Local Resident',
             ],
             [
                 'name' => 'Izzati',
                 'email' => 'izzati.public@example.com',
                 'Full_Name' => 'Izzati Zainal',
                 'Phone' => '+60123456802',
-                'Position' => 'Community Volunteer'
+                'Position' => 'Community Volunteer',
             ],
         ];
 

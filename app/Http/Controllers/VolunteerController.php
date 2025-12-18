@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventParticipation;
+use App\Models\EventRole;
+use App\Models\Skill;
+use App\Models\Volunteer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\Skill;
-use App\Models\Volunteer;
-
-
 
 class VolunteerController extends Controller
 {
@@ -21,7 +20,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -43,7 +42,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -73,16 +72,39 @@ class VolunteerController extends Controller
     /**
      * Register volunteer for an event
      */
-    public function registerForEvent(Event $event)
+    public function registerForEvent(Request $request, Event $event)
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
+        // Validate role selection if event has roles
+        $roleId = null;
+        if ($event->roles()->count() > 0) {
+            $validated = $request->validate([
+                'role_id' => ['required', 'exists:event_role,Role_ID'],
+            ]);
+            $roleId = $validated['role_id'];
+
+            // Verify role belongs to this event
+            $role = EventRole::where('Role_ID', $roleId)
+                ->where('Event_ID', $event->Event_ID)
+                ->first();
+
+            if (! $role) {
+                return back()->with('error', 'Invalid role selected.');
+            }
+
+            // Check if role is full
+            if ($role->isFull()) {
+                return back()->with('error', 'This role is already full. Please select another role.');
+            }
+        }
+
         // Check if event is still accepting volunteers
-        if (!in_array($event->Status, ['Upcoming', 'Ongoing'])) {
+        if (! in_array($event->Status, ['Upcoming', 'Ongoing'])) {
             return back()->with('error', 'This event is no longer accepting volunteers.');
         }
 
@@ -109,9 +131,17 @@ class VolunteerController extends Controller
             EventParticipation::create([
                 'Volunteer_ID' => $volunteer->Volunteer_ID,
                 'Event_ID' => $event->Event_ID,
+                'Role_ID' => $roleId,
                 'Status' => 'Registered',
                 'Total_Hours' => 0,
             ]);
+
+            // Update role volunteer count if role was selected
+            if ($roleId) {
+                DB::table('event_role')
+                    ->where('Role_ID', $roleId)
+                    ->increment('Volunteers_Filled');
+            }
 
             DB::commit();
 
@@ -120,6 +150,7 @@ class VolunteerController extends Controller
                 ->with('success', 'Successfully registered for the event!');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return back()->with('error', 'Failed to register for event. Please try again.');
         }
     }
@@ -131,18 +162,40 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
-        // Find participation using DB query builder for composite keys
-        $deleted = DB::table('event_participation')
+        // Get the participation to check for role assignment
+        $participation = DB::table('event_participation')
             ->where('Volunteer_ID', $volunteer->Volunteer_ID)
             ->where('Event_ID', $event->Event_ID)
-            ->delete();
+            ->first();
 
-        if (!$deleted) {
+        if (! $participation) {
             return back()->with('error', 'You are not registered for this event.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Decrement role volunteer count if role was assigned
+            if ($participation->Role_ID) {
+                DB::table('event_role')
+                    ->where('Role_ID', $participation->Role_ID)
+                    ->decrement('Volunteers_Filled');
+            }
+
+            // Delete participation
+            DB::table('event_participation')
+                ->where('Volunteer_ID', $volunteer->Volunteer_ID)
+                ->where('Event_ID', $event->Event_ID)
+                ->delete();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Failed to cancel registration. Please try again.');
         }
 
         return redirect()
@@ -157,7 +210,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -195,7 +248,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -237,7 +290,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -252,12 +305,12 @@ class VolunteerController extends Controller
     {
         $request->validate([
             'skill_id' => 'required|exists:skill,Skill_ID',
-            'skill_level' => 'required|in:Beginner,Intermediate,Advanced,Expert'
+            'skill_level' => 'required|in:Beginner,Intermediate,Advanced,Expert',
         ]);
 
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -270,7 +323,7 @@ class VolunteerController extends Controller
         $volunteer->skills()->attach($request->skill_id, [
             'Skill_Level' => $request->skill_level,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('volunteer.skills.index')->with('success', 'Skill added successfully!');
@@ -280,24 +333,24 @@ class VolunteerController extends Controller
     public function updateSkill(Request $request, $skillId)
     {
         $request->validate([
-            'skill_level' => 'required|in:Beginner,Intermediate,Advanced,Expert'
+            'skill_level' => 'required|in:Beginner,Intermediate,Advanced,Expert',
         ]);
 
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
         // Check if volunteer has this skill - specify table name to avoid ambiguity
-        if (!$volunteer->skills()->where('volunteer_skill.Skill_ID', $skillId)->exists()) {
+        if (! $volunteer->skills()->where('volunteer_skill.Skill_ID', $skillId)->exists()) {
             return redirect()->back()->with('error', 'Skill not found.');
         }
 
         // Update skill level
         $volunteer->skills()->updateExistingPivot($skillId, [
             'Skill_Level' => $request->skill_level,
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return redirect()->route('volunteer.skills.index')->with('success', 'Skill level updated successfully!');
@@ -308,12 +361,12 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
         // Check if volunteer has this skill - specify table name to avoid ambiguity
-        if (!$volunteer->skills()->where('volunteer_skill.Skill_ID', $skillId)->exists()) {
+        if (! $volunteer->skills()->where('volunteer_skill.Skill_ID', $skillId)->exists()) {
             return redirect()->back()->with('error', 'Skill not found.');
         }
 
@@ -330,7 +383,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -407,7 +460,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -445,7 +498,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
@@ -459,7 +512,7 @@ class VolunteerController extends Controller
     {
         $volunteer = Auth::user()->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 

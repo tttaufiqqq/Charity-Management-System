@@ -53,65 +53,123 @@
             </form>
         </div>
 
-        <!-- Campaigns Grid -->
+        <!-- Table View -->
         @if($campaigns->count() > 0)
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                @foreach($campaigns as $campaign)
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                        <!-- Campaign Image Placeholder -->
-                        <div class="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                            <svg class="w-16 h-16 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                            </svg>
-                        </div>
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Campaign
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Organization
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Progress
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Goal Amount
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    End Date
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach($campaigns as $campaign)
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <!-- Campaign -->
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-semibold text-gray-900">{{ $campaign->Title }}</div>
+                                        <div class="text-sm text-gray-500 line-clamp-1">{{ $campaign->Description }}</div>
+                                    </td>
 
-                        <div class="p-6">
-                            <!-- Organization -->
-                            <p class="text-sm text-indigo-600 font-medium mb-2">{{ $campaign->organization->Organization_Name }}</p>
+                                    <!-- Organization -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-indigo-600 font-medium">{{ $campaign->organization->user->name ?? 'N/A' }}</div>
+                                    </td>
 
-                            <!-- Title -->
-                            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ $campaign->Title }}</h3>
+                                    <!-- Progress -->
+                                    <td class="px-6 py-4">
+                                        @php
+                                            $progress = $campaign->Goal_Amount > 0 ? min(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 100) : 0;
+                                        @endphp
+                                        <div class="flex items-center">
+                                            <div class="flex-1">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-xs text-gray-600">RM {{ number_format($campaign->Collected_Amount, 2) }}</span>
+                                                    <span class="text-xs font-semibold text-gray-700">{{ number_format($progress, 1) }}%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
 
-                            <!-- Description -->
-                            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ $campaign->Description }}</p>
+                                    <!-- Goal Amount -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">RM {{ number_format($campaign->Goal_Amount, 2) }}</div>
+                                    </td>
 
-                            <!-- Progress Bar -->
-                            @php
-                                $progress = $campaign->Goal_Amount > 0 ? min(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 100) : 0;
-                            @endphp
-                            <div class="mb-4">
-                                <div class="flex justify-between text-sm mb-1">
-                                    <span class="text-gray-600">Raised: RM {{ number_format($campaign->Collected_Amount, 2) }}</span>
-                                    <span class="text-gray-600">{{ number_format($progress, 1) }}%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
-                                </div>
-                                <p class="text-sm text-gray-500 mt-1">Goal: RM {{ number_format($campaign->Goal_Amount, 2) }}</p>
-                            </div>
+                                    <!-- End Date -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($campaign->End_Date)->format('M d, Y') }}</div>
+                                        <div class="text-xs text-gray-500">
+                                            @php
+                                                $endDate   = \Carbon\Carbon::parse($campaign->End_Date)->startOfDay();
+                                                $today     = now()->startOfDay();
 
-                            <!-- End Date -->
-                            <p class="text-sm text-gray-500 mb-4">
-                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                Ends: {{ \Carbon\Carbon::parse($campaign->End_Date)->format('M d, Y') }}
-                            </p>
+                                                $daysLeft  = $today->diffInDays($endDate, false);
+                                                $isExpired = $daysLeft < 0;
+                                                $daysLeft  = abs($daysLeft);
+                                            @endphp
+                                        @if($isExpired)
+                                                <span class="text-red-600">{{ $daysLeft }} days ago</span>
+                                            @else
+                                                {{ $daysLeft }} days left
+                                            @endif
+                                        </div>
+                                    </td>
 
-                            <!-- Actions -->
-                            <div class="flex gap-2">
-                                <a href="{{ route('campaigns.show.donate', $campaign->Campaign_ID) }}"
-                                   class="flex-1 text-center bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                                    View Details
-                                </a>
-                                <a href="{{ route('campaigns.donate', $campaign->Campaign_ID) }}"
-                                   class="flex-1 text-center bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                                    Donate Now
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+                                    <!-- Actions -->
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        @php
+                                            $goalReached = $campaign->Collected_Amount >= $campaign->Goal_Amount;
+                                        @endphp
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="{{ route('campaigns.show.donate', $campaign->Campaign_ID) }}"
+                                               class="text-indigo-600 hover:text-indigo-900 font-medium"
+                                               title="View Details">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </a>
+                                            @if($goalReached)
+                                                <button disabled
+                                                        class="inline-flex items-center px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-60"
+                                                        title="Goal Reached">
+                                                    Goal Reached
+                                                </button>
+                                            @else
+                                                <a href="{{ route('campaigns.donate', $campaign->Campaign_ID) }}"
+                                                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                                    Donate Now
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Pagination -->
