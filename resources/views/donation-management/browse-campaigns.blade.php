@@ -196,5 +196,151 @@
         </div>
     </footer>
 </div>
+
+<!-- Payment Status Modal -->
+@if(session('payment_success'))
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
+            <!-- Success Header -->
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-3">
+                    <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-1">Payment Successful!</h2>
+                <p class="text-green-100">Thank you for your generosity</p>
+            </div>
+
+            <!-- Success Content -->
+            <div class="p-6">
+                <div class="text-center mb-4">
+                    <p class="text-sm text-gray-600 mb-1">Donation Amount</p>
+                    <p class="text-4xl font-bold text-gray-900">RM {{ number_format(session('payment_success')['amount'], 2) }}</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Receipt No:</span>
+                            <span class="font-mono font-semibold text-gray-900">{{ session('payment_success')['receipt_no'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Campaign:</span>
+                            <span class="font-semibold text-gray-900">{{ Str::limit(session('payment_success')['campaign_title'], 30) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <a href="{{ route('donation.receipt', session('payment_success')['donation_id']) }}"
+                       class="w-full block text-center bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                        Download Receipt
+                    </a>
+                    <button onclick="closeModal()"
+                            class="w-full bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                        Continue Browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if(session('payment_failed'))
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
+            <!-- Failed Header -->
+            <div class="bg-gradient-to-r from-red-500 to-orange-600 px-6 py-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-3">
+                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-1">Payment Failed</h2>
+                <p class="text-red-100">Transaction could not be completed</p>
+            </div>
+
+            <!-- Failed Content -->
+            <div class="p-6">
+                <div class="text-center mb-4">
+                    <p class="text-sm text-gray-600 mb-1">Attempted Amount</p>
+                    <p class="text-4xl font-bold text-gray-900">RM {{ number_format(session('payment_failed')['amount'], 2) }}</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Receipt No:</span>
+                            <span class="font-mono font-semibold text-gray-900">{{ session('payment_failed')['receipt_no'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Campaign:</span>
+                            <span class="font-semibold text-gray-900">{{ Str::limit(session('payment_failed')['campaign_title'], 30) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <p class="text-sm text-red-800">
+                        Payment could not be completed. This may be due to insufficient funds, cancelled transaction, or connection issues.
+                    </p>
+                </div>
+
+                <div class="space-y-2">
+                    <a href="{{ route('campaigns.donate', session('payment_failed')['campaign_id']) }}"
+                       class="w-full block text-center bg-indigo-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                        Try Again
+                    </a>
+                    <button onclick="closeModal()"
+                            class="w-full bg-gray-200 text-gray-700 px-4 py-2.5 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                        Continue Browsing
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+</style>
+
+<script>
+    function closeModal() {
+        const modal = document.getElementById('paymentModal');
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+            }, 200);
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('paymentModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+    });
+</script>
+
 </body>
 </html>

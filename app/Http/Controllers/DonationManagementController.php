@@ -608,8 +608,13 @@ class DonationManagementController extends Controller
                 // Clear session
                 session()->forget('pending_donation');
 
-                return redirect()->route('donation.success', $donation->Donation_ID)
-                    ->with('success', 'Thank you for your donation!');
+                return redirect()->route('campaigns.browse')
+                    ->with('payment_success', [
+                        'donation_id' => $donation->Donation_ID,
+                        'amount' => $donation->Amount,
+                        'receipt_no' => $donation->Receipt_No,
+                        'campaign_title' => $campaign->Title,
+                    ]);
             } catch (\Exception $e) {
                 DB::rollBack();
                 \Log::error('Failed to create donation after successful payment: '.$e->getMessage());
@@ -638,7 +643,13 @@ class DonationManagementController extends Controller
                 // Clear session
                 session()->forget('pending_donation');
 
-                return view('donation-management.payment-failed', compact('donation', 'campaign'));
+                return redirect()->route('campaigns.browse')
+                    ->with('payment_failed', [
+                        'amount' => $donation->Amount,
+                        'receipt_no' => $donation->Receipt_No,
+                        'campaign_id' => $campaign->Campaign_ID,
+                        'campaign_title' => $campaign->Title,
+                    ]);
             } catch (\Exception $e) {
                 DB::rollBack();
                 \Log::error('Failed to create failed donation record: '.$e->getMessage());
@@ -676,8 +687,13 @@ class DonationManagementController extends Controller
                         DB::commit();
                         session()->forget('pending_donation');
 
-                        return redirect()->route('donation.success', $donation->Donation_ID)
-                            ->with('success', 'Thank you for your donation!');
+                        return redirect()->route('campaigns.browse')
+                            ->with('payment_success', [
+                                'donation_id' => $donation->Donation_ID,
+                                'amount' => $donation->Amount,
+                                'receipt_no' => $donation->Receipt_No,
+                                'campaign_title' => $campaign->Title,
+                            ]);
                     } catch (\Exception $e) {
                         DB::rollBack();
                         \Log::error('Failed to create donation: '.$e->getMessage());
@@ -704,7 +720,13 @@ class DonationManagementController extends Controller
             DB::commit();
             session()->forget('pending_donation');
 
-            return view('donation-management.payment-failed', compact('donation', 'campaign'));
+            return redirect()->route('campaigns.browse')
+                ->with('payment_failed', [
+                    'amount' => $donation->Amount,
+                    'receipt_no' => $donation->Receipt_No,
+                    'campaign_id' => $campaign->Campaign_ID,
+                    'campaign_title' => $campaign->Title,
+                ]);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Failed to create failed donation: '.$e->getMessage());
