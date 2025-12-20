@@ -520,8 +520,18 @@
                     $totalRaised = $organization->campaigns()->sum('Collected_Amount');
                     $upcomingEvents = $organization->events()->where('Status', 'Upcoming')->count();
                     $totalEvents = $organization->events()->count();
-                    $totalVolunteers = \App\Models\EventParticipation::whereIn('Event_ID', $organization->events()->pluck('Event_ID'))->distinct('Volunteer_ID')->count('Volunteer_ID');
-                    $totalDonations = \App\Models\Donation::whereIn('Campaign_ID', $organization->campaigns()->pluck('Campaign_ID'))->where('Payment_Status', 'Completed')->count();
+
+                    // Get campaign and event IDs for this organizer
+                    $campaignIds = $organization->campaigns()->pluck('Campaign_ID')->toArray();
+                    $eventIds = $organization->events()->pluck('Event_ID')->toArray();
+
+                    // Count total volunteers across all organizer's events
+                    $totalVolunteers = \App\Models\EventParticipation::whereIn('Event_ID', $eventIds)->distinct('Volunteer_ID')->count('Volunteer_ID');
+
+                    // Count total donations across all organizer's campaigns
+                    $totalDonations = \App\Models\Donation::whereIn('Campaign_ID', $campaignIds)->where('Payment_Status', 'Completed')->count();
+
+                    // Get active campaigns and recent events for display
                     $activeCampaignsList = $organization->campaigns()->where('Status', 'Active')->orderBy('created_at', 'desc')->take(3)->get();
                     $recentEvents = $organization->events()->whereIn('Status', ['Upcoming', 'Ongoing'])->orderBy('Start_Date')->take(3)->get();
                 @endphp

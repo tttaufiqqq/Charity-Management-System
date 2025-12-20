@@ -16,9 +16,76 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = $request->user();
+
+        // Route to role-specific profile views
+        if ($user->hasRole('volunteer')) {
+            $volunteer = $user->volunteer;
+
+            if (! $volunteer) {
+                return view('profile.edit', ['user' => $user]);
+            }
+
+            // Calculate statistics
+            $totalEvents = $volunteer->events()->count();
+            $completedEvents = $volunteer->events()->where('event.Status', 'Completed')->count();
+            $upcomingEvents = $volunteer->events()->whereIn('event.Status', ['Upcoming', 'Ongoing'])->count();
+            $totalHours = $volunteer->eventParticipations()->sum('Total_Hours');
+            $skills = $volunteer->skills;
+
+            return view('profile.volunteer', compact('volunteer', 'totalEvents', 'completedEvents', 'upcomingEvents', 'totalHours', 'skills'));
+        }
+
+        if ($user->hasRole('organizer')) {
+            $organization = $user->organization;
+
+            if (! $organization) {
+                return view('profile.edit', ['user' => $user]);
+            }
+
+            // Calculate statistics
+            $totalCampaigns = $organization->campaigns()->count();
+            $activeCampaigns = $organization->campaigns()->where('Status', 'Active')->count();
+            $totalRaised = $organization->campaigns()->sum('Collected_Amount');
+            $totalEvents = $organization->events()->count();
+            $upcomingEvents = $organization->events()->whereIn('Status', ['Upcoming', 'Ongoing'])->count();
+
+            return view('profile.organizer', compact('organization', 'totalCampaigns', 'activeCampaigns', 'totalRaised', 'totalEvents', 'upcomingEvents'));
+        }
+
+        if ($user->hasRole('donor')) {
+            $donor = $user->donor;
+
+            if (! $donor) {
+                return view('profile.edit', ['user' => $user]);
+            }
+
+            // Calculate statistics
+            $totalDonations = $donor->donations()->count();
+            $totalAmount = $donor->donations()->sum('Amount');
+            $campaignsSupported = $donor->donations()->distinct('Campaign_ID')->count('Campaign_ID');
+            $recentDonations = $donor->donations()->with('campaign')->latest()->take(5)->get();
+
+            return view('profile.donor', compact('donor', 'totalDonations', 'totalAmount', 'campaignsSupported', 'recentDonations'));
+        }
+
+        if ($user->hasRole('public')) {
+            $publicProfile = $user->publicProfile;
+
+            if (! $publicProfile) {
+                return view('profile.edit', ['user' => $user]);
+            }
+
+            // Check if user has applied as recipient
+            $recipient = $publicProfile->recipient;
+            $isRecipient = (bool) $recipient;
+            $recipientStatus = $recipient ? $recipient->Status : null;
+
+            return view('profile.public', compact('publicProfile', 'isRecipient', 'recipientStatus', 'recipient'));
+        }
+
+        // Default fallback for admin or users without specific roles
+        return view('profile.edit', ['user' => $user]);
     }
 
     /**
@@ -56,5 +123,128 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /**
+     * Show organizer profile edit form
+     */
+    public function editOrganizer(Request $request)
+    {
+        $organization = $request->user()->organization;
+
+        if (! $organization) {
+            return redirect()->route('profile.edit')->with('error', 'Organization profile not found.');
+        }
+
+        return view('profile.edit-organizer', compact('organization'));
+    }
+
+    /**
+     * Update organizer profile
+     */
+    public function updateOrganizer(Request $request)
+    {
+        $organization = $request->user()->organization;
+
+        if (! $organization) {
+            return redirect()->route('profile.edit')->with('error', 'Organization profile not found.');
+        }
+
+        $validated = $request->validate([
+            'organization_name' => ['nullable', 'string', 'max:255'],
+            'phone_num' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'description' => ['nullable', 'string'],
+        ]);
+
+        $organization->update([
+            'Organization_Name' => $validated['organization_name'],
+            'Phone_Num' => $validated['phone_num'],
+            'Address' => $validated['address'],
+            'City' => $validated['city'],
+            'State' => $validated['state'],
+            'Description' => $validated['description'],
+        ]);
+
+        return redirect()->route('profile.edit')->with('success', 'Organization profile updated successfully!');
+    }
+
+    /**
+     * Show donor profile edit form
+     */
+    public function editDonor(Request $request)
+    {
+        $donor = $request->user()->donor;
+
+        if (! $donor) {
+            return redirect()->route('profile.edit')->with('error', 'Donor profile not found.');
+        }
+
+        return view('profile.edit-donor', compact('donor'));
+    }
+
+    /**
+     * Update donor profile
+     */
+    public function updateDonor(Request $request)
+    {
+        $donor = $request->user()->donor;
+
+        if (! $donor) {
+            return redirect()->route('profile.edit')->with('error', 'Donor profile not found.');
+        }
+
+        // Donor table might not have editable fields, but we keep this for future use
+        // Currently, donor info comes from user table which is updated via profile.update
+
+        return redirect()->route('profile.edit')->with('success', 'Donor profile updated successfully!');
+    }
+
+    /**
+     * Show public profile edit form
+     */
+    public function editPublic(Request $request)
+    {
+        $publicProfile = $request->user()->publicProfile;
+
+        if (! $publicProfile) {
+            return redirect()->route('profile.edit')->with('error', 'Public profile not found.');
+        }
+
+        return view('profile.edit-public', compact('publicProfile'));
+    }
+
+    /**
+     * Update public profile
+     */
+    public function updatePublic(Request $request)
+    {
+        $publicProfile = $request->user()->publicProfile;
+
+        if (! $publicProfile) {
+            return redirect()->route('profile.edit')->with('error', 'Public profile not found.');
+        }
+
+        $validated = $request->validate([
+            'full_name' => ['nullable', 'string', 'max:255'],
+            'phone_num' => ['nullable', 'string', 'max:20'],
+            'gender' => ['nullable', 'in:Male,Female,Other'],
+            'address' => ['nullable', 'string'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $publicProfile->update([
+            'Full_Name' => $validated['full_name'],
+            'Phone_Num' => $validated['phone_num'],
+            'Gender' => $validated['gender'],
+            'Address' => $validated['address'],
+            'City' => $validated['city'],
+            'State' => $validated['state'],
+        ]);
+
+        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully!');
     }
 }

@@ -46,6 +46,9 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
+        // Load roles with volunteer counts
+        $event->load(['roles', 'organization.user']);
+
         // Check if volunteer is already registered
         $isRegistered = $volunteer->events()
             ->where('event.Event_ID', $event->Event_ID)
@@ -59,14 +62,18 @@ class VolunteerController extends Controller
                 ->first();
         }
 
-        // Check if event is full
-        $isFull = false;
-        if ($event->Capacity) {
-            $currentVolunteers = $event->volunteers()->count();
-            $isFull = $currentVolunteers >= $event->Capacity;
+        // Get assigned role if registered
+        $assignedRole = null;
+        if ($participation && $participation->Role_ID) {
+            $assignedRole = EventRole::find($participation->Role_ID);
         }
 
-        return view('volunteer-management.events.show', compact('event', 'isRegistered', 'participation', 'isFull'));
+        // Check if event is full based on role capacity
+        $totalCapacity = $event->roles->sum('Volunteers_Needed');
+        $totalFilled = $event->roles->sum('Volunteers_Filled');
+        $isFull = $totalCapacity > 0 && $totalFilled >= $totalCapacity;
+
+        return view('volunteer-management.events.show', compact('event', 'isRegistered', 'participation', 'assignedRole', 'isFull', 'totalCapacity', 'totalFilled'));
     }
 
     /**
@@ -535,7 +542,7 @@ class VolunteerController extends Controller
         ]);
 
         return redirect()
-            ->route('volunteer.profile')
+            ->route('profile.edit')
             ->with('success', 'Profile updated successfully!');
     }
 }

@@ -9,19 +9,7 @@
 </head>
 <body class="bg-gray-50">
 <div class="min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('dashboard') }}" class="text-2xl font-bold text-indigo-600">CharityHub</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('volunteer.profile') }}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">Back to Profile</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('navbar')
 
     <!-- Main Content -->
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -97,7 +85,7 @@
 
                 <!-- Buttons -->
                 <div class="flex justify-end space-x-4">
-                    <a href="{{ route('volunteer.profile') }}"
+                    <a href="{{ route('profile.edit') }}"
                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                         Cancel
                     </a>

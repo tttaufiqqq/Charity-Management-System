@@ -20,6 +20,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Role-specific profile edit routes
+    Route::get('/profile/organizer/edit', [ProfileController::class, 'editOrganizer'])->name('profile.organizer.edit');
+    Route::put('/profile/organizer', [ProfileController::class, 'updateOrganizer'])->name('profile.organizer.update');
+
+    Route::get('/profile/donor/edit', [ProfileController::class, 'editDonor'])->name('profile.donor.edit');
+    Route::put('/profile/donor', [ProfileController::class, 'updateDonor'])->name('profile.donor.update');
+
+    Route::get('/profile/public/edit', [ProfileController::class, 'editPublic'])->name('profile.public.edit');
+    Route::put('/profile/public', [ProfileController::class, 'updatePublic'])->name('profile.public.update');
 });
 
 /* volunteer-management */
@@ -65,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     // Volunteer Management for Events
     Route::get('/events/{event}/volunteers', [EventManagementController::class, 'manageVolunteers'])->name('events.manage-volunteers');
     Route::post('/events/{event}/volunteers/{volunteer}/hours', [EventManagementController::class, 'updateVolunteerHours'])->name('events.update-volunteer-hours');
+    Route::post('/events/{event}/volunteers/{volunteer}/role', [EventManagementController::class, 'updateVolunteerRole'])->name('events.update-volunteer-role');
     Route::post('/events/{event}/auto-calculate-hours', [EventManagementController::class, 'autoCalculateHours'])->name('events.auto-calculate-hours');
     Route::post('/events/{event}/bulk-update-volunteers', [EventManagementController::class, 'bulkUpdateVolunteers'])->name('events.bulk-update-volunteers');
 

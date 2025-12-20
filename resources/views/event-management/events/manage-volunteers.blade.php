@@ -49,6 +49,25 @@
             </div>
         </div>
 
+        <!-- Role Distribution Summary -->
+        @if($roles->count() > 0)
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Role Distribution</h2>
+                <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    @foreach($roles as $role)
+                        <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                            <h3 class="font-semibold text-gray-900 mb-2">{{ $role->Role_Name }}</h3>
+                            <x-role-progress-bar :filled="$role->Volunteers_Filled" :total="$role->Volunteers_Needed" :showPercentage="false" />
+                            <div class="mt-2 flex justify-between items-center">
+                                <x-role-capacity-badge :filled="$role->Volunteers_Filled" :total="$role->Volunteers_Needed" />
+                                <span class="text-xs text-gray-600">{{ $roleStats[$role->Role_ID] ?? 0 }} assigned</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="bg-white rounded-lg shadow-sm">
             @if($volunteers->count() > 0)
                 <form id="bulkUpdateForm" action="{{ route('events.bulk-update-volunteers', $event->Event_ID) }}" method="POST">
@@ -80,6 +99,7 @@
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Volunteer</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
@@ -101,6 +121,18 @@
                                     <div class="text-sm text-gray-900">{{ $volunteer->Phone_Num }}</div>
                                     <div class="text-sm text-gray-500">{{ $volunteer->user->email }}</div>
                                 </td>
+                                <td class="px-6 py-4">
+                                    @php
+                                        $volunteerRole = $roles->firstWhere('Role_ID', $volunteer->pivot->Role_ID);
+                                    @endphp
+                                    @if($volunteerRole)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                            {{ $volunteerRole->Role_Name }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">No role assigned</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">
                                     {{ \Carbon\Carbon::parse($volunteer->pivot->created_at)->format('M d, Y') }}
                                 </td>
@@ -118,7 +150,7 @@
                                     <span class="text-sm text-gray-500">hrs</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <button type="button" onclick="openEditModal({{ $volunteer->Volunteer_ID }}, '{{ $volunteer->pivot->Status }}', {{ $volunteer->pivot->Total_Hours }})"
+                                    <button type="button" onclick="openEditModal({{ $volunteer->Volunteer_ID }}, '{{ $volunteer->pivot->Status }}', {{ $volunteer->pivot->Total_Hours }}, {{ $volunteer->pivot->Role_ID ?? 'null' }})"
                                             class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
                                         Edit
                                     </button>
@@ -140,9 +172,23 @@
 <!-- Edit Modal -->
 <div id="editModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Update Volunteer Hours</h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Update Volunteer</h3>
         <form id="editForm" method="POST">
             @csrf
+            @if($roles->count() > 0)
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select name="role_id" id="editRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="">No role assigned</option>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->Role_ID }}" data-filled="{{ $role->Volunteers_Filled }}" data-needed="{{ $role->Volunteers_Needed }}">
+                                {{ $role->Role_Name }} ({{ $role->Volunteers_Filled }}/{{ $role->Volunteers_Needed }} filled)
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Change volunteer's assigned role</p>
+                </div>
+            @endif
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select name="status" id="editStatus" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
@@ -177,12 +223,20 @@
     });
 
     // Edit Modal
-    function openEditModal(volunteerId, status, hours) {
+    function openEditModal(volunteerId, status, hours, roleId) {
         const modal = document.getElementById('editModal');
         const form = document.getElementById('editForm');
         form.action = `/events/{{ $event->Event_ID }}/volunteers/${volunteerId}/hours`;
         document.getElementById('editStatus').value = status;
         document.getElementById('editHours').value = hours;
+
+        @if($roles->count() > 0)
+        const roleSelect = document.getElementById('editRole');
+        if (roleSelect) {
+            roleSelect.value = roleId || '';
+        }
+        @endif
+
         modal.classList.remove('hidden');
     }
 

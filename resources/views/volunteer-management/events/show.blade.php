@@ -7,12 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ selectedRole: null }">
 <div class="min-h-screen">
-    <!-- Navigation -->
     @include('navbar')
 
-    <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Messages -->
         @if(session('success'))
@@ -33,19 +31,19 @@
             <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-12">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
-                        <div class="flex items-center space-x-3 mb-4">
-                                <span class="px-4 py-2 text-sm font-semibold rounded-full bg-white text-indigo-600">
-                                    {{ $event->Status }}
-                                </span>
+                        <div class="flex items-center space-x-3 mb-4 flex-wrap gap-2">
+                            <span class="px-4 py-2 text-sm font-semibold rounded-full bg-white text-indigo-600">
+                                {{ $event->Status }}
+                            </span>
                             @if($isRegistered)
                                 <span class="px-4 py-2 text-sm font-semibold rounded-full bg-green-500 text-white">
-                                        ✓ You're Registered
-                                    </span>
+                                    ✓ You're Registered
+                                </span>
                             @endif
                             @if($isFull)
                                 <span class="px-4 py-2 text-sm font-semibold rounded-full bg-red-500 text-white">
-                                        Event Full
-                                    </span>
+                                    Event Full
+                                </span>
                             @endif
                         </div>
                         <h1 class="text-4xl font-bold text-white mb-2">{{ $event->Title }}</h1>
@@ -79,7 +77,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                         <p class="text-sm text-gray-600">Volunteers</p>
-                        <p class="font-semibold text-gray-900">{{ $event->volunteers->count() }} / {{ $event->Capacity ?? '∞' }}</p>
+                        <p class="font-semibold text-gray-900">{{ $totalFilled }} / {{ $totalCapacity }}</p>
                     </div>
 
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -114,25 +112,44 @@
 
                 <!-- Registration Status -->
                 @if($isRegistered)
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
                         <div class="flex items-start">
-                            <svg class="w-6 h-6 text-blue-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-blue-900 mb-1">You're Registered!</h3>
-                                <p class="text-blue-700 text-sm mb-3">
-                                    Status: <span class="font-medium">{{ $participation->Status }}</span>
+                            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 ml-4">
+                                <h3 class="font-bold text-blue-900 text-lg mb-2">You're Registered!</h3>
+
+                                @if($assignedRole)
+                                    <div class="bg-white rounded-lg p-4 mb-3">
+                                        <p class="text-sm text-gray-600 mb-1">Your Assigned Role:</p>
+                                        <p class="font-bold text-gray-900 text-lg">{{ $assignedRole->Role_Name }}</p>
+                                        @if($assignedRole->Role_Description)
+                                            <p class="text-sm text-gray-600 mt-2">{{ $assignedRole->Role_Description }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <div class="flex items-center space-x-4 text-sm">
+                                    <span class="px-3 py-1 rounded-full font-medium
+                                        {{ $participation->Status === 'Attended' ? 'bg-green-100 text-green-800' : '' }}
+                                        {{ $participation->Status === 'Registered' ? 'bg-blue-100 text-blue-800' : '' }}
+                                        {{ $participation->Status === 'Cancelled' ? 'bg-gray-100 text-gray-800' : '' }}">
+                                        Status: {{ $participation->Status }}
+                                    </span>
                                     @if($participation->Total_Hours > 0)
-                                        | Hours Logged: <span class="font-medium">{{ $participation->Total_Hours }}</span>
+                                        <span class="text-gray-700 font-medium">Hours: {{ $participation->Total_Hours }}</span>
                                     @endif
-                                </p>
+                                </div>
+
                                 @if($event->Status !== 'Completed' && $participation->Status !== 'Attended')
                                     <form action="{{ route('volunteer.events.cancel', $event->Event_ID) }}" method="POST"
-                                          onsubmit="return confirm('Are you sure you want to cancel your registration?');">
+                                          onsubmit="return confirm('Are you sure you want to cancel your registration?');" class="mt-4">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium underline">
                                             Cancel Registration
                                         </button>
                                     </form>
@@ -142,103 +159,103 @@
                     </div>
                 @endif
 
-                <!-- Available Roles -->
-                @if(!$isRegistered && ($event->Status === 'Upcoming' || $event->Status === 'Ongoing') && $event->roles->count() > 0)
-                    <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Available Volunteer Roles</h3>
-                        <div class="grid gap-4">
-                            @foreach($event->roles as $role)
-                                <div class="border border-gray-300 rounded-lg p-4 {{ $role->isFull() ? 'bg-gray-50' : 'bg-white' }}">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div class="flex-1">
-                                            <h4 class="font-semibold text-gray-900">{{ $role->Role_Name }}</h4>
-                                            @if($role->Role_Description)
-                                                <p class="text-sm text-gray-600 mt-1">{{ $role->Role_Description }}</p>
-                                            @endif
-                                        </div>
-                                        <div class="ml-4">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $role->isFull() ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                                {{ $role->Volunteers_Filled }} / {{ $role->Volunteers_Needed }} filled
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                <!-- Volunteer Roles Overview -->
+                @if($event->roles->count() > 0)
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Volunteer Roles</h2>
 
-                <!-- Action Buttons -->
-                <div class="space-y-4">
-                    @if(!$isRegistered)
-                        @if($isFull)
-                            <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
-                                Event is Full
-                            </button>
-                        @elseif($event->Status === 'Upcoming' || $event->Status === 'Ongoing')
+                        <!-- Overall Capacity -->
+                        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-5 mb-6 border border-indigo-200">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-sm font-medium text-gray-700">Overall Event Capacity</span>
+                                <span class="text-lg font-bold text-indigo-600">{{ $totalFilled }}/{{ $totalCapacity }}</span>
+                            </div>
+                            <x-role-progress-bar :filled="$totalFilled" :total="$totalCapacity" :showPercentage="false" />
+                        </div>
+
+                        @if(!$isRegistered && ($event->Status === 'Upcoming' || $event->Status === 'Ongoing'))
+                            <!-- Role Selection Cards (for registration) -->
                             <form action="{{ route('volunteer.events.register', $event->Event_ID) }}" method="POST">
                                 @csrf
-                                @if($event->roles->count() > 0)
-                                    <div class="mb-4">
-                                        <label for="role_id" class="block text-sm font-medium text-gray-700 mb-2">Select Your Role *</label>
-                                        <select name="role_id" id="role_id" required
-                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                            <option value="">Choose a role...</option>
-                                            @foreach($event->roles as $role)
-                                                @if(!$role->isFull())
-                                                    <option value="{{ $role->Role_ID }}">
-                                                        {{ $role->Role_Name }} ({{ $role->getAvailableSlots() }} slots available)
-                                                    </option>
-                                                @endif
-                                            @endforeach
-                                        </select>
-                                        @error('role_id')
-                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                        @enderror
+                                <input type="hidden" name="role_id" x-model="selectedRole">
+
+                                <div class="mb-6">
+                                    <label class="block text-lg font-semibold text-gray-900 mb-4">Choose Your Role *</label>
+                                    <div class="grid md:grid-cols-2 gap-4">
+                                        @foreach($event->roles as $role)
+                                            @php
+                                                $isRoleFull = $role->isFull();
+                                            @endphp
+                                            <div @click="!{{ $isRoleFull ? 'true' : 'false' }} && (selectedRole = {{ $role->Role_ID }})"
+                                                 class="cursor-pointer">
+                                                <x-role-card
+                                                    :role="$role"
+                                                    variant="selectable"
+                                                    :disabled="$isRoleFull"
+                                                    :selected="false"
+                                                    x-bind:class="{ 'ring-2 ring-indigo-500': selectedRole === {{ $role->Role_ID }} }" />
+                                            </div>
+                                        @endforeach
                                     </div>
-                                @endif
-                                <button type="submit" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                                    Register for This Event
-                                </button>
+                                    @error('role_id')
+                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div class="flex space-x-4">
+                                    <button type="submit"
+                                            x-bind:disabled="!selectedRole || {{ $isFull ? 'true' : 'false' }}"
+                                            x-bind:class="selectedRole && !{{ $isFull ? 'true' : 'false' }} ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'"
+                                            class="flex-1 px-6 py-3 text-white rounded-lg transition-colors font-medium">
+                                        <span x-show="!selectedRole">Select a Role to Register</span>
+                                        <span x-show="selectedRole">Register for This Event</span>
+                                    </button>
+                                    <a href="{{ route('volunteer.events.browse') }}"
+                                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                        Back to Events
+                                    </a>
+                                </div>
                             </form>
                         @else
-                            <button disabled class="w-full px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
-                                Registration Closed
-                            </button>
+                            <!-- Role Display Cards (view only) -->
+                            <div class="grid md:grid-cols-2 gap-4">
+                                @foreach($event->roles as $role)
+                                    <x-role-card :role="$role" variant="view" />
+                                @endforeach
+                            </div>
+
+                            @if($isRegistered)
+                                <div class="mt-6">
+                                    <a href="{{ route('volunteer.events.browse') }}"
+                                       class="block text-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
+                                        Back to Events
+                                    </a>
+                                </div>
+                            @else
+                                <div class="mt-6 text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                    <p class="text-gray-600 font-medium">Registration is currently closed for this event.</p>
+                                    <a href="{{ route('volunteer.events.browse') }}"
+                                       class="inline-block mt-4 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-white transition-colors">
+                                        Browse Other Events
+                                    </a>
+                                </div>
+                            @endif
                         @endif
-                    @endif
-
-                    <a href="{{ route('volunteer.events.browse') }}" class="block text-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-                        Back to Events
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Other Volunteers -->
-        @if($event->volunteers->count() > 0)
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Registered Volunteers ({{ $event->volunteers->count() }})</h2>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($event->volunteers->take(6) as $volunteer)
-                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                                <span class="text-indigo-600 font-semibold">{{ strtoupper(substr($volunteer->user->name, 0, 1)) }}</span>
-                            </div>
-                            <div>
-                                <p class="font-medium text-gray-900 text-sm">{{ $volunteer->user->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $volunteer->pivot->status }}</p>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                @if($event->volunteers->count() > 6)
-                    <p class="text-sm text-gray-500 mt-4 text-center">
-                        And {{ $event->volunteers->count() - 6 }} more volunteers...
-                    </p>
+                    </div>
+                @else
+                    <!-- No roles defined -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                        <svg class="w-12 h-12 mx-auto text-yellow-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="text-gray-700 mb-4">This event doesn't have specific volunteer roles defined yet.</p>
+                        <a href="{{ route('volunteer.events.browse') }}" class="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            Browse Other Events
+                        </a>
+                    </div>
                 @endif
             </div>
-        @endif
+        </div>
     </main>
 </div>
 </body>

@@ -242,9 +242,18 @@ class EventManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $volunteers = $event->volunteers()->paginate(10);
+        // Load roles with volunteers
+        $event->load(['roles', 'roles.volunteers']);
 
-        return view('event-management.events.show', compact('event', 'volunteers'));
+        // Calculate statistics
+        $totalCapacity = $event->roles->sum('Volunteers_Needed');
+        $totalFilled = $event->roles->sum('Volunteers_Filled');
+        $capacityPercentage = $totalCapacity > 0 ? round(($totalFilled / $totalCapacity) * 100) : 0;
+
+        // Group volunteers by role
+        $volunteersByRole = $event->volunteers()->with('user')->get()->groupBy('pivot.Role_ID');
+
+        return view('event-management.events.show', compact('event', 'volunteersByRole', 'totalCapacity', 'totalFilled', 'capacityPercentage'));
     }
 
     /**
@@ -323,12 +332,22 @@ class EventManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Load roles
+        $roles = $event->roles;
+
+        // Load volunteers with role information
         $volunteers = $event->volunteers()
-            ->withPivot('Status', 'Total_Hours', 'created_at')
+            ->withPivot('Status', 'Total_Hours', 'Role_ID', 'created_at')
+            ->with('user')
             ->orderBy('event_participation.created_at', 'desc')
             ->get();
 
-        return view('event-management.events.manage-volunteers', compact('event', 'volunteers'));
+        // Get role statistics
+        $roleStats = $volunteers->groupBy('pivot.Role_ID')->map(function ($group) {
+            return $group->count();
+        });
+
+        return view('event-management.events.manage-volunteers', compact('event', 'volunteers', 'roles', 'roleStats'));
     }
 
     /**
@@ -344,34 +363,84 @@ class EventManagementController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'in:Registered,Attended,No-Show,Cancelled'],
             'total_hours' => ['required', 'numeric', 'min:0', 'max:24'],
+            'role_id' => ['nullable', 'exists:event_role,Role_ID'],
         ]);
 
         DB::beginTransaction();
 
         try {
+            // Get current participation
+            $participation = DB::table('event_participation')
+                ->where('Event_ID', $event->Event_ID)
+                ->where('Volunteer_ID', $volunteerId)
+                ->first();
+
+            if (! $participation) {
+                return back()->with('error', 'Volunteer not found for this event.');
+            }
+
+            // Handle role change if provided
+            $updateData = [
+                'Status' => $validated['status'],
+                'Total_Hours' => $validated['total_hours'],
+                'updated_at' => now(),
+            ];
+
+            if (isset($validated['role_id'])) {
+                $newRoleId = $validated['role_id'] ?: null;
+                $oldRoleId = $participation->Role_ID;
+
+                // Only update role counts if role actually changed
+                if ($newRoleId != $oldRoleId) {
+                    // Verify new role belongs to this event
+                    if ($newRoleId) {
+                        $newRole = EventRole::find($newRoleId);
+                        if (! $newRole || $newRole->Event_ID !== $event->Event_ID) {
+                            return back()->with('error', 'Invalid role selected.');
+                        }
+
+                        // Check if new role is full
+                        if ($newRole->isFull()) {
+                            return back()->with('error', 'Selected role is full.');
+                        }
+                    }
+
+                    // Decrement old role count
+                    if ($oldRoleId) {
+                        DB::table('event_role')
+                            ->where('Role_ID', $oldRoleId)
+                            ->decrement('Volunteers_Filled');
+                    }
+
+                    // Increment new role count
+                    if ($newRoleId) {
+                        DB::table('event_role')
+                            ->where('Role_ID', $newRoleId)
+                            ->increment('Volunteers_Filled');
+                    }
+
+                    $updateData['Role_ID'] = $newRoleId;
+                }
+            }
+
             // Update volunteer participation
             DB::table('event_participation')
                 ->where('Event_ID', $event->Event_ID)
                 ->where('Volunteer_ID', $volunteerId)
-                ->update([
-                    'Status' => $validated['status'],
-                    'Total_Hours' => $validated['total_hours'],
-                    'updated_at' => now(),
-                ]);
+                ->update($updateData);
 
             // Check if event should be marked as completed
-            // If event end date has passed and we're updating volunteer hours, mark as completed
             if ($event->End_Date < now() && $event->Status !== 'Completed') {
                 $event->update(['Status' => 'Completed']);
             }
 
             DB::commit();
 
-            return back()->with('success', 'Volunteer hours updated successfully!');
+            return back()->with('success', 'Volunteer updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Failed to update volunteer hours.');
+            return back()->with('error', 'Failed to update volunteer.');
         }
     }
 
@@ -437,6 +506,75 @@ class EventManagementController extends Controller
         $count = count($validated['volunteer_ids']);
 
         return back()->with('success', "Updated {$count} volunteers!");
+    }
+
+    /**
+     * Update a volunteer's assigned role
+     */
+    public function updateVolunteerRole(Request $request, Event $event, $volunteerId)
+    {
+        // Check if user owns this event
+        if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'role_id' => ['required', 'exists:event_role,Role_ID'],
+        ]);
+
+        $newRole = EventRole::findOrFail($validated['role_id']);
+
+        // Verify role belongs to this event
+        if ($newRole->Event_ID !== $event->Event_ID) {
+            return back()->with('error', 'Invalid role selected.');
+        }
+
+        // Check if new role is full
+        if ($newRole->isFull()) {
+            return back()->with('error', 'Selected role is full.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Get current participation
+            $participation = DB::table('event_participation')
+                ->where('Event_ID', $event->Event_ID)
+                ->where('Volunteer_ID', $volunteerId)
+                ->first();
+
+            if (! $participation) {
+                return back()->with('error', 'Volunteer not found for this event.');
+            }
+
+            $oldRoleId = $participation->Role_ID;
+
+            // Decrement old role count
+            if ($oldRoleId) {
+                DB::table('event_role')
+                    ->where('Role_ID', $oldRoleId)
+                    ->decrement('Volunteers_Filled');
+            }
+
+            // Update participation
+            DB::table('event_participation')
+                ->where('Event_ID', $event->Event_ID)
+                ->where('Volunteer_ID', $volunteerId)
+                ->update(['Role_ID' => $validated['role_id']]);
+
+            // Increment new role count
+            DB::table('event_role')
+                ->where('Role_ID', $validated['role_id'])
+                ->increment('Volunteers_Filled');
+
+            DB::commit();
+
+            return back()->with('success', 'Volunteer role updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Failed to update role.');
+        }
     }
 
     // ========================================
