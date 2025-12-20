@@ -8,6 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Creates the event_role table to define specific volunteer roles for each event.
      */
     public function up(): void
     {

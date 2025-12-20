@@ -50,50 +50,74 @@ class UserRoleSeeder extends Seeder
 
     private function createAdmin($role)
     {
-        $createdAt = $this->getRandomCreatedAt();
+        // Admin user is already created by RoleSeeder
+        // Just verify it exists and has the correct role
+        $user = User::where('email', 'admin@gmail.com')->first();
 
-        $user = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-            'created_at' => $createdAt,
-            'updated_at' => $createdAt,
-        ]);
+        if ($user && ! $user->hasRole('admin')) {
+            $user->assignRole($role);
+        }
 
-        $user->assignRole($role);
-
-        $this->command->info('Created admin account');
+        $this->command->info('Admin account verified (admin@gmail.com / password)');
     }
 
     private function createDonors($role)
     {
         $donors = [
             [
-                'name' => 'Izz',
-                'email' => 'izz@example.com',
-                'Full_Name' => 'Izz Rahman',
+                'name' => 'Ahmad',
+                'email' => 'ahmad.donor@gmail.com',
+                'Full_Name' => 'Ahmad bin Ibrahim',
                 'Phone_Num' => '+60123456789',
                 'Total_Donated' => 0.00,
             ],
             [
-                'name' => 'Sashvini',
-                'email' => 'sashvini@example.com',
-                'Full_Name' => 'Sashvini Devi',
-                'Phone_Num' => '+60123456790',
+                'name' => 'Siti',
+                'email' => 'siti.donor@gmail.com',
+                'Full_Name' => 'Siti Nurhaliza binti Hassan',
+                'Phone_Num' => '+60138765432',
                 'Total_Donated' => 0.00,
             ],
             [
-                'name' => 'Hannah',
-                'email' => 'hannah@example.com',
-                'Full_Name' => 'Hannah Lee',
-                'Phone_Num' => '+60123456791',
+                'name' => 'Kumar',
+                'email' => 'kumar.donor@gmail.com',
+                'Full_Name' => 'Kumar s/o Rajan',
+                'Phone_Num' => '+60147654321',
                 'Total_Donated' => 0.00,
             ],
             [
-                'name' => 'Adam',
-                'email' => 'adam@example.com',
-                'Full_Name' => 'Adam Tan',
-                'Phone_Num' => '+60123456792',
+                'name' => 'Michelle',
+                'email' => 'michelle.donor@gmail.com',
+                'Full_Name' => 'Michelle Tan Mei Ling',
+                'Phone_Num' => '+60156543210',
+                'Total_Donated' => 0.00,
+            ],
+            [
+                'name' => 'Azman',
+                'email' => 'azman.donor@gmail.com',
+                'Full_Name' => 'Azman bin Othman',
+                'Phone_Num' => '+60165432109',
+                'Total_Donated' => 0.00,
+            ],
+            [
+                'name' => 'Priya',
+                'email' => 'priya.donor@gmail.com',
+                'Full_Name' => 'Priya Devi a/p Subramaniam',
+                'Phone_Num' => '+60174321098',
+                'Total_Donated' => 0.00,
+            ],
+            [
+                'name' => 'David',
+                'email' => 'david.donor@gmail.com',
+                'Full_Name' => 'David Wong Wei Liang',
+                'Phone_Num' => '+60183210987',
+                'Total_Donated' => 0.00,
+            ],
+            [
+                'name' => 'Nora',
+                'email' => 'nora.donor@gmail.com',
+                'Full_Name' => 'Nora binti Abdullah',
+                'Phone_Num' => '+60192109876',
                 'Total_Donated' => 0.00,
             ],
         ];
@@ -121,7 +145,7 @@ class UserRoleSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Created 4 donor accounts');
+        $this->command->info('Created 8 donor accounts with realistic Malaysian names');
     }
 
     private function createVolunteers($role)
@@ -129,47 +153,69 @@ class UserRoleSeeder extends Seeder
         $volunteers = [
             [
                 'name' => 'Izzati',
-                'email' => 'izzati@example.com',
+                'email' => 'izzati.volunteer@gmail.com',
                 'Availability' => 'Weekends',
-                'Address' => '123 Volunteer Street',
+                'Address' => 'No. 45, Jalan Bunga Raya 3/2, Taman Sentosa',
                 'City' => 'Kuala Lumpur',
                 'State' => 'Wilayah Persekutuan',
                 'Gender' => 'Female',
                 'Phone_Num' => '+60123456793',
-                'Description' => 'Passionate about community service and helping others.',
+                'Description' => 'Passionate about community service and helping underprivileged children. 2 years volunteering experience with NGOs.',
             ],
             [
-                'name' => 'Hannah',
-                'email' => 'hannah.volunteer@example.com',
+                'name' => 'Wei Jie',
+                'email' => 'weijie.volunteer@gmail.com',
                 'Availability' => 'Weekdays after 5pm',
-                'Address' => '456 Helper Avenue',
+                'Address' => 'No. 78, Lorong Seri Harmoni, Taman Maju',
                 'City' => 'Seremban',
                 'State' => 'Negeri Sembilan',
-                'Gender' => 'Female',
-                'Phone_Num' => '+60123456794',
-                'Description' => 'Experienced volunteer with skills in education and mentoring.',
+                'Gender' => 'Male',
+                'Phone_Num' => '+60134567890',
+                'Description' => 'University student majoring in Education. Love teaching and mentoring youth.',
             ],
             [
-                'name' => 'Adam',
-                'email' => 'adam.volunteer@example.com',
+                'name' => 'Rajesh',
+                'email' => 'rajesh.volunteer@gmail.com',
                 'Availability' => 'Flexible',
-                'Address' => '789 Community Road',
+                'Address' => 'No. 123, Jalan Damai 5/6, Bandar Sri Damansara',
                 'City' => 'Petaling Jaya',
                 'State' => 'Selangor',
                 'Gender' => 'Male',
-                'Phone_Num' => '+60123456795',
-                'Description' => 'Enthusiastic about making a positive impact in the community.',
+                'Phone_Num' => '+60145678901',
+                'Description' => 'IT professional with first aid certification. Interested in community health programs.',
             ],
             [
-                'name' => 'Izz',
-                'email' => 'izz.volunteer@example.com',
+                'name' => 'Amira',
+                'email' => 'amira.volunteer@gmail.com',
                 'Availability' => 'Weekends and Public Holidays',
-                'Address' => '321 Helping Hand Lane',
+                'Address' => 'No. 56, Taman Melati Indah',
                 'City' => 'Shah Alam',
                 'State' => 'Selangor',
+                'Gender' => 'Female',
+                'Phone_Num' => '+60156789012',
+                'Description' => 'Event coordinator with 3 years experience organizing charity events and food drives.',
+            ],
+            [
+                'name' => 'Chong',
+                'email' => 'chong.volunteer@gmail.com',
+                'Availability' => 'Weekends',
+                'Address' => 'No. 89, Jalan Kasturi 12, Taman Megah',
+                'City' => 'Ipoh',
+                'State' => 'Perak',
                 'Gender' => 'Male',
-                'Phone_Num' => '+60123456796',
-                'Description' => 'Dedicated volunteer with experience in event coordination.',
+                'Phone_Num' => '+60167890123',
+                'Description' => 'Retired teacher passionate about literacy programs and elderly care.',
+            ],
+            [
+                'name' => 'Farah',
+                'email' => 'farah.volunteer@gmail.com',
+                'Availability' => 'Weekdays evening',
+                'Address' => 'No. 34, Lorong Mawar 2, Kampung Baru',
+                'City' => 'Johor Bahru',
+                'State' => 'Johor',
+                'Gender' => 'Female',
+                'Phone_Num' => '+60178901234',
+                'Description' => 'Healthcare worker interested in medical outreach and health screening programs.',
             ],
         ];
 
@@ -223,44 +269,55 @@ class UserRoleSeeder extends Seeder
             }
         }
 
-        $this->command->info('Created 4 volunteer accounts');
+        $this->command->info('Created 6 volunteer accounts with diverse Malaysian backgrounds');
     }
 
     private function createOrganizers($role)
     {
         $organizers = [
             [
-                'name' => 'Hope Foundation',
-                'email' => 'admin@hopefoundation.org',
-                'Organization_Name' => 'Hope Foundation Malaysia',
-                'Phone_No' => '+60123456797',
-                'Register_No' => 'REG-2020-001',
-                'Address' => '789 Charity Lane',
+                'name' => 'Yayasan Kebajikan Rakyat',
+                'email' => 'admin@ykr.org.my',
+                'Organization_Name' => 'Yayasan Kebajikan Rakyat Malaysia',
+                'Phone_No' => '+603-7956-4321',
+                'Register_No' => 'PPM-002-10-11012020',
+                'Address' => 'No. 45-47, Jalan Sultan Ismail, Bukit Bintang',
+                'State' => 'Wilayah Persekutuan',
+                'City' => 'Kuala Lumpur',
+                'Description' => 'Established in 2020, YKR is a registered welfare foundation dedicated to alleviating poverty and improving quality of life for underprivileged communities across Malaysia. We focus on education support, healthcare assistance, and emergency relief programs.',
+            ],
+            [
+                'name' => 'Pertubuhan Amal Sejahtera',
+                'email' => 'info@amalsejahtera.org.my',
+                'Organization_Name' => 'Pertubuhan Amal Sejahtera Negeri Selangor',
+                'Phone_No' => '+603-5544-7890',
+                'Register_No' => 'PPM-003-14-25072019',
+                'Address' => 'No. 23, Jalan SS 2/24, Petaling Jaya',
                 'State' => 'Selangor',
                 'City' => 'Petaling Jaya',
-                'Description' => 'A non-profit organization dedicated to helping underprivileged communities.',
+                'Description' => 'A community-driven charitable organization providing comprehensive support to families in need. Our programs include food assistance, skills training, micro-financing for small businesses, and youth development initiatives. Serving Selangor communities since 2019.',
             ],
             [
-                'name' => 'Care Malaysia',
-                'email' => 'info@caremalaysia.org',
-                'Organization_Name' => 'Care Malaysia Foundation',
-                'Phone_No' => '+60123456798',
-                'Register_No' => 'REG-2019-045',
-                'Address' => '321 NGO Boulevard',
-                'State' => 'Penang',
+                'name' => 'Malaysian Hearts Foundation',
+                'email' => 'contact@malaysianhearts.org',
+                'Organization_Name' => 'Malaysian Hearts Charitable Foundation',
+                'Phone_No' => '+604-229-6543',
+                'Register_No' => 'PPM-007-10-14032018',
+                'Address' => 'No. 156, Jalan Masjid Kapitan Keling, George Town',
+                'State' => 'Pulau Pinang',
                 'City' => 'George Town',
-                'Description' => 'Providing education and healthcare support to those in need.',
+                'Description' => 'Focusing on sustainable community development through education, healthcare, and environmental programs. We operate scholarship programs, mobile health clinics, and clean water initiatives across Penang and Northern Malaysia.',
             ],
             [
-                'name' => 'Community Hearts',
-                'email' => 'contact@communityhearts.org',
-                'Organization_Name' => 'Community Hearts Foundation',
-                'Phone_No' => '+60123456799',
-                'Register_No' => 'REG-2021-088',
-                'Address' => '456 Kindness Avenue',
+                'name' => 'Persatuan Kebajikan Masyarakat Johor',
+                'email' => 'info@pkm-johor.org.my',
+                'Organization_Name' => 'Persatuan Kebajikan Masyarakat Johor',
+                'Phone_No' => '+607-223-8901',
+                'Register_No' => 'PPM-001-01-03112017',
+                'Address' => 'No. 78, Jalan Trus, Bandar Johor Bahru',
                 'State' => 'Johor',
                 'City' => 'Johor Bahru',
-                'Description' => 'Empowering communities through sustainable development programs.',
+                'Description' => 'Southern Malaysia\'s leading welfare association committed to empowering marginalized communities. We run orphanages, elderly care centers, and vocational training programs. Recognized by the state government for outstanding community service.',
             ],
         ];
 
@@ -290,32 +347,39 @@ class UserRoleSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Created 3 organizer accounts');
+        $this->command->info('Created 4 organizer accounts with authentic Malaysian charitable organizations');
     }
 
     private function createPublicProfiles($role)
     {
         $publicProfiles = [
             [
-                'name' => 'Sashvini',
-                'email' => 'sashvini.public@example.com',
-                'Full_Name' => 'Sashvini Kumar',
+                'name' => 'Hassan',
+                'email' => 'hassan.public@gmail.com',
+                'Full_Name' => 'Hassan bin Mahmud',
                 'Phone' => '+60123456800',
-                'Position' => 'Community Member',
+                'Position' => 'Social Worker',
             ],
             [
-                'name' => 'Adam',
-                'email' => 'adam.public@example.com',
-                'Full_Name' => 'Adam Wong',
-                'Phone' => '+60123456801',
+                'name' => 'Lina',
+                'email' => 'lina.public@gmail.com',
+                'Full_Name' => 'Lina Wong Siew Mei',
+                'Phone' => '+60134567891',
+                'Position' => 'Community Leader',
+            ],
+            [
+                'name' => 'Suresh',
+                'email' => 'suresh.public@gmail.com',
+                'Full_Name' => 'Suresh a/l Muthu',
+                'Phone' => '+60145678902',
                 'Position' => 'Local Resident',
             ],
             [
-                'name' => 'Izzati',
-                'email' => 'izzati.public@example.com',
-                'Full_Name' => 'Izzati Zainal',
-                'Phone' => '+60123456802',
-                'Position' => 'Community Volunteer',
+                'name' => 'Aishah',
+                'email' => 'aishah.public@gmail.com',
+                'Full_Name' => 'Aishah binti Razak',
+                'Phone' => '+60156789013',
+                'Position' => 'Welfare Officer',
             ],
         ];
 
@@ -343,6 +407,6 @@ class UserRoleSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Created 3 public accounts');
+        $this->command->info('Created 4 public accounts (for recipient applications)');
     }
 }

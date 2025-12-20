@@ -9,7 +9,9 @@
       "Bash(php artisan:*)",
       "Bash(curl:*)",
       "Bash(php:*)",
-      "Bash(move /Y \"C:\\\\php-8.3.12\\\\php.ini.tmp\" \"C:\\\\php-8.3.12\\\\php.ini\")"
+      "Bash(move /Y \"C:\\\\php-8.3.12\\\\php.ini.tmp\" \"C:\\\\php-8.3.12\\\\php.ini\")",
+      "Bash(findstr:*)",
+      "Bash(del databasemigrations2025_12_21_002549_add_payment_tracking_to_donations_table.php)"
     ]
   }
 }

@@ -503,7 +503,7 @@
                                 <a href="{{ route('volunteer.skills.index') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                     Manage Skills
                                 </a>
-                                <a href="{{ route('volunteer.profile') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                                <a href="{{ route('profile.edit') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                     My Profile
                                 </a>
                             </div>

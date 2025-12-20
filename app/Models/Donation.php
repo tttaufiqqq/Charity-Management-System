@@ -29,13 +29,15 @@ class Donation extends Model
         'Donation_Date',
         'Payment_Method',
         'Receipt_No',
+        'Payment_Status', // ToyyibPay payment status
+        'Bill_Code', // ToyyibPay bill code
+        'Transaction_ID', // ToyyibPay transaction ID
     ];
 
     protected $casts = [
         'Donation_Date' => 'datetime',
         'Amount' => 'decimal:2',
     ];
-
 
     /**
      * Relationships

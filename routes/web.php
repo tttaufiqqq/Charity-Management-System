@@ -107,7 +107,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/donation/success/{donationId}', [DonationManagementController::class, 'donationSuccess'])->name('donation.success');
 
     // ToyyibPay Payment Routes
-    Route::get('/donation/payment/return/{donationId}', [DonationManagementController::class, 'paymentReturn'])->name('donation.payment.return');
+    Route::get('/donation/payment/return', [DonationManagementController::class, 'paymentReturn'])->name('donation.payment.return');
 
     // My donations
     Route::get('/my-donations', [DonationManagementController::class, 'myDonations'])->name('donations.my');

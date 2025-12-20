@@ -72,58 +72,7 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div class="grid md:grid-cols-4 gap-4">
-                <a href="{{ route('volunteer.events.browse') }}" class="flex items-center p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg hover:shadow-md transition-shadow">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center mr-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">Find Events</div>
-                        <div class="text-xs text-gray-600">Browse available events</div>
-                    </div>
-                </a>
 
-                <a href="{{ route('volunteer.schedule') }}" class="flex items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg hover:shadow-md transition-shadow">
-                    <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">My Schedule</div>
-                        <div class="text-xs text-gray-600">View your calendar</div>
-                    </div>
-                </a>
-
-                <a href="{{ route('volunteer.skills.index') }}" class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg hover:shadow-md transition-shadow">
-                    <div class="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center mr-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">My Skills</div>
-                        <div class="text-xs text-gray-600">Manage your skills</div>
-                    </div>
-                </a>
-
-                <a href="{{ route('volunteer.profile') }}" class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg hover:shadow-md transition-shadow">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-semibold text-gray-900">My Profile</div>
-                        <div class="text-xs text-gray-600">Update your info</div>
-                    </div>
-                </a>
-            </div>
-        </div>
 
         <div class="grid lg:grid-cols-2 gap-8">
             <!-- Upcoming Events -->

@@ -156,17 +156,22 @@ class DonationManagementController extends Controller
                 ->withInput();
         }
 
-        DB::beginTransaction();
         try {
-            // Create donation record with pending status
-            $donation = Donation::create([
-                'Donor_ID' => $donor->Donor_ID,
-                'Campaign_ID' => $campaign->Campaign_ID,
-                'Amount' => $request->amount,
-                'Donation_Date' => now(),
-                'Payment_Method' => 'FPX Online Banking',
-                'Receipt_No' => 'RCP-'.strtoupper(uniqid()),
-                'Payment_Status' => 'Pending',
+            // Generate unique reference for this donation attempt
+            $receiptNo = 'RCP-'.strtoupper(uniqid());
+            $donationRef = 'DON-'.time().'-'.$donor->Donor_ID;
+
+            // Store donation data in session (don't create in database yet)
+            session([
+                'pending_donation' => [
+                    'donation_ref' => $donationRef,
+                    'donor_id' => $donor->Donor_ID,
+                    'campaign_id' => $campaign->Campaign_ID,
+                    'amount' => $request->amount,
+                    'receipt_no' => $receiptNo,
+                    'payment_method' => 'FPX Online Banking',
+                    'donation_date' => now()->toDateTimeString(),
+                ],
             ]);
 
             // Initialize ToyyibPay service
@@ -183,9 +188,9 @@ class DonationManagementController extends Controller
                 'billName' => $billName,
                 'billDescription' => 'Charity donation via CharityHub',
                 'billAmount' => $request->amount,
-                'billReturnUrl' => route('donation.payment.return', $donation->Donation_ID),
+                'billReturnUrl' => route('donation.payment.return', ['ref' => $donationRef]),
                 'billCallbackUrl' => route('donation.payment.callback'),
-                'billExternalReferenceNo' => 'DON-'.$donation->Donation_ID,
+                'billExternalReferenceNo' => $donationRef,
                 'billTo' => $donor->Full_Name,
                 'billEmail' => Auth::user()->email,
                 'billPhone' => $donor->Phone_Num ?? '0123456789',
@@ -194,26 +199,18 @@ class DonationManagementController extends Controller
             $result = $toyyibpay->createBill($billData);
 
             if ($result['success']) {
-                // Store bill code in donation record
-                $donation->update([
-                    'Bill_Code' => $result['billCode'],
-                ]);
-
-                DB::commit();
+                // Store bill code in session
+                session(['pending_donation.bill_code' => $result['billCode']]);
 
                 // Redirect to ToyyibPay payment page (sandbox or production)
                 return redirect()->away($result['paymentUrl']);
             } else {
-                DB::rollBack();
-
                 return redirect()->back()
                     ->with('error', 'Payment gateway error: '.$result['message'])
                     ->withInput();
             }
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             // Log the actual error for debugging
             \Log::error('Donation failed: '.$e->getMessage());
             \Log::error('Stack trace: '.$e->getTraceAsString());
@@ -250,8 +247,10 @@ class DonationManagementController extends Controller
             return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
         }
 
+        // Show all donations (Completed and Failed - no Pending exists anymore)
         $query = $donor->donations()
             ->with('campaign.organization.user')
+            ->whereIn('Payment_Status', ['Completed', 'Failed']) // Show both Completed and Failed
             ->orderBy('Donation_Date', 'desc');
 
         // Filter by date range
@@ -264,12 +263,13 @@ class DonationManagementController extends Controller
 
         $donations = $query->paginate(10);
 
-        // Calculate statistics
+        // Calculate statistics (only for completed donations)
         $stats = [
             'total_donated' => $donor->Total_Donated,
-            'total_donations' => $donor->donations()->count(),
-            'campaigns_supported' => $donor->donations()->distinct('Campaign_ID')->count(),
-            'average_donation' => $donor->donations()->avg('Amount') ?? 0,
+            'total_donations' => $donor->donations()->where('Payment_Status', 'Completed')->count(),
+            'total_failed' => $donor->donations()->where('Payment_Status', 'Failed')->count(),
+            'campaigns_supported' => $donor->donations()->where('Payment_Status', 'Completed')->distinct('Campaign_ID')->count(),
+            'average_donation' => $donor->donations()->where('Payment_Status', 'Completed')->avg('Amount') ?? 0,
         ];
 
         return view('donation-management.my-donations', compact('donations', 'stats', 'donor'));
@@ -559,117 +559,164 @@ class DonationManagementController extends Controller
     /**
      * Handle payment return from ToyyibPay
      */
-    public function paymentReturn(Request $request, $donationId)
+    public function paymentReturn(Request $request)
     {
-        $donation = Donation::with(['campaign', 'donor'])->findOrFail($donationId);
+        // Get donation data from session
+        $donationData = session('pending_donation');
 
-        // Verify this donation belongs to current user
-        if ($donation->donor->User_ID !== Auth::id()) {
-            abort(403);
+        if (! $donationData) {
+            return redirect()->route('campaigns.browse')
+                ->with('error', 'Donation session expired. Please try again.');
         }
 
-        // If already completed, redirect to success
-        if ($donation->Payment_Status === 'Completed') {
-            return redirect()->route('donation.success', $donation->Donation_ID)
-                ->with('success', 'Thank you for your donation!');
+        // Get donor to verify ownership
+        $donor = Auth::user()->donor;
+        if (! $donor || $donor->Donor_ID != $donationData['donor_id']) {
+            abort(403, 'Unauthorized donation access');
         }
 
-        // Check URL parameters for immediate status (ToyyibPay passes status_id)
+        // Get campaign for later updates
+        $campaign = Campaign::findOrFail($donationData['campaign_id']);
+
+        // Check URL parameters for payment status (ToyyibPay passes status_id)
         $statusId = $request->input('status_id');
 
-        if ($statusId) {
-            if ($statusId == '1') {
-                // Payment successful
-                DB::beginTransaction();
-                try {
-                    $donation->update([
-                        'Payment_Status' => 'Completed',
-                        'Transaction_ID' => $request->input('transaction_id') ?? 'TOYYIB-'.strtoupper(uniqid()),
-                    ]);
-
-                    // Update campaign total
-                    $donation->campaign->increment('Collected_Amount', $donation->Amount);
-
-                    // Update donor total
-                    $donation->donor->increment('Total_Donated', $donation->Amount);
-
-                    DB::commit();
-
-                    return redirect()->route('donation.success', $donation->Donation_ID)
-                        ->with('success', 'Thank you for your donation!');
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    \Log::error('Failed to update donation after payment: '.$e->getMessage());
-                }
-            } elseif (in_array($statusId, ['2', '3'])) {
-                // Payment failed (2 = pending/cancelled, 3 = failed)
-                $donation->update([
-                    'Payment_Status' => 'Failed',
+        if ($statusId == '1') {
+            // ✅ PAYMENT SUCCESSFUL - Create donation with Completed status
+            DB::beginTransaction();
+            try {
+                $donation = Donation::create([
+                    'Donor_ID' => $donationData['donor_id'],
+                    'Campaign_ID' => $donationData['campaign_id'],
+                    'Amount' => $donationData['amount'],
+                    'Donation_Date' => $donationData['donation_date'],
+                    'Payment_Method' => $donationData['payment_method'],
+                    'Receipt_No' => $donationData['receipt_no'],
+                    'Payment_Status' => 'Completed', // SUCCESS - insert as Completed
+                    'Bill_Code' => $donationData['bill_code'] ?? null,
+                    'Transaction_ID' => $request->input('transaction_id') ?? 'TOYYIB-'.strtoupper(uniqid()),
                 ]);
 
-                return view('donation-management.payment-failed', compact('donation'));
+                // Update campaign total
+                $campaign->increment('Collected_Amount', $donation->Amount);
+
+                // Update donor total
+                $donor->increment('Total_Donated', $donation->Amount);
+
+                DB::commit();
+
+                // Clear session
+                session()->forget('pending_donation');
+
+                return redirect()->route('donation.success', $donation->Donation_ID)
+                    ->with('success', 'Thank you for your donation!');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('Failed to create donation after successful payment: '.$e->getMessage());
+
+                return redirect()->route('campaigns.browse')
+                    ->with('error', 'Failed to process donation. Please contact support.');
+            }
+        } elseif (in_array($statusId, ['2', '3'])) {
+            // ❌ PAYMENT FAILED - Create donation with Failed status
+            DB::beginTransaction();
+            try {
+                $donation = Donation::create([
+                    'Donor_ID' => $donationData['donor_id'],
+                    'Campaign_ID' => $donationData['campaign_id'],
+                    'Amount' => $donationData['amount'],
+                    'Donation_Date' => $donationData['donation_date'],
+                    'Payment_Method' => $donationData['payment_method'],
+                    'Receipt_No' => $donationData['receipt_no'],
+                    'Payment_Status' => 'Failed', // FAILED - insert as Failed
+                    'Bill_Code' => $donationData['bill_code'] ?? null,
+                    'Transaction_ID' => null,
+                ]);
+
+                DB::commit();
+
+                // Clear session
+                session()->forget('pending_donation');
+
+                return view('donation-management.payment-failed', compact('donation', 'campaign'));
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('Failed to create failed donation record: '.$e->getMessage());
             }
         }
 
-        // If no status_id, try querying ToyyibPay API
-        if ($donation->Bill_Code) {
+        // If no status_id or unknown status, try querying ToyyibPay API
+        if (isset($donationData['bill_code'])) {
             $toyyibpay = new \App\Services\ToyyibPayService;
-            $result = $toyyibpay->getBillTransactions($donation->Bill_Code);
+            $result = $toyyibpay->getBillTransactions($donationData['bill_code']);
 
             if ($result['success'] && ! empty($result['data'])) {
                 $transactions = $result['data'];
-
-                // Check if there's a successful transaction
                 $successfulTransaction = collect($transactions)->firstWhere('billpaymentStatus', '1');
 
                 if ($successfulTransaction) {
-                    // Payment successful - update donation
+                    // Payment was successful
                     DB::beginTransaction();
                     try {
-                        $donation->update([
+                        $donation = Donation::create([
+                            'Donor_ID' => $donationData['donor_id'],
+                            'Campaign_ID' => $donationData['campaign_id'],
+                            'Amount' => $donationData['amount'],
+                            'Donation_Date' => $donationData['donation_date'],
+                            'Payment_Method' => $donationData['payment_method'],
+                            'Receipt_No' => $donationData['receipt_no'],
                             'Payment_Status' => 'Completed',
+                            'Bill_Code' => $donationData['bill_code'],
                             'Transaction_ID' => $successfulTransaction['billpaymentInvoiceNo'] ?? 'TOYYIB-'.strtoupper(uniqid()),
                         ]);
 
-                        // Update campaign total
-                        $donation->campaign->increment('Collected_Amount', $donation->Amount);
-
-                        // Update donor total
-                        $donation->donor->increment('Total_Donated', $donation->Amount);
+                        $campaign->increment('Collected_Amount', $donation->Amount);
+                        $donor->increment('Total_Donated', $donation->Amount);
 
                         DB::commit();
+                        session()->forget('pending_donation');
 
                         return redirect()->route('donation.success', $donation->Donation_ID)
                             ->with('success', 'Thank you for your donation!');
                     } catch (\Exception $e) {
                         DB::rollBack();
-                        \Log::error('Failed to update donation after payment: '.$e->getMessage());
+                        \Log::error('Failed to create donation: '.$e->getMessage());
                     }
-                }
-
-                // Check if there's a failed transaction or payment was cancelled
-                $failedTransaction = collect($transactions)->firstWhere('billpaymentStatus', '3');
-                if ($failedTransaction || collect($transactions)->firstWhere('billpaymentStatus', '2')) {
-                    // Payment failed or cancelled
-                    $donation->update([
-                        'Payment_Status' => 'Failed',
-                    ]);
-
-                    return view('donation-management.payment-failed', compact('donation'));
                 }
             }
         }
 
-        // If still can't determine status, assume failed (no pending page)
-        $donation->update([
-            'Payment_Status' => 'Failed',
-        ]);
+        // Default: Payment failed - create failed record
+        DB::beginTransaction();
+        try {
+            $donation = Donation::create([
+                'Donor_ID' => $donationData['donor_id'],
+                'Campaign_ID' => $donationData['campaign_id'],
+                'Amount' => $donationData['amount'],
+                'Donation_Date' => $donationData['donation_date'],
+                'Payment_Method' => $donationData['payment_method'],
+                'Receipt_No' => $donationData['receipt_no'],
+                'Payment_Status' => 'Failed',
+                'Bill_Code' => $donationData['bill_code'] ?? null,
+                'Transaction_ID' => null,
+            ]);
 
-        return view('donation-management.payment-failed', compact('donation'));
+            DB::commit();
+            session()->forget('pending_donation');
+
+            return view('donation-management.payment-failed', compact('donation', 'campaign'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to create failed donation: '.$e->getMessage());
+
+            return redirect()->route('campaigns.browse')
+                ->with('error', 'Payment failed. Please try again.');
+        }
     }
 
     /**
-     * Handle payment callback from ToyyibPay
+     * Handle payment callback from ToyyibPay (server-to-server notification)
+     * Note: Callback is async and may arrive after user return, so we check if donation already exists
      */
     public function paymentCallback(Request $request)
     {
@@ -679,34 +726,21 @@ class DonationManagementController extends Controller
 
         // Verify payment
         if ($toyyibpay->verifyPayment($request->all())) {
-            // Find donation by external reference
-            $refNo = $request->input('refno');
-            $donationId = str_replace('DON-', '', $refNo);
+            $refNo = $request->input('refno'); // Format: DON-timestamp-donorId
+            $billCode = $request->input('billcode');
+            $statusId = $request->input('status_id');
 
-            $donation = Donation::find($donationId);
+            // Check if donation already exists for this bill
+            $existingDonation = Donation::where('Bill_Code', $billCode)->first();
 
-            if ($donation && $donation->Payment_Status !== 'Completed') {
-                DB::beginTransaction();
-                try {
-                    // Update donation status
-                    $donation->update([
-                        'Payment_Status' => 'Completed',
-                        'Transaction_ID' => $request->input('transaction_id'),
-                    ]);
-
-                    // Update campaign total
-                    $donation->campaign->increment('Collected_Amount', $donation->Amount);
-
-                    // Update donor total
-                    $donation->donor->increment('Total_Donated', $donation->Amount);
-
-                    DB::commit();
-
-                    \Log::info('Payment completed for donation: '.$donationId);
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    \Log::error('Payment callback failed: '.$e->getMessage());
-                }
+            if ($existingDonation) {
+                // Donation already created by paymentReturn, just log
+                \Log::info('Callback received for existing donation: '.$existingDonation->Donation_ID);
+            } else {
+                // This shouldn't happen normally, but handle it as backup
+                \Log::warning('Callback received but no donation record found for bill: '.$billCode);
+                // We can't create the donation here because we don't have the session data
+                // This would only happen if callback arrives before user return (very rare)
             }
         }
 

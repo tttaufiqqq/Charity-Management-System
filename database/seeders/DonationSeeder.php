@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Donor;
-use App\Models\Campaign;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class DonationSeeder extends Seeder
 {
@@ -20,6 +20,7 @@ class DonationSeeder extends Seeder
 
         if ($donors->isEmpty()) {
             $this->command->warn('No donors found. Please run UserRoleSeeder first.');
+
             return;
         }
 
@@ -28,6 +29,7 @@ class DonationSeeder extends Seeder
 
         if ($campaigns->isEmpty()) {
             $this->command->warn('No campaigns found. Please run CampaignSeeder first.');
+
             return;
         }
 
@@ -75,6 +77,9 @@ class DonationSeeder extends Seeder
                 'Donation_Date' => $donationDate,
                 'Payment_Method' => $paymentMethod,
                 'Receipt_No' => $receiptNo,
+                'Payment_Status' => 'Completed', // ✅ All seeded donations are successful
+                'Bill_Code' => 'SEED-'.strtoupper(uniqid()), // Seeded bill code
+                'Transaction_ID' => 'TXN-'.strtoupper(uniqid()), // Seeded transaction
                 'created_at' => $donationDate,
                 'updated_at' => $donationDate,
             ]);
@@ -98,7 +103,7 @@ class DonationSeeder extends Seeder
         // Generate realistic donation amounts with better distribution
         $amounts = [
             50, 50, 100, 100, 100, 150, 200, 200, 250, 300,
-            500, 500, 750, 1000, 1000, 1500, 2000, 2500, 5000
+            500, 500, 750, 1000, 1000, 1500, 2000, 2500, 5000,
         ];
 
         return $amounts[array_rand($amounts)];
@@ -113,14 +118,20 @@ class DonationSeeder extends Seeder
         // For completed campaigns, generate dates within the campaign period
         if ($campaign->Status === 'Completed') {
             $daysDiff = $startDate->diffInDays($endDate);
-            if ($daysDiff < 1) $daysDiff = 1;
+            if ($daysDiff < 1) {
+                $daysDiff = 1;
+            }
+
             return $startDate->copy()->addDays(rand(0, $daysDiff));
         }
 
         // For active campaigns, generate dates from start to now
         if ($now->greaterThan($startDate)) {
             $daysDiff = $startDate->diffInDays($now);
-            if ($daysDiff < 1) $daysDiff = 1;
+            if ($daysDiff < 1) {
+                $daysDiff = 1;
+            }
+
             return $startDate->copy()->addDays(rand(0, $daysDiff));
         }
 
@@ -142,11 +153,11 @@ class DonationSeeder extends Seeder
         $totalDonations = Donation::count();
         $totalAmount = Donation::sum('Amount');
 
-        $this->command->info("========================");
-        $this->command->info("Donation Statistics:");
+        $this->command->info('========================');
+        $this->command->info('Donation Statistics:');
         $this->command->info("Total Donations: {$totalDonations}");
-        $this->command->info("Total Amount: RM " . number_format($totalAmount, 2));
-        $this->command->info("========================");
+        $this->command->info('Total Amount: RM '.number_format($totalAmount, 2));
+        $this->command->info('========================');
 
         // Show per campaign
         $campaigns = Campaign::with('donations')->get();
@@ -156,7 +167,7 @@ class DonationSeeder extends Seeder
             $percentage = $goal > 0 ? ($collected / $goal * 100) : 0;
 
             $this->command->info("Campaign: {$campaign->Title}");
-            $this->command->info("  Collected: RM " . number_format($collected, 2) . " / RM " . number_format($goal, 2) . " ({$percentage}%)");
+            $this->command->info('  Collected: RM '.number_format($collected, 2).' / RM '.number_format($goal, 2)." ({$percentage}%)");
             $this->command->info("  Donations count: {$campaign->donations->count()}");
         }
     }
