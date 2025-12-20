@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DonationManagementController;
 use App\Http\Controllers\EventManagementController;
 use App\Http\Controllers\ProfileController;
@@ -68,6 +69,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/events/{event}/bulk-update-volunteers', [EventManagementController::class, 'bulkUpdateVolunteers'])->name('events.bulk-update-volunteers');
 
     Route::get('/admin/dashboard', [EventManagementController::class, 'adminDashboard'])->name('admin.dashboard');
+
+    // User Management
+    Route::get('/admin/users', [AdminController::class, 'manageUsers'])->name('admin.manage.users');
 
     // Campaign Approval
     Route::get('/admin/campaigns/pending', [EventManagementController::class, 'adminPendingCampaigns'])->name('admin.campaigns.pending');

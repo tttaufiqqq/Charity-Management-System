@@ -20,12 +20,6 @@
                 <!-- Campaign Information -->
                 <div class="bg-white rounded-lg shadow-xl p-8">
                     <div class="mb-6">
-                        <a href="{{ route('campaigns.show.donate', $campaign->Campaign_ID) }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center mb-4">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                            </svg>
-                            Back to Campaign
-                        </a>
                         <h2 class="text-2xl font-bold text-gray-900 mb-2">Campaign Details</h2>
                     </div>
 

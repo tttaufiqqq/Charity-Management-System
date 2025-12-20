@@ -3,7 +3,14 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Logo / Site Name -->
-            <div class="flex items-center">
+            <div class="flex items-center gap-3">
+                <!-- Back Button -->
+                <button onclick="window.history.back()" class="text-gray-600 hover:text-indigo-600 p-2 rounded-md hover:bg-gray-50 transition-colors" title="Go back">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+
                 <a href="{{ route('welcome') }}" class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
@@ -22,6 +29,12 @@
                         </a>
                         <a href="{{ route('admin.analytics.dashboard') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Dashboard
+                        </a>
+                        <a href="{{ route('admin.analytics.dashboard') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            Analytics
+                        </a>
+                        <a href="{{ route('admin.manage.users') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                            Users
                         </a>
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1">
@@ -73,9 +86,6 @@
 
                     <!-- Donor Navigation -->
                     @elseif(auth()->user()->hasRole('donor'))
-                        <a href="{{ route('welcome') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Home
-                        </a>
                         <a href="{{ route('campaigns.browse') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Browse Campaigns
                         </a>
@@ -88,9 +98,6 @@
 
                     <!-- Volunteer Navigation -->
                     @elseif(auth()->user()->hasRole('volunteer'))
-                        <a href="{{ route('welcome') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Home
-                        </a>
                         <a href="{{ route('volunteer.dashboard') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Dashboard
                         </a>
@@ -109,9 +116,6 @@
 
                     <!-- Public Navigation -->
                     @elseif(auth()->user()->hasRole('public'))
-                        <a href="{{ route('welcome') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Home
-                        </a>
                         <a href="{{ route('public.campaigns.browse') }}" class="text-gray-700 hover:text-indigo-600 hover:bg-gray-50 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Campaigns
                         </a>
@@ -231,8 +235,9 @@
 
                 <!-- Admin Mobile Menu -->
                 @if(auth()->user()->hasRole('admin'))
-                    <a href="{{ route('welcome') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Home</a>
                     <a href="{{ route('admin.analytics.dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Dashboard</a>
+                    <a href="{{ route('admin.analytics.dashboard') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Analytics</a>
+                    <a href="{{ route('admin.manage.users') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Users</a>
                     <a href="{{ route('admin.recipients.pending') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Recipients Approval</a>
                     <a href="{{ route('admin.campaigns.pending') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Campaigns Approval</a>
                     <a href="{{ route('admin.events.pending') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Events Approval</a>
