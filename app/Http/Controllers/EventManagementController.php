@@ -250,8 +250,11 @@ class EventManagementController extends Controller
         $totalFilled = $event->roles->sum('Volunteers_Filled');
         $capacityPercentage = $totalCapacity > 0 ? round(($totalFilled / $totalCapacity) * 100) : 0;
 
-        // Group volunteers by role
-        $volunteersByRole = $event->volunteers()->with('user')->get()->groupBy('pivot.Role_ID');
+        // Group volunteers by role with their skills and user details
+        $volunteersByRole = $event->volunteers()
+            ->with(['user', 'skills'])
+            ->get()
+            ->groupBy('pivot.Role_ID');
 
         return view('event-management.events.show', compact('event', 'volunteersByRole', 'totalCapacity', 'totalFilled', 'capacityPercentage'));
     }

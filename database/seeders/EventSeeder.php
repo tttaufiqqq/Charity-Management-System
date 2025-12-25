@@ -324,16 +324,16 @@ class EventSeeder extends Seeder
 
             $assignedRole = $availableRoles->random();
 
+            // Valid participation statuses: Registered, Attended, No-Show, Cancelled
             $participationStatus = match ($event->Status) {
-                'Completed' => 'Completed',
-                'Ongoing' => ['Approved', 'Registered'][array_rand(['Approved', 'Registered'])],
-                'Upcoming' => ['Registered', 'Approved', 'Rejected'][array_rand(['Registered', 'Approved', 'Rejected'])],
+                'Completed' => (rand(1, 100) <= 75) ? 'Attended' : 'No-Show', // 75% attended, 25% no-show
+                'Ongoing' => 'Registered',
+                'Upcoming' => 'Registered',
                 default => 'Registered'
             };
 
             $totalHours = match ($participationStatus) {
-                'Completed' => rand(3, 8),
-                'Approved' => rand(0, 4),
+                'Attended' => rand(3, 8),
                 default => 0
             };
 

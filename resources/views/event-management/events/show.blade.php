@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" x-data="{ showVolunteerModal: false, selectedVolunteer: null }">
 <div class="min-h-screen">
     @include('navbar')
 
@@ -133,7 +133,25 @@
                             @if($roleVolunteers->count() > 0)
                                 <div class="space-y-3 pl-8">
                                     @foreach($roleVolunteers as $volunteer)
-                                        <div class="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-300 transition-colors">
+                                        <div @click="selectedVolunteer = {{ json_encode([
+                                                'id' => $volunteer->Volunteer_ID,
+                                                'name' => $volunteer->user->name,
+                                                'email' => $volunteer->user->email,
+                                                'phone' => $volunteer->Phone_Num,
+                                                'gender' => $volunteer->Gender,
+                                                'availability' => $volunteer->Availability,
+                                                'address' => $volunteer->Address,
+                                                'city' => $volunteer->City,
+                                                'state' => $volunteer->State,
+                                                'description' => $volunteer->Description,
+                                                'status' => $volunteer->pivot->Status,
+                                                'hours' => $volunteer->pivot->Total_Hours,
+                                                'skills' => $volunteer->skills->map(fn($skill) => [
+                                                    'name' => $skill->Skill_Name,
+                                                    'level' => $skill->pivot->Skill_Level
+                                                ])
+                                            ]) }}; showVolunteerModal = true"
+                                             class="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-colors cursor-pointer">
                                             <div>
                                                 <p class="font-medium text-gray-900">{{ $volunteer->user->name }}</p>
                                                 <div class="flex items-center space-x-4 mt-1">
@@ -146,6 +164,11 @@
                                                     </span>
                                                     <span class="text-sm text-gray-600">{{ $volunteer->pivot->Total_Hours }} hours</span>
                                                 </div>
+                                            </div>
+                                            <div class="text-indigo-600 hover:text-indigo-800">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                </svg>
                                             </div>
                                         </div>
                                     @endforeach
@@ -170,10 +193,33 @@
                             </div>
                             <div class="space-y-3 pl-8">
                                 @foreach($unassignedVolunteers as $volunteer)
-                                    <div class="flex justify-between items-center py-3 px-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                    <div @click="selectedVolunteer = {{ json_encode([
+                                            'id' => $volunteer->Volunteer_ID,
+                                            'name' => $volunteer->user->name,
+                                            'email' => $volunteer->user->email,
+                                            'phone' => $volunteer->Phone_Num,
+                                            'gender' => $volunteer->Gender,
+                                            'availability' => $volunteer->Availability,
+                                            'address' => $volunteer->Address,
+                                            'city' => $volunteer->City,
+                                            'state' => $volunteer->State,
+                                            'description' => $volunteer->Description,
+                                            'status' => $volunteer->pivot->Status,
+                                            'hours' => $volunteer->pivot->Total_Hours,
+                                            'skills' => $volunteer->skills->map(fn($skill) => [
+                                                'name' => $skill->Skill_Name,
+                                                'level' => $skill->pivot->Skill_Level
+                                            ])
+                                        ]) }}; showVolunteerModal = true"
+                                         class="flex justify-between items-center py-3 px-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 transition-colors cursor-pointer">
                                         <div>
                                             <p class="font-medium text-gray-900">{{ $volunteer->user->name }}</p>
                                             <p class="text-sm text-gray-600">Status: {{ $volunteer->pivot->Status }}</p>
+                                        </div>
+                                        <div class="text-yellow-600 hover:text-yellow-800">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
                                         </div>
                                     </div>
                                 @endforeach
@@ -197,6 +243,155 @@
             </div>
         @endif
     </main>
+
+    <!-- Volunteer Profile Modal -->
+    <div x-show="showVolunteerModal"
+         x-cloak
+         @click.away="showVolunteerModal = false"
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+
+        <!-- Modal -->
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
+                 @click.stop>
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-white" x-text="selectedVolunteer?.name"></h3>
+                        <button @click="showVolunteerModal = false" class="text-white hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="px-6 py-6">
+                    <template x-if="selectedVolunteer">
+                        <div class="space-y-6">
+                            <!-- Event Status -->
+                            <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">Event Status</p>
+                                    <span class="text-sm px-3 py-1 rounded-full font-medium inline-block"
+                                          :class="{
+                                              'bg-green-100 text-green-800': selectedVolunteer.status === 'Attended',
+                                              'bg-blue-100 text-blue-800': selectedVolunteer.status === 'Registered',
+                                              'bg-red-100 text-red-800': selectedVolunteer.status === 'No-Show',
+                                              'bg-gray-100 text-gray-800': selectedVolunteer.status === 'Cancelled'
+                                          }"
+                                          x-text="selectedVolunteer.status"></span>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-600 mb-1">Hours Logged</p>
+                                    <p class="text-2xl font-bold text-indigo-600" x-text="selectedVolunteer.hours"></p>
+                                </div>
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Contact Information
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Email</p>
+                                        <p class="text-sm font-medium text-gray-900" x-text="selectedVolunteer.email || 'N/A'"></p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Phone</p>
+                                        <p class="text-sm font-medium text-gray-900" x-text="selectedVolunteer.phone || 'N/A'"></p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Gender</p>
+                                        <p class="text-sm font-medium text-gray-900" x-text="selectedVolunteer.gender || 'N/A'"></p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <p class="text-xs text-gray-600 mb-1">Availability</p>
+                                        <p class="text-sm font-medium text-gray-900" x-text="selectedVolunteer.availability || 'N/A'"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Address -->
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    Address
+                                </h4>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <p class="text-sm text-gray-900" x-text="selectedVolunteer.address || 'N/A'"></p>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        <span x-text="selectedVolunteer.city || 'N/A'"></span>,
+                                        <span x-text="selectedVolunteer.state || 'N/A'"></span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Skills -->
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                    Skills
+                                </h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-if="selectedVolunteer.skills && selectedVolunteer.skills.length > 0">
+                                        <div class="flex flex-wrap gap-2">
+                                            <template x-for="skill in selectedVolunteer.skills" :key="skill.name">
+                                                <span class="px-3 py-2 bg-indigo-100 text-indigo-800 rounded-lg text-sm font-medium">
+                                                    <span x-text="skill.name"></span>
+                                                    <span class="text-indigo-600 ml-1">•</span>
+                                                    <span class="text-xs" x-text="skill.level"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="!selectedVolunteer.skills || selectedVolunteer.skills.length === 0">
+                                        <p class="text-sm text-gray-500 italic">No skills listed</p>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <template x-if="selectedVolunteer.description">
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                                        </svg>
+                                        About
+                                    </h4>
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap" x-text="selectedVolunteer.description"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                    <button @click="showVolunteerModal = false"
+                            class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

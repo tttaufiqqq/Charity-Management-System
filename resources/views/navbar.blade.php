@@ -247,7 +247,6 @@
                     <a href="{{ route('welcome') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Home</a>
                     <a href="{{ route('campaigns.browse') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Browse Campaigns</a>
                     <a href="{{ route('donations.my') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">My Donations</a>
-                    <a href="{{ route('public.events.browse') }}" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50 rounded-md">Events</a>
 
                 <!-- Volunteer Mobile Menu -->
                 @elseif(auth()->user()->hasRole('volunteer'))

@@ -81,4 +81,15 @@ class Event extends Model
     {
         return $query->where('Status', 'Ongoing');
     }
+
+    // Helper methods for volunteer counts
+    public function getTotalVolunteerCapacity()
+    {
+        return $this->roles()->sum('Volunteers_Needed') ?: $this->Capacity;
+    }
+
+    public function getTotalVolunteersFilled()
+    {
+        return $this->roles()->sum('Volunteers_Filled') ?: $this->volunteers()->count();
+    }
 }

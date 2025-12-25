@@ -18,6 +18,7 @@ class EventParticipation extends Model
     protected $fillable = [
         'Volunteer_ID',
         'Event_ID',
+        'Role_ID',
         'Status',
         'Total_Hours'
     ];

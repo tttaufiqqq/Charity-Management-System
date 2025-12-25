@@ -24,8 +24,9 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
-        // Get all upcoming and ongoing events
+        // Get all upcoming and ongoing events with roles eager loaded
         $events = Event::whereIn('Status', ['Upcoming', 'Ongoing'])
+            ->with('roles')
             ->orderBy('Start_Date', 'asc')
             ->paginate(12);
 
