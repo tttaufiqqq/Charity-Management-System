@@ -9,7 +9,11 @@ class Recipient extends Model
 {
     use HasFactory;
 
+    // Recipient Service Database Connection
+    protected $connection = 'adam';
+
     protected $table = 'recipient';
+
     protected $primaryKey = 'Recipient_ID';
 
     protected $fillable = [
@@ -19,7 +23,7 @@ class Recipient extends Model
         'Contact',
         'Need_Description',
         'Status',
-        'Approved_At'
+        'Approved_At',
     ];
 
     protected $casts = [

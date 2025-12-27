@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Organization.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,11 @@ class Organization extends Model
 {
     use HasFactory;
 
+    // Event Management Service Database Connection
+    protected $connection = 'izati';
+
     protected $table = 'organization';
+
     protected $primaryKey = 'Organization_ID';
 
     protected $fillable = [
@@ -20,7 +25,7 @@ class Organization extends Model
         'Address',
         'State',
         'City',
-        'Description'
+        'Description',
     ];
 
     // Relationships

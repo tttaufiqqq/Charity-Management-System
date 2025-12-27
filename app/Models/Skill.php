@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Skill.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,12 +11,16 @@ class Skill extends Model
 {
     use HasFactory;
 
+    // Volunteer Service Database Connection
+    protected $connection = 'sashvini';
+
     protected $table = 'skill';
+
     protected $primaryKey = 'Skill_ID';
 
     protected $fillable = [
         'Skill_Name',
-        'Description'
+        'Description',
     ];
 
     // Relationships

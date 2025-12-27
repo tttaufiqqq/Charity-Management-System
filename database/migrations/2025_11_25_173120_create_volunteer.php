@@ -10,7 +10,11 @@ return new class extends Migration
     {
         Schema::create('volunteer', function (Blueprint $table) {
             $table->id('Volunteer_ID');
-            $table->foreignId('User_ID')->constrained('users')->onDelete('cascade');
+
+            // Cross-service reference - NO foreign key constraint
+            $table->unsignedBigInteger('User_ID');  // References users (in User Service DB)
+            $table->index('User_ID');
+
             $table->string('Availability');
             $table->text('Address');
             $table->string('City', 100);

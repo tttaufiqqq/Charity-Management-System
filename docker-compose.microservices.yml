@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # User Service - PostgreSQL (Port 5432)
+  postgres-user:
+    image: postgres:16-alpine
+    container_name: charity-user-db
+    environment:
+      POSTGRES_DB: charity_izz_user
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Event Management - PostgreSQL (Port 5433)
+  postgres-event:
+    image: postgres:16-alpine
+    container_name: charity-event-db
+    environment:
+      POSTGRES_DB: charity_izz_event
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-event-data:/var/lib/postgresql/data
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Volunteer Service - MariaDB (Port 3307)
+  mariadb-volunteer:
+    image: mariadb:11-jammy
+    container_name: charity-volunteer-db
+    environment:
+      MYSQL_DATABASE: charity_izz_volunteer
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb-volunteer-data:/var/lib/mysql
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Donation Service - MySQL (Port 3306)
+  mysql-donation:
+    image: mysql:8-oracle
+    container_name: charity-donation-db
+    environment:
+      MYSQL_DATABASE: charity_izz_donation
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-donation-data:/var/lib/mysql
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Recipient Service - MySQL (Port 3308)
+  mysql-recipient:
+    image: mysql:8-oracle
+    container_name: charity-recipient-db
+    environment:
+      MYSQL_DATABASE: charity_izz_recipient
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-recipient-data:/var/lib/mysql
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for queues and events
+  redis:
+    image: redis:7-alpine
+    container_name: charity-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - charity-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-user-data:
+  postgres-event-data:
+  mariadb-volunteer-data:
+  mysql-donation-data:
+  mysql-recipient-data:
+  redis-data:
+
+networks:
+  charity-network:
+    driver: bridge

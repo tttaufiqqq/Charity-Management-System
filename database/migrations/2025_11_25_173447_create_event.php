@@ -15,7 +15,10 @@ return new class extends Migration
     {
         Schema::create('event', function (Blueprint $table) {
             $table->id('Event_ID');
-            $table->foreignId('Organizer_ID')->constrained('organization', 'Organization_ID')->onDelete('cascade');
+
+            // Cross-service reference - NO foreign key constraint
+            $table->unsignedBigInteger('Organizer_ID');  // References organization (in Event Management DB)
+
             $table->string('Title');
             $table->text('Description')->nullable();
             $table->text('Location')->nullable();

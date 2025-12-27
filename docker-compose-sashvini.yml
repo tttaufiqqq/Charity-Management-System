@@ -1,0 +1,38 @@
+version: '3.8'
+
+# sashvini's Docker Compose - Volunteer Management Database
+# Only run MariaDB for Volunteer Management
+# Other team members will connect to this database remotely
+
+services:
+  mariadb-volunteer:
+    image: mariadb:11-jammy
+    container_name: charity-volunteer-db-sashvini
+    environment:
+      MYSQL_DATABASE: charity_izz_volunteer
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'  # Allow connections from any host
+    ports:
+      - "3307:3306"  # Exposed to network
+    volumes:
+      - mariadb-volunteer-data:/var/lib/mysql
+    networks:
+      - charity-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --bind-address=0.0.0.0
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  mariadb-volunteer-data:
+    driver: local
+
+networks:
+  charity-network:
+    driver: bridge

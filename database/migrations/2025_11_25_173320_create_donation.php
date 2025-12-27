@@ -16,8 +16,11 @@ return new class extends Migration
     {
         Schema::create('donation', function (Blueprint $table) {
             $table->id('Donation_ID');
-            $table->foreignId('Donor_ID')->constrained('donor', 'Donor_ID')->onDelete('cascade');
-            $table->foreignId('Campaign_ID')->constrained('campaign', 'Campaign_ID')->onDelete('cascade');
+
+            // Cross-service references - NO foreign key constraints
+            $table->unsignedBigInteger('Donor_ID');     // References donor table (in same DB)
+            $table->unsignedBigInteger('Campaign_ID');  // References campaign table (in Event Management DB - cross-service)
+
             $table->decimal('Amount', 10, 2); // Donation amount
             $table->date('Donation_Date');
             $table->string('Payment_Method', 50); // Payment method used (FPX Online Banking, etc.)
@@ -37,6 +40,9 @@ return new class extends Migration
             $table->index('created_at'); // For sorting recent donations
             $table->index('Payment_Status'); // For payment status queries
             $table->index('Bill_Code'); // For ToyyibPay lookups
+
+            // Local FK only (Donor is in same database)
+            $table->foreign('Donor_ID')->references('Donor_ID')->on('donor')->onDelete('cascade');
         });
     }
 

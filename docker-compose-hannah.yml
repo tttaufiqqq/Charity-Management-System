@@ -1,0 +1,38 @@
+version: '3.8'
+
+# hannah's Docker Compose - Donation Management Database
+# Only run MySQL for Donation Management
+# Other team members will connect to this database remotely
+
+services:
+  mysql-donation:
+    image: mysql:8-oracle
+    container_name: charity-donation-db-hannah
+    environment:
+      MYSQL_DATABASE: charity_izz_donation
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'  # Allow connections from any host
+    ports:
+      - "3306:3306"  # Exposed to network
+    volumes:
+      - mysql-donation-data:/var/lib/mysql
+    networks:
+      - charity-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --bind-address=0.0.0.0
+
+volumes:
+  mysql-donation-data:
+    driver: local
+
+networks:
+  charity-network:
+    driver: bridge

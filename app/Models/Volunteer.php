@@ -12,6 +12,9 @@ class Volunteer extends Model
 {
     use AsPivot, HasFactory;
 
+    // Volunteer Service Database Connection
+    protected $connection = 'sashvini';
+
     protected $table = 'volunteer';
 
     protected $primaryKey = 'Volunteer_ID';

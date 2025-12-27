@@ -15,7 +15,10 @@ return new class extends Migration
     {
         Schema::create('donor', function (Blueprint $table) {
             $table->id('Donor_ID');
-            $table->foreignId('User_ID')->constrained('users')->onDelete('cascade');
+
+            // Cross-service reference - NO foreign key constraint
+            $table->unsignedBigInteger('User_ID');  // References users (in User Service DB)
+
             $table->string('Full_Name');
             $table->string('Phone_Num', 20);
             $table->decimal('Total_Donated', 10, 2)->default(0); // Cumulative donation total

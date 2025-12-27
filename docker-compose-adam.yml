@@ -1,0 +1,38 @@
+version: '3.8'
+
+# adam's Docker Compose - Recipient Management Database
+# Only run MySQL for Recipient Management
+# Other team members will connect to this database remotely
+
+services:
+  mysql-recipient:
+    image: mysql:8-oracle
+    container_name: charity-recipient-db-adam
+    environment:
+      MYSQL_DATABASE: charity_izz_recipient
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'  # Allow connections from any host
+    ports:
+      - "3308:3306"  # Exposed to network (host port 3308, container port 3306)
+    volumes:
+      - mysql-recipient-data:/var/lib/mysql
+    networks:
+      - charity-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --bind-address=0.0.0.0
+
+volumes:
+  mysql-recipient-data:
+    driver: local
+
+networks:
+  charity-network:
+    driver: bridge

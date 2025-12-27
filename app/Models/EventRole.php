@@ -9,6 +9,9 @@ class EventRole extends Model
 {
     use HasFactory;
 
+    // Event Management Service Database Connection
+    protected $connection = 'izati';
+
     protected $table = 'event_role';
 
     protected $primaryKey = 'Role_ID';

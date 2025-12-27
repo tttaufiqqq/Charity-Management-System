@@ -9,8 +9,10 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+    use HasFactory, HasRoles, Notifiable;
 
-    use HasFactory, Notifiable, HasRoles;
+    // User Service Database Connection
+    protected $connection = 'izz';
 
     protected $fillable = [
         'name',

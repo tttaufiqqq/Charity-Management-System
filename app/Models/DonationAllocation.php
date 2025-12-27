@@ -9,17 +9,21 @@ class DonationAllocation extends Model
 {
     use HasFactory;
 
+    // Donation Service Database Connection
+    protected $connection = 'hannah';
+
     protected $table = 'donation_allocation';
 
     // Composite primary key
     protected $primaryKey = ['Recipient_ID', 'Campaign_ID'];
+
     public $incrementing = false;
 
     protected $fillable = [
         'Recipient_ID',
         'Campaign_ID',
         'Amount_Allocated',
-        'Allocated_At'
+        'Allocated_At',
     ];
 
     protected $casts = [

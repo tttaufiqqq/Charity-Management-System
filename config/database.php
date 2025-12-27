@@ -30,59 +30,80 @@ return [
     */
 
     'connections' => [
-        //workshop2
-        'hannah' => [
-            'driver' => 'mysql',
-            'host' => env('DB1_HOST'),
-            'port' => env('DB1_PORT', 3306),
-            'database' => env('DB1_DATABASE'),
-            'username' => env('DB1_USERNAME'),
-            'password' => env('DB1_PASSWORD'),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
+        // User Management - Izz (PostgreSQL 5432)
+        'izz' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_USER_HOST', '127.0.0.1'),
+            'port' => env('DB_USER_PORT', '5432'),
+            'database' => env('DB_USER_DATABASE', 'charity_izz_user'),
+            'username' => env('DB_USER_USERNAME', 'postgres'),
+            'password' => env('DB_USER_PASSWORD', 'password'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
         ],
 
-        'adam' => [
-            'driver' => 'mysql',
-            'host' => env('DB2_HOST'),
-            'port' => env('DB2_PORT', 3306),
-            'database' => env('DB2_DATABASE'),
-            'username' => env('DB2_USERNAME'),
-            'password' => env('DB2_PASSWORD'),
-        ],
-
-        'sahsvini' => [
+        // Volunteer Management - Sashvini (MariaDB 3307)
+        'sashvini' => [
             'driver' => 'mysql', // MariaDB uses the MySQL driver
-            'host' => env('DB4_HOST'),
-            'port' => env('DB4_PORT', 3306),
-            'database' => env('DB4_DATABASE'),
-            'username' => env('DB4_USERNAME'),
-            'password' => env('DB4_PASSWORD'),
+            'host' => env('DB_VOLUNTEER_HOST', '127.0.0.1'),
+            'port' => env('DB_VOLUNTEER_PORT', '3307'),
+            'database' => env('DB_VOLUNTEER_DATABASE', 'charity_izz_volunteer'),
+            'username' => env('DB_VOLUNTEER_USERNAME', 'root'),
+            'password' => env('DB_VOLUNTEER_PASSWORD', 'password'),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
             'strict' => true,
-            'engine' => null,
+            'engine' => 'InnoDB',
         ],
 
-        'izzhilmy' => [
-            'driver' => 'pgsql',
-            'host' => env('DB5_HOST'),
-            'port' => env('DB5_PORT', 5432),
-            'database' => env('DB5_DATABASE'),
-            'username' => env('DB5_USERNAME'),
-            'password' => env('DB5_PASSWORD'),
-        ],
-
+        // Event Management - Izzati (PostgreSQL 5433)
         'izati' => [
             'driver' => 'pgsql',
-            'host' => env('DB4_HOST'),
-            'port' => env('DB4_PORT', 5432),
-            'database' => env('DB4_DATABASE'),
-            'username' => env('DB4_USERNAME'),
-            'password' => env('DB4_PASSWORD'),
+            'host' => env('DB_EVENT_HOST', '127.0.0.1'),
+            'port' => env('DB_EVENT_PORT', '5433'),
+            'database' => env('DB_EVENT_DATABASE', 'charity_izz_event'),
+            'username' => env('DB_EVENT_USERNAME', 'postgres'),
+            'password' => env('DB_EVENT_PASSWORD', 'password'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
         ],
-        //workshop2
+
+        // Donation Management - Hannah (MySQL 3306)
+        'hannah' => [
+            'driver' => 'mysql',
+            'host' => env('DB_DONATION_HOST', '127.0.0.1'),
+            'port' => env('DB_DONATION_PORT', '3306'),
+            'database' => env('DB_DONATION_DATABASE', 'charity_izz_donation'),
+            'username' => env('DB_DONATION_USERNAME', 'root'),
+            'password' => env('DB_DONATION_PASSWORD', 'password'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => 'InnoDB',
+        ],
+
+        // Recipient Management - Adam (MySQL 3308)
+        'adam' => [
+            'driver' => 'mysql',
+            'host' => env('DB_RECIPIENT_HOST', '127.0.0.1'),
+            'port' => env('DB_RECIPIENT_PORT', '3308'),
+            'database' => env('DB_RECIPIENT_DATABASE', 'charity_izz_recipient'),
+            'username' => env('DB_RECIPIENT_USERNAME', 'root'),
+            'password' => env('DB_RECIPIENT_PASSWORD', 'password'),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => 'InnoDB',
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',

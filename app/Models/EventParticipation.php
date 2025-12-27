@@ -9,10 +9,14 @@ class EventParticipation extends Model
 {
     use HasFactory;
 
+    // Volunteer Service Database Connection
+    protected $connection = 'sashvini';
+
     protected $table = 'event_participation';
 
     // Composite primary key
     protected $primaryKey = ['Volunteer_ID', 'Event_ID'];
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -20,7 +24,7 @@ class EventParticipation extends Model
         'Event_ID',
         'Role_ID',
         'Status',
-        'Total_Hours'
+        'Total_Hours',
     ];
 
     protected $casts = [

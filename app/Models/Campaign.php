@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Campaign.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,11 @@ class Campaign extends Model
 {
     use HasFactory;
 
+    // Event Management Service Database Connection
+    protected $connection = 'izati';
+
     protected $table = 'campaign';
+
     protected $primaryKey = 'Campaign_ID';
 
     protected $fillable = [
@@ -21,7 +26,7 @@ class Campaign extends Model
         'Collected_Amount',
         'Start_Date',
         'End_Date',
-        'Status'
+        'Status',
     ];
 
     protected $casts = [
@@ -68,4 +73,3 @@ class Campaign extends Model
         return $query->where('Status', 'Completed');
     }
 }
-

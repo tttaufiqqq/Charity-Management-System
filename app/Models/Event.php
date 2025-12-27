@@ -11,6 +11,9 @@ class Event extends Model
 {
     use HasFactory;
 
+    // Volunteer Service Database Connection (owns event table)
+    protected $connection = 'sashvini';
+
     protected $table = 'event';
 
     protected $primaryKey = 'Event_ID';

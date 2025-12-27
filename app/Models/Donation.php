@@ -9,6 +9,9 @@ class Donation extends Model
 {
     use HasFactory;
 
+    // Donation Service Database Connection
+    protected $connection = 'hannah';
+
     // Table name (because your table is not plural)
     protected $table = 'donation';
 

@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/PublicProfile.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,11 @@ class PublicProfile extends Model
 {
     use HasFactory;
 
+    // Recipient Service Database Connection
+    protected $connection = 'adam';
+
     protected $table = 'public';
+
     protected $primaryKey = 'Public_ID';
 
     protected $fillable = [
@@ -18,7 +23,7 @@ class PublicProfile extends Model
         'Full_Name',
         'Phone',
         'Email',
-        'Position'
+        'Position',
     ];
 
     // Relationships
@@ -32,4 +37,3 @@ class PublicProfile extends Model
         return $this->hasMany(Recipient::class, 'Public_ID', 'Public_ID');
     }
 }
-

@@ -1,6 +1,7 @@
 <?php
 
 // File: app/Models/Donor.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,14 +11,18 @@ class Donor extends Model
 {
     use HasFactory;
 
+    // Donation Service Database Connection
+    protected $connection = 'hannah';
+
     protected $table = 'donor';
+
     protected $primaryKey = 'Donor_ID';
 
     protected $fillable = [
         'User_ID',
         'Full_Name',
         'Phone_Num',
-        'Total_Donated'
+        'Total_Donated',
     ];
 
     protected $casts = [

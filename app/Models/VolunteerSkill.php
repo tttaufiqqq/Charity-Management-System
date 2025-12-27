@@ -11,16 +11,20 @@ class VolunteerSkill extends Model
 {
     use HasFactory;
 
+    // Volunteer Service Database Connection
+    protected $connection = 'sashvini';
+
     protected $table = 'volunteer_skill';
 
     // Composite primary key
     protected $primaryKey = ['Skill_ID', 'Volunteer_ID'];
+
     public $incrementing = false;
 
     protected $fillable = [
         'Skill_ID',
         'Volunteer_ID',
-        'Skill_Level'
+        'Skill_Level',
     ];
 
     // Relationships

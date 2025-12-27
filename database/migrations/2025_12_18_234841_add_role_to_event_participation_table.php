@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('event_participation', function (Blueprint $table) {
-            $table->foreignId('Role_ID')->nullable()->after('Event_ID')->constrained('event_role', 'Role_ID')->onDelete('set null');
+            // Cross-service reference - NO foreign key constraint
+            $table->unsignedBigInteger('Role_ID')->nullable()->after('Event_ID');  // References event_role (in Event Management DB)
+            $table->index('Role_ID');
         });
     }
 
