@@ -9,6 +9,12 @@ class Donation extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Hannah node: Donations & Allocations
+     */
+    protected $connection = 'hannah';
+
     // Table name (because your table is not plural)
     protected $table = 'donation';
 

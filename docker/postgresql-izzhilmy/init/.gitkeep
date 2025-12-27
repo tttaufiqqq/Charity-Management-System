@@ -1,0 +1,2 @@
+# This directory contains PostgreSQL initialization scripts for Izzhilmy node
+# Scripts will be executed in alphabetical order when the container first starts

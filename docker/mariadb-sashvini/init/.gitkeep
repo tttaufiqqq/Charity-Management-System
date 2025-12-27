@@ -1,0 +1,2 @@
+# This directory contains MariaDB initialization scripts for Sashvini node
+# Scripts will be executed in alphabetical order when the container first starts

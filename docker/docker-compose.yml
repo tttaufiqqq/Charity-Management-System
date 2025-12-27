@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Izzhilmy (Authentication & Authorization)
+  postgres-izzhilmy:
+    build:
+      context: ./postgresql-izzhilmy
+      dockerfile: Dockerfile
+    container_name: charity-izz-postgres-izzhilmy
+    environment:
+      POSTGRES_DB: ${DB5_DATABASE:-charity_izzhilmy}
+      POSTGRES_USER: ${DB5_USERNAME:-izzhilmy}
+      POSTGRES_PASSWORD: ${DB5_PASSWORD:-izzhilmy_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${DB5_PORT:-5432}:5432"
+    volumes:
+      - postgres_izzhilmy_data:/var/lib/postgresql/data
+      - ./postgresql-izzhilmy/init:/docker-entrypoint-initdb.d
+    networks:
+      - charity-izz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB5_USERNAME:-izzhilmy} -d ${DB5_DATABASE:-charity_izzhilmy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL - Izati (Organization & Events)
+  postgres-izati:
+    build:
+      context: ./postgresql-izati
+      dockerfile: Dockerfile
+    container_name: charity-izz-postgres-izati
+    environment:
+      POSTGRES_DB: ${DB4_DATABASE:-charity_izati}
+      POSTGRES_USER: ${DB4_USERNAME:-izati}
+      POSTGRES_PASSWORD: ${DB4_PASSWORD:-izati_password}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "${DB4_PORT:-5433}:5432"
+    volumes:
+      - postgres_izati_data:/var/lib/postgresql/data
+      - ./postgresql-izati/init:/docker-entrypoint-initdb.d
+    networks:
+      - charity-izz-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB4_USERNAME:-izati} -d ${DB4_DATABASE:-charity_izati}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MySQL - Hannah (Donations & Allocations)
+  mysql-hannah:
+    build:
+      context: ./mysql-hannah
+      dockerfile: Dockerfile
+    container_name: charity-izz-mysql-hannah
+    environment:
+      MYSQL_DATABASE: ${DB1_DATABASE:-charity_hannah}
+      MYSQL_USER: ${DB1_USERNAME:-hannah}
+      MYSQL_PASSWORD: ${DB1_PASSWORD:-hannah_password}
+      MYSQL_ROOT_PASSWORD: ${DB1_ROOT_PASSWORD:-root_password}
+    ports:
+      - "${DB1_PORT:-3306}:3306"
+    volumes:
+      - mysql_hannah_data:/var/lib/mysql
+      - ./mysql-hannah/init:/docker-entrypoint-initdb.d
+    networks:
+      - charity-izz-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB1_USERNAME:-hannah}", "-p${DB1_PASSWORD:-hannah_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MySQL - Adam (Public & Recipients)
+  mysql-adam:
+    build:
+      context: ./mysql-adam
+      dockerfile: Dockerfile
+    container_name: charity-izz-mysql-adam
+    environment:
+      MYSQL_DATABASE: ${DB2_DATABASE:-charity_adam}
+      MYSQL_USER: ${DB2_USERNAME:-adam}
+      MYSQL_PASSWORD: ${DB2_PASSWORD:-adam_password}
+      MYSQL_ROOT_PASSWORD: ${DB2_ROOT_PASSWORD:-root_password}
+    ports:
+      - "${DB2_PORT:-3307}:3306"
+    volumes:
+      - mysql_adam_data:/var/lib/mysql
+      - ./mysql-adam/init:/docker-entrypoint-initdb.d
+    networks:
+      - charity-izz-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB2_USERNAME:-adam}", "-p${DB2_PASSWORD:-adam_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MariaDB - Sashvini (Volunteer Management)
+  mariadb-sashvini:
+    build:
+      context: ./mariadb-sashvini
+      dockerfile: Dockerfile
+    container_name: charity-izz-mariadb-sashvini
+    environment:
+      MYSQL_DATABASE: ${DB4_DATABASE:-charity_sashvini}
+      MYSQL_USER: ${DB4_USERNAME:-sahsvini}
+      MYSQL_PASSWORD: ${DB4_PASSWORD:-sashvini_password}
+      MYSQL_ROOT_PASSWORD: ${DB4_ROOT_PASSWORD:-root_password}
+    ports:
+      - "${DB4_PORT:-3308}:3306"
+    volumes:
+      - mariadb_sashvini_data:/var/lib/mysql
+      - ./mariadb-sashvini/init:/docker-entrypoint-initdb.d
+    networks:
+      - charity-izz-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB4_USERNAME:-sahsvini}", "-p${DB4_PASSWORD:-sashvini_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  charity-izz-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  postgres_izzhilmy_data:
+    driver: local
+  postgres_izati_data:
+    driver: local
+  mysql_hannah_data:
+    driver: local
+  mysql_adam_data:
+    driver: local
+  mariadb_sashvini_data:
+    driver: local

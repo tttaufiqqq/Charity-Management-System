@@ -9,6 +9,12 @@ class Recipient extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Adam node: Public & Recipients
+     */
+    protected $connection = 'adam';
+
     protected $table = 'recipient';
     protected $primaryKey = 'Recipient_ID';
 

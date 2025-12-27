@@ -12,6 +12,12 @@ class Volunteer extends Model
 {
     use AsPivot, HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Sashvini node: Volunteer Management
+     */
+    protected $connection = 'sahsvini';
+
     protected $table = 'volunteer';
 
     protected $primaryKey = 'Volunteer_ID';

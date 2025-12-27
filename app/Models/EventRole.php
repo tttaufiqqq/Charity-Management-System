@@ -9,6 +9,12 @@ class EventRole extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Izati node: Organization & Events
+     */
+    protected $connection = 'izati';
+
     protected $table = 'event_role';
 
     protected $primaryKey = 'Role_ID';

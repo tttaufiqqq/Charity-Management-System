@@ -9,6 +9,12 @@ class DonationAllocation extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Hannah node: Donations & Allocations
+     */
+    protected $connection = 'hannah';
+
     protected $table = 'donation_allocation';
 
     // Composite primary key

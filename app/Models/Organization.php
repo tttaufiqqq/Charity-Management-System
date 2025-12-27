@@ -10,6 +10,12 @@ class Organization extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Izati node: Organization & Events
+     */
+    protected $connection = 'izati';
+
     protected $table = 'organization';
     protected $primaryKey = 'Organization_ID';
 

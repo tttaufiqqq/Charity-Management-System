@@ -53,11 +53,11 @@ return [
 
         'sahsvini' => [
             'driver' => 'mysql', // MariaDB uses the MySQL driver
-            'host' => env('DB4_HOST'),
-            'port' => env('DB4_PORT', 3306),
-            'database' => env('DB4_DATABASE'),
-            'username' => env('DB4_USERNAME'),
-            'password' => env('DB4_PASSWORD'),
+            'host' => env('DB3_HOST'),
+            'port' => env('DB3_PORT', 3306),
+            'database' => env('DB3_DATABASE'),
+            'username' => env('DB3_USERNAME'),
+            'password' => env('DB3_PASSWORD'),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

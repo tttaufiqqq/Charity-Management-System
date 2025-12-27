@@ -12,6 +12,12 @@ class User extends Authenticatable
 
     use HasFactory, Notifiable, HasRoles;
 
+    /**
+     * The database connection that should be used by the model.
+     * Izzhilmy node: Authentication & Authorization
+     */
+    protected $connection = 'izzhilmy';
+
     protected $fillable = [
         'name',
         'email',

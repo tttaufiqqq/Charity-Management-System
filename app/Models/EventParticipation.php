@@ -9,6 +9,12 @@ class EventParticipation extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Sashvini node: Volunteer Management
+     */
+    protected $connection = 'sahsvini';
+
     protected $table = 'event_participation';
 
     // Composite primary key

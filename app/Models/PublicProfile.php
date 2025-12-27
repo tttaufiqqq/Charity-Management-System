@@ -10,6 +10,12 @@ class PublicProfile extends Model
 {
     use HasFactory;
 
+    /**
+     * The database connection that should be used by the model.
+     * Adam node: Public & Recipients
+     */
+    protected $connection = 'adam';
+
     protected $table = 'public';
     protected $primaryKey = 'Public_ID';
 

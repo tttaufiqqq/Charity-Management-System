@@ -1,0 +1,2 @@
+# This directory contains MySQL initialization scripts for Hannah node
+# Scripts will be executed in alphabetical order when the container first starts
