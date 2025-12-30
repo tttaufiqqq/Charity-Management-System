@@ -83,6 +83,9 @@ Route::middleware(['auth'])->group(function () {
 
     // User Management
     Route::get('/admin/users', [AdminController::class, 'manageUsers'])->name('admin.manage.users');
+    Route::get('/admin/users/{user}', [AdminController::class, 'viewUser'])->name('admin.users.view');
+    Route::get('/admin/users/{user}/edit', [AdminController::class, 'editUser'])->name('admin.users.edit');
+    Route::put('/admin/users/{user}', [AdminController::class, 'updateUser'])->name('admin.users.update');
 
     // Campaign Approval
     Route::get('/admin/campaigns/pending', [EventManagementController::class, 'adminPendingCampaigns'])->name('admin.campaigns.pending');

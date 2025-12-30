@@ -84,7 +84,12 @@ class ProfileController extends Controller
             return view('profile.public', compact('publicProfile', 'isRecipient', 'recipientStatus', 'recipient'));
         }
 
-        // Default fallback for admin or users without specific roles
+        // Admin profile
+        if ($user->hasRole('admin')) {
+            return view('profile.admin', ['user' => $user]);
+        }
+
+        // Default fallback for users without specific roles
         return view('profile.edit', ['user' => $user]);
     }
 

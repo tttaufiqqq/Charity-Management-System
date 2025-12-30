@@ -106,7 +106,12 @@
                     $uniqueCampaigns = $donor ? $donor->donations()->distinct('Campaign_ID')->count('Campaign_ID') : 0;
                     $lastDonation = $donor ? $donor->donations()->latest('Donation_Date')->first() : null;
                     $recentDonations = $donor ? $donor->donations()->with('campaign')->latest('Donation_Date')->take(3)->get() : collect();
-                    $activeCampaigns = \App\Models\Campaign::where('Status', 'Active')->take(3)->get();
+                    // Get active campaigns - query directly from database to ensure fresh data
+                    $activeCampaigns = \DB::table('campaign')
+                        ->where('Status', 'Active')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(3)
+                        ->get();
                 @endphp
 
                 <div class="bg-white rounded-lg shadow-lg p-8">
@@ -196,7 +201,7 @@
                                         <h4 class="font-semibold text-gray-900 mb-2">{{ Str::limit($campaign->Title, 40) }}</h4>
                                         <div class="mb-3">
                                             @php
-                                                $percentage = $campaign->Target_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Target_Amount) * 100 : 0;
+                                                $percentage = $campaign->Goal_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100 : 0;
                                             @endphp
                                             <div class="flex justify-between text-xs text-gray-600 mb-1">
                                                 <span>Raised</span>
@@ -207,7 +212,7 @@
                                             </div>
                                             <div class="flex justify-between text-xs text-gray-600 mt-1">
                                                 <span>RM {{ number_format($campaign->Collected_Amount, 0) }}</span>
-                                                <span>RM {{ number_format($campaign->Target_Amount, 0) }}</span>
+                                                <span>RM {{ number_format($campaign->Goal_Amount, 0) }}</span>
                                             </div>
                                         </div>
                                         <a href="{{ route('campaigns.donate', $campaign->Campaign_ID) }}" class="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
@@ -256,7 +261,7 @@
                             $totalVolunteers = \App\Models\User::role('volunteer')->count();
                             $totalDonors = \App\Models\User::role('donor')->count();
                             $recentPendingItems = collect()
-                                ->merge(\App\Models\Recipient::where('Status', 'Pending')->latest()->take(2)->get()->map(fn($r) => ['type' => 'Recipient', 'name' => $r->Full_Name, 'date' => $r->created_at]))
+                                ->merge(\App\Models\Recipient::where('Status', 'Pending')->latest()->take(2)->get()->map(fn($r) => ['type' => 'Recipient', 'name' => $r->Name, 'date' => $r->created_at]))
                                 ->merge(\App\Models\Campaign::where('Status', 'Pending')->latest()->take(2)->get()->map(fn($c) => ['type' => 'Campaign', 'name' => $c->Title, 'date' => $c->created_at]))
                                 ->merge(\App\Models\Event::where('Status', 'Pending')->latest()->take(2)->get()->map(fn($e) => ['type' => 'Event', 'name' => $e->Title, 'date' => $e->created_at]))
                                 ->sortByDesc('date')
@@ -598,7 +603,7 @@
                             <div class="space-y-3">
                                 @foreach($activeCampaignsList as $campaign)
                                     @php
-                                        $campaignPercentage = $campaign->Target_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Target_Amount) * 100 : 0;
+                                        $campaignPercentage = $campaign->Goal_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100 : 0;
                                         $campaignDonations = \App\Models\Donation::where('Campaign_ID', $campaign->Campaign_ID)->where('Payment_Status', 'Completed')->count();
                                     @endphp
                                     <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg hover:shadow-md transition-shadow">
@@ -614,7 +619,7 @@
                                         <div class="mb-2">
                                             <div class="flex justify-between text-xs text-gray-600 mb-1">
                                                 <span>RM {{ number_format($campaign->Collected_Amount, 2) }} raised</span>
-                                                <span>{{ number_format($campaignPercentage, 1) }}% of RM {{ number_format($campaign->Target_Amount, 2) }}</span>
+                                                <span>{{ number_format($campaignPercentage, 1) }}% of RM {{ number_format($campaign->Goal_Amount, 2) }}</span>
                                             </div>
                                             <div class="w-full bg-gray-200 rounded-full h-2">
                                                 <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ min($campaignPercentage, 100) }}%"></div>
@@ -744,7 +749,7 @@
                             <div class="grid md:grid-cols-3 gap-4">
                                 @foreach($featuredCampaigns as $campaign)
                                     @php
-                                        $percentage = $campaign->Target_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Target_Amount) * 100 : 0;
+                                        $percentage = $campaign->Goal_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100 : 0;
                                     @endphp
                                     <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                                         <h4 class="font-semibold text-gray-900 mb-2">{{ Str::limit($campaign->Title, 40) }}</h4>
@@ -758,7 +763,7 @@
                                             </div>
                                             <div class="flex justify-between text-xs text-gray-600 mt-1">
                                                 <span>RM {{ number_format($campaign->Collected_Amount, 0) }}</span>
-                                                <span>RM {{ number_format($campaign->Target_Amount, 0) }}</span>
+                                                <span>RM {{ number_format($campaign->Goal_Amount, 0) }}</span>
                                             </div>
                                         </div>
                                         <a href="{{ route('public.campaigns.show', $campaign->Campaign_ID) }}" class="block w-full text-center bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">

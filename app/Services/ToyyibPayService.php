@@ -36,9 +36,19 @@ class ToyyibPayService
 
             // For development/sandbox, handle SSL certificate
             if (config('services.toyyibpay.sandbox')) {
-                $http = $http->withOptions([
-                    'verify' => storage_path('cacert.pem'),
-                ]);
+                $cacertPath = storage_path('cacert.pem');
+
+                // Use custom CA cert if it exists and is readable, otherwise use system default
+                if (file_exists($cacertPath) && is_readable($cacertPath)) {
+                    $http = $http->withOptions([
+                        'verify' => $cacertPath,
+                    ]);
+                } else {
+                    // On Ubuntu/Linux, use system CA certificates or disable verification for sandbox
+                    $http = $http->withOptions([
+                        'verify' => config('services.toyyibpay.verify_ssl', true),
+                    ]);
+                }
             }
 
             $response = $http->post("{$this->baseUrl}/index.php/api/createBill", [
@@ -111,9 +121,19 @@ class ToyyibPayService
 
             // For development/sandbox, handle SSL certificate
             if (config('services.toyyibpay.sandbox')) {
-                $http = $http->withOptions([
-                    'verify' => storage_path('cacert.pem'),
-                ]);
+                $cacertPath = storage_path('cacert.pem');
+
+                // Use custom CA cert if it exists and is readable, otherwise use system default
+                if (file_exists($cacertPath) && is_readable($cacertPath)) {
+                    $http = $http->withOptions([
+                        'verify' => $cacertPath,
+                    ]);
+                } else {
+                    // On Ubuntu/Linux, use system CA certificates or disable verification for sandbox
+                    $http = $http->withOptions([
+                        'verify' => config('services.toyyibpay.verify_ssl', true),
+                    ]);
+                }
             }
 
             $response = $http->post("{$this->baseUrl}/index.php/api/getBillTransactions", [

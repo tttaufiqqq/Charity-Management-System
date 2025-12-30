@@ -39,6 +39,7 @@ return [
         'secret_key' => env('TOYYIBPAY_SECRET_KEY'),
         'category_code' => env('TOYYIBPAY_CATEGORY_CODE'),
         'sandbox' => env('TOYYIBPAY_SANDBOX', true),
+        'verify_ssl' => env('TOYYIBPAY_VERIFY_SSL', true), // Set to false on Ubuntu if SSL issues persist
     ],
 
 ];

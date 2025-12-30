@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
@@ -40,5 +41,42 @@ class AdminController extends Controller
         ];
 
         return view('admin.manage-users', compact('users', 'roleStats'));
+    }
+
+    public function viewUser(User $user)
+    {
+        $user->load(['roles', 'donor', 'organization', 'volunteer', 'publicProfile']);
+
+        return view('admin.view-user', compact('user'));
+    }
+
+    public function editUser(User $user)
+    {
+        $user->load('roles');
+        $roles = Role::all();
+
+        return view('admin.edit-user', compact('user', 'roles'));
+    }
+
+    public function updateUser(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'role' => ['required', 'string', 'exists:roles,name'],
+        ]);
+
+        // Update user details
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        // Sync role
+        $user->syncRoles([$validated['role']]);
+
+        return redirect()
+            ->route('admin.manage.users')
+            ->with('success', 'User updated successfully');
     }
 }
