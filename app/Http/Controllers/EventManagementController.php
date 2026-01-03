@@ -28,6 +28,12 @@ class EventManagementController extends Controller
 
         $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
             ->where('Status', 'Active')
+            ->withCount([
+                'recipientSuggestions',
+                'recipientSuggestions as pending_suggestions_count' => function ($query) {
+                    $query->where('Status', 'Pending');
+                },
+            ])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 

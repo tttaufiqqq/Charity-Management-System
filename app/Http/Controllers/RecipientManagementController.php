@@ -7,6 +7,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\CampaignRecipientSuggestion;
 use App\Models\DonationAllocation;
 use App\Models\Recipient;
 use Illuminate\Http\Request;
@@ -369,5 +370,285 @@ class RecipientManagementController extends Controller
         $recipient->delete();
 
         return redirect()->route('admin.recipients.all')->with('success', 'Recipient deleted successfully.');
+    }
+
+    /**
+     * Show campaigns for admin to suggest recipients (Task 3)
+     */
+    public function adminCampaignsForSuggestion(Request $request)
+    {
+        $query = Campaign::with('organization.user');
+
+        // Filter by status - only active campaigns
+        if ($request->has('status') && $request->status != '') {
+            $query->where('Status', $request->status);
+        } else {
+            $query->where('Status', 'Active');
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('Title', 'ILIKE', "%{$search}%")
+                    ->orWhere('Description', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        $campaigns = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('recipient-management.admin.campaigns-for-suggestion', compact('campaigns'));
+    }
+
+    /**
+     * Show form to suggest recipients for a specific campaign (Task 3)
+     */
+    public function suggestRecipientsForCampaign($campaignId)
+    {
+        $campaign = Campaign::with(['organization.user', 'recipientSuggestions.recipient'])->findOrFail($campaignId);
+
+        // Get approved recipients not yet suggested for this campaign
+        $existingSuggestionIds = $campaign->recipientSuggestions->pluck('Recipient_ID')->toArray();
+        $recipients = Recipient::where('Status', 'Approved')
+            ->whereNotIn('Recipient_ID', $existingSuggestionIds)
+            ->with('publicProfile.user')
+            ->paginate(15);
+
+        // Get existing suggestions for this campaign
+        $suggestions = CampaignRecipientSuggestion::where('Campaign_ID', $campaignId)
+            ->with(['recipient', 'suggestedBy'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('recipient-management.admin.suggest-recipients', compact('campaign', 'recipients', 'suggestions'));
+    }
+
+    /**
+     * Store recipient suggestion for campaign (Task 3)
+     */
+    public function storeSuggestion(Request $request, $campaignId)
+    {
+        $request->validate([
+            'recipient_id' => 'required|exists:recipient,Recipient_ID',
+            'suggestion_reason' => 'nullable|string|max:1000',
+        ]);
+
+        $campaign = Campaign::findOrFail($campaignId);
+        $recipient = Recipient::findOrFail($request->recipient_id);
+
+        if ($recipient->Status !== 'Approved') {
+            return redirect()->back()->with('error', 'Can only suggest approved recipients.');
+        }
+
+        // Check if suggestion already exists
+        $exists = CampaignRecipientSuggestion::where('Campaign_ID', $campaignId)
+            ->where('Recipient_ID', $request->recipient_id)
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()->with('error', 'This recipient has already been suggested for this campaign.');
+        }
+
+        CampaignRecipientSuggestion::create([
+            'Campaign_ID' => $campaignId,
+            'Recipient_ID' => $request->recipient_id,
+            'Suggested_By' => Auth::id(),
+            'Suggestion_Reason' => $request->suggestion_reason,
+            'Status' => 'Pending',
+        ]);
+
+        return redirect()->back()->with('success', 'Recipient suggested successfully!');
+    }
+
+    /**
+     * Show suggested recipients for organizer's campaign
+     */
+    public function viewSuggestionsForCampaign($campaignId)
+    {
+        $campaign = Campaign::with('organization')->findOrFail($campaignId);
+
+        // Verify user is the organizer
+        if (Auth::user()->organization->Organization_ID !== $campaign->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $suggestions = CampaignRecipientSuggestion::where('Campaign_ID', $campaignId)
+            ->with(['recipient.publicProfile.user', 'suggestedBy'])
+            ->orderBy('Status', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('recipient-management.organizer.suggestions', compact('campaign', 'suggestions'));
+    }
+
+    /**
+     * Accept a recipient suggestion
+     */
+    public function acceptSuggestion($suggestionId)
+    {
+        $suggestion = CampaignRecipientSuggestion::with('campaign')->findOrFail($suggestionId);
+
+        // Verify user is the organizer
+        if (Auth::user()->organization->Organization_ID !== $suggestion->campaign->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($suggestion->Status !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending suggestions can be accepted.');
+        }
+
+        $suggestion->update(['Status' => 'Accepted']);
+
+        return redirect()->back()->with('success', 'Suggestion accepted! You can now allocate funds to this recipient.');
+    }
+
+    /**
+     * Reject a recipient suggestion
+     */
+    public function rejectSuggestion($suggestionId)
+    {
+        $suggestion = CampaignRecipientSuggestion::with('campaign')->findOrFail($suggestionId);
+
+        // Verify user is the organizer
+        if (Auth::user()->organization->Organization_ID !== $suggestion->campaign->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($suggestion->Status !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending suggestions can be rejected.');
+        }
+
+        $suggestion->update(['Status' => 'Rejected']);
+
+        return redirect()->back()->with('success', 'Suggestion rejected.');
+    }
+
+    /**
+     * Accept suggestion AND allocate funds in one action
+     */
+    public function acceptAndAllocateSuggestion(Request $request, $suggestionId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $suggestion = CampaignRecipientSuggestion::with('campaign')->findOrFail($suggestionId);
+
+        // Verify organizer owns the campaign
+        if (Auth::user()->organization->Organization_ID !== $suggestion->campaign->Organization_ID) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Verify status is pending
+        if ($suggestion->Status !== 'Pending') {
+            return redirect()->back()->with('error', 'Only pending suggestions can be accepted.');
+        }
+
+        // Verify recipient is approved
+        $recipient = Recipient::findOrFail($suggestion->Recipient_ID);
+        if ($recipient->Status !== 'Approved') {
+            return redirect()->back()->with('error', 'Recipient must be approved before allocation.');
+        }
+
+        // Check available funds
+        $totalAllocated = DonationAllocation::where('Campaign_ID', $suggestion->Campaign_ID)->sum('Amount_Allocated');
+        $availableFunds = $suggestion->campaign->Collected_Amount - $totalAllocated;
+
+        if ($request->amount > $availableFunds) {
+            return redirect()->back()
+                ->with('error', 'Insufficient funds. Available: RM '.number_format($availableFunds, 2))
+                ->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Accept the suggestion
+            $suggestion->update(['Status' => 'Accepted']);
+
+            // 2. Create or update allocation
+            $allocation = DonationAllocation::where('Recipient_ID', $suggestion->Recipient_ID)
+                ->where('Campaign_ID', $suggestion->Campaign_ID)
+                ->first();
+
+            if ($allocation) {
+                // Update existing allocation
+                $allocation->increment('Amount_Allocated', $request->amount);
+                $allocation->update(['Allocated_At' => now()]);
+            } else {
+                // Create new allocation
+                DonationAllocation::create([
+                    'Recipient_ID' => $suggestion->Recipient_ID,
+                    'Campaign_ID' => $suggestion->Campaign_ID,
+                    'Amount_Allocated' => $request->amount,
+                    'Allocated_At' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success',
+                'Suggestion accepted and RM '.number_format($request->amount, 2).' allocated successfully! 🎉');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'Failed to process: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Admin report: View each campaign's recipients (Task 4)
+     */
+    public function adminCampaignRecipientsReport(Request $request)
+    {
+        $query = Campaign::with(['organization.user']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status != '') {
+            $query->where('Status', $request->status);
+        }
+
+        // Search filter
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('Title', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        $campaigns = $query->withCount('donationAllocations')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('recipient-management.admin.campaign-recipients-report', compact('campaigns'));
+    }
+
+    /**
+     * Admin view: View specific campaign's recipients detail (Task 4)
+     */
+    public function adminViewCampaignRecipients($campaignId)
+    {
+        $campaign = Campaign::with('organization.user')->findOrFail($campaignId);
+
+        $allocations = DonationAllocation::where('Campaign_ID', $campaignId)
+            ->with('recipient.publicProfile.user')
+            ->orderBy('Allocated_At', 'desc')
+            ->paginate(15);
+
+        $totalAllocated = $allocations->sum('Amount_Allocated');
+        $remainingAmount = $campaign->Collected_Amount - $totalAllocated;
+
+        // Get statistics
+        $stats = [
+            'total_recipients' => $allocations->unique('Recipient_ID')->count(),
+            'total_allocated' => $totalAllocated,
+            'total_collected' => $campaign->Collected_Amount,
+            'remaining_amount' => $remainingAmount,
+            'allocation_percentage' => $campaign->Collected_Amount > 0
+                ? ($totalAllocated / $campaign->Collected_Amount) * 100
+                : 0,
+        ];
+
+        return view('recipient-management.admin.campaign-recipients-detail', compact('campaign', 'allocations', 'stats'));
     }
 }

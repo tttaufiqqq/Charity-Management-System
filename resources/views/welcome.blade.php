@@ -536,6 +536,14 @@
                     // Count total donations across all organizer's campaigns
                     $totalDonations = \App\Models\Donation::whereIn('Campaign_ID', $campaignIds)->where('Payment_Status', 'Completed')->count();
 
+                    // Count pending recipient suggestions for this organizer's campaigns
+                    $pendingSuggestions = \App\Models\CampaignRecipientSuggestion::whereIn('Campaign_ID', $campaignIds)
+                        ->where('Status', 'Pending')
+                        ->count();
+
+                    // Count total suggestions (all statuses)
+                    $totalSuggestions = \App\Models\CampaignRecipientSuggestion::whereIn('Campaign_ID', $campaignIds)->count();
+
                     // Get active campaigns and recent events for display
                     $activeCampaignsList = $organization->campaigns()->where('Status', 'Active')->orderBy('created_at', 'desc')->take(3)->get();
                     $recentEvents = $organization->events()->whereIn('Status', ['Upcoming', 'Ongoing'])->orderBy('Start_Date')->take(3)->get();
@@ -545,7 +553,13 @@
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <h2 class="text-3xl font-bold text-gray-900">Welcome back, {{ auth()->user()->name }}!</h2>
-                            <p class="text-gray-600 mt-1">{{ $activeCampaignsCount }} active campaign{{ $activeCampaignsCount != 1 ? 's' : '' }} • {{ $upcomingEvents }} upcoming event{{ $upcomingEvents != 1 ? 's' : '' }}</p>
+                            <p class="text-gray-600 mt-1">
+                                {{ $activeCampaignsCount }} active campaign{{ $activeCampaignsCount != 1 ? 's' : '' }} •
+                                {{ $upcomingEvents }} upcoming event{{ $upcomingEvents != 1 ? 's' : '' }}
+                                @if($pendingSuggestions > 0)
+                                    • <span class="text-yellow-600 font-medium">{{ $pendingSuggestions }} pending suggestion{{ $pendingSuggestions != 1 ? 's' : '' }}</span>
+                                @endif
+                            </p>
                         </div>
                         <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
                             <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,6 +611,32 @@
                         </div>
                     </div>
 
+                    @if($pendingSuggestions > 0)
+                        <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                    </svg>
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-yellow-900">Recipient Suggestions Pending Review</h4>
+                                        <p class="text-sm text-yellow-800 mt-1">
+                                            You have <strong>{{ $pendingSuggestions }}</strong> pending recipient suggestion{{ $pendingSuggestions != 1 ? 's' : '' }} from administrators across your campaigns.
+                                            Review and accept suitable recipients for fund allocation.
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('campaigns.index') }}" class="ml-4 flex-shrink-0 inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium whitespace-nowrap">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    Review Suggestions
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
                     @if($activeCampaignsList->count() > 0)
                         <div class="mb-8">
                             <h3 class="text-xl font-semibold text-gray-900 mb-4">Active Campaigns</h3>
@@ -605,16 +645,34 @@
                                     @php
                                         $campaignPercentage = $campaign->Goal_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100 : 0;
                                         $campaignDonations = \App\Models\Donation::where('Campaign_ID', $campaign->Campaign_ID)->where('Payment_Status', 'Completed')->count();
+                                        $campaignSuggestions = \App\Models\CampaignRecipientSuggestion::where('Campaign_ID', $campaign->Campaign_ID)->where('Status', 'Pending')->count();
                                     @endphp
                                     <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                                         <div class="flex items-start justify-between mb-3">
                                             <div class="flex-1">
-                                                <h4 class="font-semibold text-gray-900">{{ $campaign->Title }}</h4>
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="font-semibold text-gray-900">{{ $campaign->Title }}</h4>
+                                                    @if($campaignSuggestions > 0)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                            {{ $campaignSuggestions }} suggestion{{ $campaignSuggestions != 1 ? 's' : '' }}
+                                                        </span>
+                                                    @endif
+                                                </div>
                                                 <p class="text-sm text-gray-600">{{ $campaignDonations }} donation{{ $campaignDonations != 1 ? 's' : '' }} • Created {{ $campaign->created_at->diffForHumans() }}</p>
                                             </div>
-                                            <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}" class="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap">
-                                                Allocate Funds
-                                            </a>
+                                            <div class="ml-4 flex gap-2">
+                                                @if($campaignSuggestions > 0)
+                                                    <a href="{{ route('campaigns.suggestions', $campaign->Campaign_ID) }}" class="inline-flex items-center bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-yellow-700 transition-colors whitespace-nowrap">
+                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                                        </svg>
+                                                        View
+                                                    </a>
+                                                @endif
+                                                <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}" class="inline-flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap">
+                                                    Allocate Funds
+                                                </a>
+                                            </div>
                                         </div>
                                         <div class="mb-2">
                                             <div class="flex justify-between text-xs text-gray-600 mb-1">
@@ -676,6 +734,17 @@
                             <a href="{{ route('campaigns.index') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                 View All Campaigns
                             </a>
+                            @if($totalSuggestions > 0)
+                                <a href="{{ route('campaigns.index') }}" class="{{ $pendingSuggestions > 0 ? 'relative bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }} px-6 py-2 rounded-lg transition-colors inline-flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                    </svg>
+                                    Recipient Suggestions
+                                    @if($pendingSuggestions > 0)
+                                        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">{{ $pendingSuggestions }}</span>
+                                    @endif
+                                </a>
+                            @endif
                             <a href="{{ route('events.index') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                                 View All Events
                             </a>

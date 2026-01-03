@@ -154,6 +154,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/recipients/{id}/reject', [RecipientManagementController::class, 'rejectRecipient'])->name('admin.recipients.reject');
     Route::put('/recipients/{id}/status', [RecipientManagementController::class, 'updateRecipientStatus'])->name('admin.recipients.status');
     Route::delete('/recipients/{id}', [RecipientManagementController::class, 'adminDeleteRecipient'])->name('admin.recipients.delete');
+
+    // Admin: Suggest Recipients for Campaigns (Task 3)
+    Route::get('/admin/campaigns/suggestions', [RecipientManagementController::class, 'adminCampaignsForSuggestion'])->name('admin.campaigns.suggestions');
+    Route::get('/admin/campaigns/{campaignId}/suggest-recipients', [RecipientManagementController::class, 'suggestRecipientsForCampaign'])->name('admin.campaigns.suggest-recipients');
+    Route::post('/admin/campaigns/{campaignId}/suggest-recipients', [RecipientManagementController::class, 'storeSuggestion'])->name('admin.campaigns.suggest-recipients.store');
+
+    // Organizer: View and Manage Recipient Suggestions
+    Route::get('/campaigns/{campaignId}/suggestions', [RecipientManagementController::class, 'viewSuggestionsForCampaign'])->name('campaigns.suggestions');
+    Route::post('/suggestions/{suggestionId}/accept', [RecipientManagementController::class, 'acceptSuggestion'])->name('suggestions.accept');
+    Route::post('/suggestions/{suggestionId}/reject', [RecipientManagementController::class, 'rejectSuggestion'])->name('suggestions.reject');
+    Route::post('/suggestions/{suggestionId}/accept-and-allocate', [RecipientManagementController::class, 'acceptAndAllocateSuggestion'])->name('suggestions.accept-and-allocate');
+
+    // Admin: Campaign Recipients Report (Task 4)
+    Route::get('/admin/reports/campaign-recipients', [RecipientManagementController::class, 'adminCampaignRecipientsReport'])->name('admin.reports.campaign-recipients');
+    Route::get('/admin/reports/campaign-recipients/{campaignId}', [RecipientManagementController::class, 'adminViewCampaignRecipients'])->name('admin.reports.campaign-recipients.view');
 });
 
 /* reporting */
