@@ -15,8 +15,6 @@ use Livewire\Component;
 
 class AdminDashboard extends Component
 {
-    public $dateRange = '30'; // days
-
     public $activeTab = 'overview'; // overview, campaigns, organizations, donors, events
 
     // Statistics
@@ -72,11 +70,6 @@ class AdminDashboard extends Component
         $this->loadStatistics();
     }
 
-    public function updatedDateRange()
-    {
-        $this->loadStatistics();
-    }
-
     public function updatedActiveTab()
     {
         $this->loadStatistics();
@@ -84,8 +77,6 @@ class AdminDashboard extends Component
 
     public function loadStatistics()
     {
-        $days = (int) $this->dateRange;
-        $startDate = now()->subDays($days);
 
         // Basic Statistics
         $this->totalUsers = User::count();
@@ -107,13 +98,13 @@ class AdminDashboard extends Component
         ];
 
         // Load advanced analytics based on active tab
-        $this->loadAdvancedAnalytics($startDate);
+        $this->loadAdvancedAnalytics();
 
         // Load charts
-        $this->loadChartData($startDate);
+        $this->loadChartData();
     }
 
-    private function loadAdvancedAnalytics($startDate)
+    private function loadAdvancedAnalytics()
     {
         // Database-agnostic column quoting helper
         $quotedColumn = function ($table, $column) {
@@ -180,7 +171,6 @@ class AdminDashboard extends Component
                 DB::raw('MAX('.$quotedColumn('donation', 'Donation_Date').') as last_donation'),
                 DB::raw('COUNT(DISTINCT '.$quotedColumn('donation', 'Campaign_ID').') as campaigns_supported')
             )
-            ->where('donation.created_at', '>=', $startDate)
             ->groupBy('donation.Donor_ID', 'users.name', 'users.email')
             ->orderByDesc('total_donated')
             ->limit(10)
@@ -280,7 +270,7 @@ class AdminDashboard extends Component
                 DB::raw($concatDonation.' as description'),
                 'donation.created_at as activity_date'
             )
-            ->where('donation.created_at', '>=', $startDate)
+            ->orderByDesc('donation.created_at')
             ->limit(5);
 
         $recentCampaigns = DB::table('campaign')
@@ -292,7 +282,7 @@ class AdminDashboard extends Component
                 DB::raw($concatCampaign.' as description'),
                 'campaign.created_at as activity_date'
             )
-            ->where('campaign.created_at', '>=', $startDate)
+            ->orderByDesc('campaign.created_at')
             ->limit(5);
 
         $this->recentActivity = $recentDonations
@@ -302,10 +292,10 @@ class AdminDashboard extends Component
             ->get();
     }
 
-    private function loadChartData($startDate)
+    private function loadChartData()
     {
-        // Donations chart - aggregated by date
-        $donations = Donation::where('Donation_Date', '>=', $startDate)
+        // Donations chart - aggregated by date (last 90 days for performance)
+        $donations = Donation::where('Donation_Date', '>=', now()->subDays(90))
             ->orderBy('Donation_Date')
             ->get();
 
@@ -323,8 +313,8 @@ class AdminDashboard extends Component
             ->values()
             ->toArray();
 
-        // Campaigns chart
-        $campaigns = Campaign::where('created_at', '>=', $startDate)
+        // Campaigns chart (last 90 days for performance)
+        $campaigns = Campaign::where('created_at', '>=', now()->subDays(90))
             ->orderBy('created_at')
             ->get();
 
@@ -341,8 +331,8 @@ class AdminDashboard extends Component
             ->values()
             ->toArray();
 
-        // Events chart
-        $events = Event::where('created_at', '>=', $startDate)
+        // Events chart (last 90 days for performance)
+        $events = Event::where('created_at', '>=', now()->subDays(90))
             ->orderBy('created_at')
             ->get();
 
@@ -359,8 +349,8 @@ class AdminDashboard extends Component
             ->values()
             ->toArray();
 
-        // User growth chart - grouped by role
-        $users = User::where('created_at', '>=', $startDate)
+        // User growth chart - grouped by role (last 90 days for performance)
+        $users = User::where('created_at', '>=', now()->subDays(90))
             ->with('roles')
             ->orderBy('created_at')
             ->get();

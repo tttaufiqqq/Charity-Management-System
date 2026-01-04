@@ -105,59 +105,97 @@
 
         <!-- Donations List -->
         @if($donations->count() > 0)
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <!-- Desktop Table View (hidden on mobile) -->
+            <div class="hidden lg:block bg-white rounded-lg shadow-lg overflow-hidden">
+                <table class="w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign & Organization</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receipt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($donations as $donation)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ \Carbon\Carbon::parse($donation->Donation_Date)->format('M d, Y') }}
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                <div class="font-medium text-gray-900">{{ $donation->campaign->Title }}</div>
+                                <div class="text-gray-600 text-xs mt-1">{{ $donation->campaign->organization->user->name ?? 'N/A' }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
+                                RM {{ number_format($donation->Amount, 2) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ $donation->Payment_Method }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono text-xs">
+                                {{ $donation->Receipt_No }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <div class="flex flex-col gap-1">
+                                    <a href="{{ route('campaigns.show.donate', $donation->Campaign_ID) }}"
+                                       class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                        View
+                                    </a>
+                                    <a href="{{ route('donation.receipt', $donation->Donation_ID) }}"
+                                       class="text-green-600 hover:text-green-900 font-medium">
+                                        Receipt
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($donations as $donation)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ \Carbon\Carbon::parse($donation->Donation_Date)->format('M d, Y') }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    <div class="font-medium">{{ $donation->campaign->Title }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $donation->campaign->organization->user->name ?? 'N/A' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                                    RM {{ number_format($donation->Amount, 2) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $donation->Payment_Method }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                                    {{ $donation->Receipt_No }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <div class="flex gap-2">
-                                        <a href="{{ route('campaigns.show.donate', $donation->Campaign_ID) }}"
-                                           class="text-indigo-600 hover:text-indigo-900 font-medium">
-                                            View Campaign
-                                        </a>
-                                        <span class="text-gray-300">|</span>
-                                        <a href="{{ route('donation.receipt', $donation->Donation_ID) }}"
-                                           class="text-green-600 hover:text-green-900 font-medium">
-                                            Download Receipt
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile/Tablet Card View -->
+            <div class="lg:hidden space-y-4">
+                @foreach($donations as $donation)
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 mb-1">{{ $donation->campaign->Title }}</h3>
+                                <p class="text-sm text-gray-600">{{ $donation->campaign->organization->user->name ?? 'N/A' }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-bold text-green-600">RM {{ number_format($donation->Amount, 2) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div>
+                                <p class="text-gray-500">Date</p>
+                                <p class="text-gray-900 font-medium">{{ \Carbon\Carbon::parse($donation->Donation_Date)->format('M d, Y') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Payment</p>
+                                <p class="text-gray-900 font-medium">{{ $donation->Payment_Method }}</p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-gray-500">Receipt Number</p>
+                                <p class="text-gray-900 font-mono text-xs">{{ $donation->Receipt_No }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-4 border-t border-gray-200">
+                            <a href="{{ route('campaigns.show.donate', $donation->Campaign_ID) }}"
+                               class="flex-1 text-center bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition-colors">
+                                View Campaign
+                            </a>
+                            <a href="{{ route('donation.receipt', $donation->Donation_ID) }}"
+                               class="flex-1 text-center bg-green-50 text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors">
+                                Download Receipt
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
             <!-- Pagination -->

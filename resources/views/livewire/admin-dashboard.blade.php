@@ -1,22 +1,13 @@
 <div x-data="{ activeTab: '{{ $activeTab }}' }" x-init="$watch('activeTab', value => $wire.set('activeTab', value))">
-    <!-- Header with Filters -->
-    <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex items-center gap-4">
-            <div>
-                <label class="text-sm font-medium text-gray-700 mr-2">Date Range:</label>
-                <select wire:model.live="dateRange" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
-                    <option value="365">Last Year</option>
-                </select>
-            </div>
-            <div wire:loading class="text-sm text-indigo-600 flex items-center gap-2">
-                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <!-- Loading Indicator -->
+    <div wire:loading class="mb-6">
+        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Loading...</span>
+                <span class="text-sm font-medium text-indigo-900">Loading analytics data...</span>
             </div>
         </div>
     </div>
@@ -126,52 +117,28 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="grid md:grid-cols-2 gap-6 mb-8">
+    <!-- Quick Action -->
+    <div class="mb-8">
         <a href="{{ route('admin.campaigns.suggestions') }}"
-           class="bg-white rounded-lg shadow-lg p-6 border-2 border-transparent hover:border-indigo-500 transition-all transform hover:scale-105 group">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+           class="block bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 border-2 border-transparent hover:shadow-2xl transition-all transform hover:scale-[1.02] group">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6">
+                    <div class="p-4 bg-white/20 backdrop-blur-sm rounded-xl group-hover:bg-white/30 transition-colors">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-white mb-2">
                             Suggest Recipients for Campaigns
                         </h3>
+                        <p class="text-indigo-100 leading-relaxed">
+                            Review active campaigns and suggest approved recipients who match campaign needs. Help organizers find suitable beneficiaries for their fundraising efforts.
+                        </p>
                     </div>
-                    <p class="text-sm text-gray-600 leading-relaxed">
-                        Review active campaigns and suggest approved recipients who match campaign needs. Help organizers find suitable beneficiaries for their fundraising efforts.
-                    </p>
                 </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </div>
-        </a>
-
-        <a href="{{ route('admin.reports.campaign-recipients') }}"
-           class="bg-white rounded-lg shadow-lg p-6 border-2 border-transparent hover:border-purple-500 transition-all transform hover:scale-105 group">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                            Campaign Recipients Report
-                        </h3>
-                    </div>
-                    <p class="text-sm text-gray-600 leading-relaxed">
-                        View detailed reports of fund allocations across all campaigns. Track which recipients received funds, allocation amounts, and campaign performance metrics.
-                    </p>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                <svg class="w-8 h-8 text-white/80 group-hover:text-white group-hover:translate-x-2 transition-all flex-shrink-0 ml-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                 </svg>
             </div>
         </a>
@@ -259,130 +226,310 @@
 
     <!-- Overview Tab -->
     <div x-show="activeTab === 'overview'" style="display: block;">
-        <!-- Charts Grid -->
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <!-- Donations Chart -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Donations Over Time</h3>
-                    <span class="text-xs text-gray-500">Amount (RM)</span>
-                </div>
-                <div class="h-64" wire:ignore>
-                    <canvas id="donationsChart"></canvas>
-                </div>
+        <!-- Performance Metrics Section -->
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-8 w-1 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">Performance Analytics</h2>
             </div>
 
-            <!-- User Growth Chart -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">User Growth by Role</h3>
-                    <span class="text-xs text-gray-500">New Registrations</span>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Donations Chart -->
+                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Donations Over Time</h3>
+                            <p class="text-sm text-gray-500 mt-2">Total amount received per day (RM)</p>
+                        </div>
+                        <div class="p-3 bg-green-50 rounded-lg">
+                            <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="h-96" wire:ignore>
+                        <canvas id="donationsChart"></canvas>
+                    </div>
                 </div>
-                <div class="h-64" wire:ignore>
-                    <canvas id="userGrowthChart"></canvas>
-                </div>
-            </div>
 
-            <!-- Campaign Status Distribution -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Campaign Status</h3>
-                    <span class="text-xs text-gray-500">Distribution</span>
-                </div>
-                <div class="h-64" wire:ignore>
-                    <canvas id="campaignStatusChart"></canvas>
+                <!-- User Growth Chart -->
+                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-8 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">User Growth by Role</h3>
+                            <p class="text-sm text-gray-500 mt-2">Daily new user registrations by role</p>
+                        </div>
+                        <div class="p-3 bg-purple-50 rounded-lg">
+                            <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="h-96" wire:ignore>
+                        <canvas id="userGrowthChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Additional Charts Row -->
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-            <!-- Geographic Distribution Chart -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Top States by Fundraising</h3>
-                    <span class="text-xs text-gray-500">Amount Raised</span>
-                </div>
-                <div class="h-64" wire:ignore>
-                    <canvas id="geoDistributionChart"></canvas>
-                </div>
+        <!-- Distribution & Geography Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-8 w-1 bg-gradient-to-b from-blue-500 to-cyan-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">Distribution & Geography</h2>
             </div>
 
-            <!-- Fund Allocation Efficiency -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Fund Allocation Overview</h3>
-                    <span class="text-xs text-gray-500">Efficiency %</span>
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Campaign Status Distribution -->
+                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Campaign Status</h3>
+                            <p class="text-sm text-gray-500 mt-1">Distribution</p>
+                        </div>
+                        <div class="p-3 bg-blue-50 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="h-64" wire:ignore>
+                        <canvas id="campaignStatusChart"></canvas>
+                    </div>
                 </div>
-                <div class="h-64" wire:ignore>
+
+                <!-- Geographic Distribution Chart -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">Top States by Fundraising</h3>
+                            <p class="text-sm text-gray-500 mt-1">Amount Raised</p>
+                        </div>
+                        <div class="p-3 bg-cyan-50 rounded-lg">
+                            <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="h-64" wire:ignore>
+                        <canvas id="geoDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fund Allocation Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-8 w-1 bg-gradient-to-b from-amber-500 to-orange-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">Fund Allocation</h2>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
+                <!-- Important Note -->
+                <div class="mb-6 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold text-amber-900 mb-1">Note about Fund Allocation Data</p>
+                            <p class="text-xs text-amber-800 leading-relaxed">
+                                This chart shows allocated vs unallocated funds for the <span class="font-semibold">top 10 campaigns by amount raised</span>.
+                                The totals here may differ from the "Total Allocated" card above, which shows allocations across <span class="font-semibold">all campaigns</span> (including smaller ones not shown in this chart).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Fund Allocation Overview</h3>
+                        <p class="text-sm text-gray-500 mt-1">Top 10 Campaigns - Allocation Efficiency %</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 rounded-lg">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="h-72" wire:ignore>
                     <canvas id="allocationChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Campaign Success Rate -->
-        <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Campaign Performance Summary</h3>
-            <div class="grid md:grid-cols-5 gap-4 mb-6">
-                <div class="bg-gray-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-gray-900">{{ $campaignSuccessRate['total'] }}</div>
-                    <div class="text-sm text-gray-600 mt-1">Total Campaigns</div>
-                </div>
-                <div class="bg-green-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-green-600">{{ $campaignSuccessRate['successful'] }}</div>
-                    <div class="text-sm text-gray-600 mt-1">Reached Goal</div>
-                </div>
-                <div class="bg-blue-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-blue-600">{{ $campaignSuccessRate['active'] }}</div>
-                    <div class="text-sm text-gray-600 mt-1">Active</div>
-                </div>
-                <div class="bg-yellow-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-yellow-600">{{ $campaignSuccessRate['success_rate'] }}%</div>
-                    <div class="text-sm text-gray-600 mt-1">Success Rate</div>
-                </div>
-                <div class="bg-purple-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-purple-600">{{ $campaignSuccessRate['avg_achievement_rate'] }}%</div>
-                    <div class="text-sm text-gray-600 mt-1">Avg Achievement</div>
+        <!-- Campaign Recipients Report Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-8 w-1 bg-gradient-to-b from-purple-500 to-fuchsia-600 rounded-full"></div>
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-900">Campaign Recipients Report</h2>
+                    <p class="text-sm text-gray-600 mt-1">Track fund allocations and recipient impact across all campaigns</p>
                 </div>
             </div>
-            <!-- Campaign Success Funnel Chart -->
-            <div class="h-64" wire:ignore>
-                <canvas id="campaignFunnelChart"></canvas>
+
+            <!-- Summary Cards -->
+            <div class="grid md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-gradient-to-br from-purple-50 to-fuchsia-100 rounded-xl p-6 border border-purple-200 shadow-md">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm font-semibold text-purple-700">Total Campaigns</div>
+                        <div class="p-2 bg-purple-200 rounded-lg">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">{{ count($allocationEfficiency) }}</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl p-6 border border-emerald-200 shadow-md">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm font-semibold text-emerald-700">Total Raised</div>
+                        <div class="p-2 bg-emerald-200 rounded-lg">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">RM {{ number_format($allocationEfficiency->sum('Collected_Amount'), 2) }}</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-6 border border-blue-200 shadow-md">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm font-semibold text-blue-700">Total Allocated</div>
+                        <div class="p-2 bg-blue-200 rounded-lg">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">RM {{ number_format($allocationEfficiency->sum('allocated_amount'), 2) }}</div>
+                </div>
+
+                <div class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-6 border border-amber-200 shadow-md">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm font-semibold text-amber-700">Recipients Helped</div>
+                        <div class="p-2 bg-amber-200 rounded-lg">
+                            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900">{{ $allocationEfficiency->sum('recipient_count') }}</div>
+                </div>
+            </div>
+
+            <!-- Detailed Report Table -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-purple-50 to-fuchsia-50 border-b border-purple-100">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-purple-500 rounded-lg">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">Campaign-wise Allocation Details</h3>
+                            <p class="text-xs text-gray-600 mt-0.5">Fund distribution and recipient impact analysis</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Raised</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Allocated</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Efficiency</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Recipients</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($allocationEfficiency as $allocation)
+                                <tr class="hover:bg-purple-50/50 transition-colors">
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ $allocation->Title }}</td>
+                                    <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">RM {{ number_format($allocation->Collected_Amount, 2) }}</td>
+                                    <td class="px-6 py-4 text-sm text-right font-bold text-blue-600">RM {{ number_format($allocation->allocated_amount, 2) }}</td>
+                                    <td class="px-6 py-4 text-sm text-right font-semibold text-amber-600">RM {{ number_format($allocation->unallocated_amount, 2) }}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="w-20 bg-gray-200 rounded-full h-2">
+                                                <div class="h-2 rounded-full {{ $allocation->allocation_percentage >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-600' : ($allocation->allocation_percentage >= 50 ? 'bg-gradient-to-r from-yellow-500 to-amber-600' : 'bg-gradient-to-r from-red-500 to-rose-600') }}"
+                                                     style="width: {{ min($allocation->allocation_percentage ?? 0, 100) }}%"></div>
+                                            </div>
+                                            <span class="text-sm font-bold {{ $allocation->allocation_percentage >= 80 ? 'text-green-600' : ($allocation->allocation_percentage >= 50 ? 'text-yellow-600' : 'text-red-600') }}">
+                                                {{ $allocation->allocation_percentage ?? 0 }}%
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-right font-bold text-purple-600">{{ number_format($allocation->recipient_count) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <p class="text-sm font-medium text-gray-500">No allocation data available</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-            <div class="space-y-3">
-                @forelse($recentActivity as $activity)
-                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div class="flex-shrink-0">
-                            @if($activity->type === 'donation')
-                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                            @else
-                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                                    </svg>
-                                </div>
-                            @endif
+        <!-- Recent Activity Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-8 w-1 bg-gradient-to-b from-pink-500 to-rose-600 rounded-full"></div>
+                <h2 class="text-2xl font-bold text-gray-900">Recent Activity</h2>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <div class="space-y-3">
+                    @forelse($recentActivity as $activity)
+                        <div class="flex items-start gap-4 p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100 hover:shadow-sm transition-all">
+                            <div class="flex-shrink-0">
+                                @if($activity->type === 'donation')
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                @else
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl flex items-center justify-center">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                                        </svg>
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 mb-1">{{ $activity->actor }}</p>
+                                <p class="text-sm text-gray-600">{{ $activity->description }}</p>
+                            </div>
+                            <div class="flex-shrink-0 text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                {{ \Carbon\Carbon::parse($activity->activity_date)->diffForHumans() }}
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900">{{ $activity->actor }}</p>
-                            <p class="text-sm text-gray-600">{{ $activity->description }}</p>
+                    @empty
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-500">No recent activity</p>
                         </div>
-                        <div class="flex-shrink-0 text-xs text-gray-500">
-                            {{ \Carbon\Carbon::parse($activity->activity_date)->diffForHumans() }}
-                        </div>
-                    </div>
-                @empty
-                    <p class="text-sm text-gray-500 text-center py-4">No recent activity</p>
-                @endforelse
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
