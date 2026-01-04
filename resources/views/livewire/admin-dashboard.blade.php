@@ -117,27 +117,49 @@
         </div>
     </div>
 
-    <!-- Quick Action -->
-    <div class="mb-8">
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <!-- Suggest Recipients -->
         <a href="{{ route('admin.campaigns.suggestions') }}"
-           class="block bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-8 border-2 border-transparent hover:shadow-2xl transition-all transform hover:scale-[1.02] group">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-6">
-                    <div class="p-4 bg-white/20 backdrop-blur-sm rounded-xl group-hover:bg-white/30 transition-colors">
-                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="text-2xl font-bold text-white mb-2">
-                            Suggest Recipients for Campaigns
-                        </h3>
-                        <p class="text-indigo-100 leading-relaxed">
-                            Review active campaigns and suggest approved recipients who match campaign needs. Help organizers find suitable beneficiaries for their fundraising efforts.
-                        </p>
-                    </div>
+           class="block bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 border-2 border-transparent hover:shadow-2xl transition-all transform hover:scale-[1.02] group">
+            <div class="flex items-start gap-4 mb-4">
+                <div class="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:bg-white/30 transition-colors">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
                 </div>
-                <svg class="w-8 h-8 text-white/80 group-hover:text-white group-hover:translate-x-2 transition-all flex-shrink-0 ml-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-white mb-2">
+                        Suggest Recipients for Campaigns
+                    </h3>
+                    <p class="text-indigo-100 text-sm leading-relaxed">
+                        Review active campaigns and suggest approved recipients who match campaign needs.
+                    </p>
+                </div>
+                <svg class="w-6 h-6 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </div>
+        </a>
+
+        <!-- Register Recipient -->
+        <a href="{{ route('admin.recipients.create') }}"
+           class="block bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl shadow-lg p-6 border-2 border-transparent hover:shadow-2xl transition-all transform hover:scale-[1.02] group">
+            <div class="flex items-start gap-4 mb-4">
+                <div class="p-3 bg-white/20 backdrop-blur-sm rounded-xl group-hover:bg-white/30 transition-colors">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-bold text-white mb-2">
+                        Register New Recipient
+                    </h3>
+                    <p class="text-emerald-100 text-sm leading-relaxed">
+                        Add a new recipient to the system. Auto-approved and immediately available for allocation.
+                    </p>
+                </div>
+                <svg class="w-6 h-6 text-white/80 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                 </svg>
             </div>
@@ -214,12 +236,6 @@
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Event Metrics
                 </button>
-                <button
-                    @click="activeTab = 'geography'"
-                    :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'geography', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'geography' }"
-                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    Geography
-                </button>
             </nav>
         </div>
     </div>
@@ -272,49 +288,28 @@
             </div>
         </div>
 
-        <!-- Distribution & Geography Section -->
+        <!-- Campaign Status Distribution Section -->
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-6">
                 <div class="h-8 w-1 bg-gradient-to-b from-blue-500 to-cyan-600 rounded-full"></div>
-                <h2 class="text-2xl font-bold text-gray-900">Distribution & Geography</h2>
+                <h2 class="text-2xl font-bold text-gray-900">Campaign Status Distribution</h2>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-6">
-                <!-- Campaign Status Distribution -->
-                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Campaign Status</h3>
-                            <p class="text-sm text-gray-500 mt-1">Distribution</p>
-                        </div>
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
-                            </svg>
-                        </div>
+            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Campaign Status</h3>
+                        <p class="text-sm text-gray-500 mt-1">Distribution</p>
                     </div>
-                    <div class="h-64" wire:ignore>
-                        <canvas id="campaignStatusChart"></canvas>
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
+                        </svg>
                     </div>
                 </div>
-
-                <!-- Geographic Distribution Chart -->
-                <div class="lg:col-span-2 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">Top States by Fundraising</h3>
-                            <p class="text-sm text-gray-500 mt-1">Amount Raised</p>
-                        </div>
-                        <div class="p-3 bg-cyan-50 rounded-lg">
-                            <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="h-64" wire:ignore>
-                        <canvas id="geoDistributionChart"></canvas>
-                    </div>
+                <div class="h-64" wire:ignore>
+                    <canvas id="campaignStatusChart"></canvas>
                 </div>
             </div>
         </div>
@@ -441,12 +436,90 @@
                     <table class="w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Raised</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Allocated</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Efficiency</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Recipients</th>
+                                <th wire:click="sortRecipients('Title')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center gap-2">
+                                        <span>Campaign</span>
+                                        @if($recipientSortBy === 'Title')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortRecipients('Collected_Amount')" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span>Raised</span>
+                                        @if($recipientSortBy === 'Collected_Amount')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortRecipients('allocated_amount')" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span>Allocated</span>
+                                        @if($recipientSortBy === 'allocated_amount')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortRecipients('unallocated_amount')" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span>Remaining</span>
+                                        @if($recipientSortBy === 'unallocated_amount')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortRecipients('allocation_percentage')" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span>Efficiency</span>
+                                        @if($recipientSortBy === 'allocation_percentage')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
+                                <th wire:click="sortRecipients('recipient_count')" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <span>Recipients</span>
+                                        @if($recipientSortBy === 'recipient_count')
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                                @if($recipientSortDirection === 'asc')
+                                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                                                @else
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                                @endif
+                                            </svg>
+                                        @endif
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -489,9 +562,33 @@
 
         <!-- Recent Activity Section -->
         <div class="mb-8">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="h-8 w-1 bg-gradient-to-b from-pink-500 to-rose-600 rounded-full"></div>
-                <h2 class="text-2xl font-bold text-gray-900">Recent Activity</h2>
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="h-8 w-1 bg-gradient-to-b from-pink-500 to-rose-600 rounded-full"></div>
+                    <h2 class="text-2xl font-bold text-gray-900">Recent Activity</h2>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                    <button wire:click="$set('activityFilter', 'all')"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all {{ $activityFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                        All Activity
+                    </button>
+                    <button wire:click="$set('activityFilter', 'donation')"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all {{ $activityFilter === 'donation' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Donations
+                    </button>
+                    <button wire:click="$set('activityFilter', 'campaign')"
+                            class="px-4 py-2 text-sm font-medium rounded-md transition-all {{ $activityFilter === 'campaign' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900' }}">
+                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                        Campaigns
+                    </button>
+                </div>
             </div>
 
             <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
@@ -657,7 +754,6 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Raised</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Campaigns</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Events</th>
@@ -673,7 +769,6 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $org->organizer_name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ $org->City }}, {{ $org->State }}</td>
                                 <td class="px-6 py-4 text-sm text-right font-bold text-green-600">RM {{ number_format($org->total_raised ?? 0, 2) }}</td>
                                 <td class="px-6 py-4 text-sm text-right font-medium text-blue-600">{{ number_format($org->total_campaigns) }}</td>
                                 <td class="px-6 py-4 text-sm text-right font-medium text-purple-600">{{ number_format($org->total_events) }}</td>
@@ -681,7 +776,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">No organization data available</td>
+                                <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">No organization data available</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -812,43 +907,6 @@
         </div>
     </div>
 
-    <!-- Geography Tab -->
-    <div x-show="activeTab === 'geography'" x-cloak>
-        <div class="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Geographic Distribution</h3>
-                <p class="text-sm text-gray-600 mt-1">Fundraising performance by location</p>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Organizations</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Campaigns</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Raised</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($geographicDistribution as $location)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $location->State }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ $location->City }}</td>
-                                <td class="px-6 py-4 text-sm text-right font-medium text-purple-600">{{ number_format($location->org_count) }}</td>
-                                <td class="px-6 py-4 text-sm text-right font-medium text-blue-600">{{ number_format($location->campaign_count) }}</td>
-                                <td class="px-6 py-4 text-sm text-right font-bold text-green-600">RM {{ number_format($location->total_raised ?? 0, 2) }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">No geographic data available</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 @push('scripts')
@@ -871,7 +929,7 @@
                 console.log('Chart.js loaded successfully!');
 
                 let donationsChart, userGrowthChart, campaignStatusChart;
-                let geoDistributionChart, allocationChart, campaignFunnelChart;
+                let allocationChart, campaignFunnelChart;
                 let topCampaignsChart, orgPerformanceChart, topDonorsChart, eventMetricsChart;
 
                 function initCharts() {
@@ -1093,52 +1151,6 @@
                     });
                 }
 
-                // Geographic Distribution Chart (Bar Chart)
-                const geoCanvas = document.getElementById('geoDistributionChart');
-                if (geoCanvas) {
-                    const geoCtx = geoCanvas.getContext('2d');
-                    const geoData = @json($geographicDistribution ?? []);
-
-                    if (geoDistributionChart) geoDistributionChart.destroy();
-                    geoDistributionChart = new Chart(geoCtx, {
-                        type: 'bar',
-                        data: {
-                            labels: geoData.map(d => `${d.City}, ${d.State}`).slice(0, 10),
-                            datasets: [{
-                                label: 'Amount Raised (RM)',
-                                data: geoData.map(d => parseFloat(d.total_raised || 0)).slice(0, 10),
-                                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                                borderColor: 'rgb(59, 130, 246)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return 'RM ' + context.parsed.x.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                x: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return 'RM ' + value.toLocaleString();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
 
                 // Allocation Efficiency Chart (Doughnut)
                 const allocCanvas = document.getElementById('allocationChart');
@@ -1450,6 +1462,16 @@
                             initCharts();
                         });
                     });
+                });
+
+                // Listen for chart filter updates (Livewire v3 event listener)
+                window.addEventListener('chartsUpdated', (event) => {
+                    console.log('Charts updated event received, re-rendering charts...');
+                    // Small delay to ensure Livewire data is updated
+                    setTimeout(() => {
+                        console.log('Calling initCharts() after filter change');
+                        initCharts();
+                    }, 100);
                 });
             }); // End waitForChart callback
         });

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 class RecipientManagementController extends Controller
 {
     /**
-     * Show list of approved recipients for allocation
+     * Show list of admin-suggested recipients for allocation
      */
     public function showRecipients($campaignId)
     {
@@ -26,8 +26,12 @@ class RecipientManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Get approved recipients
-        $recipients = Recipient::where('Status', 'Approved')
+        // Get only recipients suggested by admin (Pending or Accepted, but not Rejected)
+        $recipients = Recipient::where('recipient.Status', 'Approved')
+            ->join('campaign_recipient_suggestions', 'recipient.Recipient_ID', '=', 'campaign_recipient_suggestions.Recipient_ID')
+            ->where('campaign_recipient_suggestions.Campaign_ID', $campaignId)
+            ->whereIn('campaign_recipient_suggestions.Status', ['Pending', 'Accepted'])
+            ->select('recipient.*')
             ->with(['donationAllocations' => function ($query) use ($campaignId) {
                 $query->where('Campaign_ID', $campaignId);
             }])
@@ -654,5 +658,53 @@ class RecipientManagementController extends Controller
         ];
 
         return view('recipient-management.admin.campaign-recipients-detail', compact('campaign', 'allocations', 'stats'));
+    }
+
+    /**
+     * Show form for admin to register a new recipient
+     */
+    public function adminCreateRecipient()
+    {
+        return view('recipient-management.admin.create');
+    }
+
+    /**
+     * Store new recipient created by admin (auto-approved)
+     */
+    public function adminStoreRecipient(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string'],
+            'contact' => ['required', 'string', 'max:20'],
+            'need_description' => ['required', 'string'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $recipient = Recipient::create([
+                'Public_ID' => null, // Admin-registered recipients don't need public profile
+                'Name' => $validated['name'],
+                'Address' => $validated['address'],
+                'Contact' => $validated['contact'],
+                'Need_Description' => $validated['need_description'],
+                'Status' => 'Approved', // Admin registrations are auto-approved
+                'Approved_At' => now(),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.recipients.show', $recipient->Recipient_ID)
+                ->with('success', 'Recipient registered and approved successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to register recipient: '.$e->getMessage());
+        }
     }
 }

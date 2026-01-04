@@ -54,7 +54,7 @@
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date', $campaign->Start_Date->format('Y-m-d')) }}" required
+                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date', $campaign->Start_Date->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         @error('start_date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -62,7 +62,7 @@
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $campaign->End_Date->format('Y-m-d')) }}" required
+                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $campaign->End_Date->format('Y-m-d')) }}" min="{{ date('Y-m-d') }}" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         @error('end_date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

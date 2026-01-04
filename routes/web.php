@@ -147,6 +147,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/recipients/pending', [RecipientManagementController::class, 'pendingRecipients'])->name('admin.recipients.pending');
     Route::get('/recipients/all', [RecipientManagementController::class, 'allRecipients'])->name('admin.recipients.all');
+    Route::get('/recipients/create', [RecipientManagementController::class, 'adminCreateRecipient'])->name('admin.recipients.create');
+    Route::post('/recipients/create', [RecipientManagementController::class, 'adminStoreRecipient'])->name('admin.recipients.create.store');
     Route::get('/recipients/{id}', [RecipientManagementController::class, 'adminShowRecipient'])->name('admin.recipients.show');
 
     // Approval Actions

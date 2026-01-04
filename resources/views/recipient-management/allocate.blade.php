@@ -123,12 +123,47 @@
                 {{ $recipients->links() }}
             </div>
         @else
-            <div class="bg-white rounded-lg shadow-lg p-12 text-center">
-                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">No approved recipients</h3>
-                <p class="text-gray-600">There are no approved recipients available for fund allocation at this time.</p>
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg p-12 text-center border-2 border-blue-200">
+                <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">No Recipients Suggested Yet</h3>
+                <p class="text-gray-700 mb-6 max-w-2xl mx-auto">
+                    Administrators have not suggested any recipients for this campaign yet.
+                    You'll be able to allocate funds once admins review and suggest eligible recipients for <strong>{{ $campaign->Title }}</strong>.
+                </p>
+
+                <div class="bg-white rounded-lg p-6 max-w-xl mx-auto border border-blue-200">
+                    <div class="flex items-start gap-3 text-left">
+                        <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-2">What happens next?</h4>
+                            <ul class="text-sm text-gray-600 space-y-1.5">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-blue-600 font-bold">1.</span>
+                                    <span>Administrators will review eligible recipients in the system</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-blue-600 font-bold">2.</span>
+                                    <span>They will suggest suitable recipients for your campaign</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-blue-600 font-bold">3.</span>
+                                    <span>You'll be able to allocate collected funds to suggested recipients</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-500 mt-6">
+                    Need help? Contact your system administrator to request recipient suggestions for this campaign.
+                </p>
             </div>
         @endif
     </main>

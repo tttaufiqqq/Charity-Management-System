@@ -66,7 +66,7 @@
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
-                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date') }}" required
+                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date') }}" min="{{ date('Y-m-d') }}" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         @error('start_date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -74,7 +74,7 @@
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
-                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" required
+                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}" min="{{ date('Y-m-d') }}" required
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                         @error('end_date')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -98,18 +98,50 @@
                     </div>
                 </div>
 
+                <!-- Info Banner about Roles -->
+                <div class="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-xl p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-indigo-900 mb-2">💡 Organize Volunteers with Multiple Roles</h3>
+                            <p class="text-indigo-800 mb-3">
+                                Break down your event into specific volunteer roles for better organization and efficiency. Each role can have its own responsibilities and volunteer count.
+                            </p>
+                            <div class="bg-white rounded-lg p-4 border border-indigo-200">
+                                <p class="text-sm font-semibold text-gray-700 mb-2">Example roles you might need:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full">Registration Desk</span>
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Food Distribution</span>
+                                    <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">Setup Crew</span>
+                                    <span class="px-3 py-1 bg-pink-100 text-pink-700 text-xs font-medium rounded-full">Guest Support</span>
+                                    <span class="px-3 py-1 bg-cyan-100 text-cyan-700 text-xs font-medium rounded-full">Clean-up Team</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Volunteer Roles Section -->
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Volunteer Roles *</label>
-                            <p class="text-xs text-gray-500 mt-1">Define specific roles volunteers can fill during this event</p>
+                            <label class="block text-lg font-bold text-gray-900">Volunteer Roles *</label>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <span class="font-semibold text-indigo-600">Define multiple roles</span> to organize volunteers and distribute responsibilities effectively
+                            </p>
                         </div>
-                        <button type="button" @click="addRole()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm hover:shadow-md">
-                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" @click="addRole()"
+                                class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all text-sm font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
-                            Add Role
+                            Add Volunteer Role
                         </button>
                     </div>
 
@@ -157,12 +189,19 @@
                             </div>
                         </template>
 
-                        <div x-show="roles.length === 0" class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                            <svg class="w-16 h-16 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            <p class="text-gray-600 font-medium mb-1">No volunteer roles defined yet</p>
-                            <p class="text-gray-500 text-sm">Click "Add Role" to organize your event with specific volunteer positions</p>
+                        <div x-show="roles.length === 0" class="text-center py-16 border-2 border-dashed border-indigo-300 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-indigo-600 rounded-full flex items-center justify-center animate-pulse">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">No volunteer roles yet - Let's add some!</h3>
+                            <p class="text-gray-600 mb-4 max-w-md mx-auto">
+                                Click the <span class="font-semibold text-indigo-600">"Add Volunteer Role"</span> button above to create your first volunteer position.
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                💡 Tip: Most events need 3-5 different roles for smooth operation
+                            </p>
                         </div>
                     </div>
                     @error('roles')

@@ -17,6 +17,13 @@ class AdminDashboard extends Component
 {
     public $activeTab = 'overview'; // overview, campaigns, organizations, donors, events
 
+    // Sorting and Filtering
+    public $recipientSortBy = 'Collected_Amount';
+
+    public $recipientSortDirection = 'desc';
+
+    public $activityFilter = 'all'; // all, donation, campaign
+
     // Statistics
     public $totalUsers;
 
@@ -47,8 +54,6 @@ class AdminDashboard extends Component
     public $eventMetrics;
 
     public $campaignSuccessRate;
-
-    public $geographicDistribution;
 
     public $allocationEfficiency;
 
@@ -217,22 +222,7 @@ class AdminDashboard extends Component
             'avg_achievement_rate' => round($campaignStats->avg_achievement_rate ?? 0, 2),
         ];
 
-        // Geographic Distribution
-        $this->geographicDistribution = DB::table('organization')
-            ->leftJoin('campaign', 'organization.Organization_ID', '=', 'campaign.Organization_ID')
-            ->select(
-                'organization.State',
-                'organization.City',
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('organization', 'Organization_ID').') as org_count'),
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('campaign', 'Campaign_ID').') as campaign_count'),
-                DB::raw('SUM('.$quotedColumn('campaign', 'Collected_Amount').') as total_raised')
-            )
-            ->groupBy('organization.State', 'organization.City')
-            ->orderByDesc('total_raised')
-            ->limit(15)
-            ->get();
-
-        // Allocation Efficiency - JOIN across multiple tables
+        // Allocation Efficiency - JOIN across multiple tables with sorting
         $this->allocationEfficiency = DB::table('campaign')
             ->leftJoin('donation_allocation', 'campaign.Campaign_ID', '=', 'donation_allocation.Campaign_ID')
             ->select(
@@ -246,7 +236,7 @@ class AdminDashboard extends Component
             )
             ->where('campaign.Status', '!=', 'Pending')
             ->groupBy('campaign.Campaign_ID', 'campaign.Title', 'campaign.Collected_Amount')
-            ->orderByDesc('campaign.Collected_Amount')
+            ->orderBy($this->recipientSortBy, $this->recipientSortDirection)
             ->limit(10)
             ->get();
 
@@ -260,41 +250,52 @@ class AdminDashboard extends Component
             ? "CONCAT('created campaign: ', ".$quotedColumn('campaign', 'Title').')'
             : "CONCAT('created campaign: ', ".$quotedColumn('campaign', 'Title').')';
 
-        $recentDonations = DB::table('donation')
-            ->join('donor', 'donation.Donor_ID', '=', 'donor.Donor_ID')
-            ->join('users', 'donor.User_ID', '=', 'users.id')
-            ->join('campaign', 'donation.Campaign_ID', '=', 'campaign.Campaign_ID')
-            ->select(
-                DB::raw("'donation' as type"),
-                'users.name as actor',
-                DB::raw($concatDonation.' as description'),
-                'donation.created_at as activity_date'
-            )
-            ->orderByDesc('donation.created_at')
-            ->limit(5);
+        // Recent Activity with filtering
+        if ($this->activityFilter === 'all' || $this->activityFilter === 'donation') {
+            $recentDonations = DB::table('donation')
+                ->join('donor', 'donation.Donor_ID', '=', 'donor.Donor_ID')
+                ->join('users', 'donor.User_ID', '=', 'users.id')
+                ->join('campaign', 'donation.Campaign_ID', '=', 'campaign.Campaign_ID')
+                ->select(
+                    DB::raw("'donation' as type"),
+                    'users.name as actor',
+                    DB::raw($concatDonation.' as description'),
+                    'donation.created_at as activity_date'
+                )
+                ->orderByDesc('donation.created_at')
+                ->limit($this->activityFilter === 'donation' ? 10 : 5);
+        }
 
-        $recentCampaigns = DB::table('campaign')
-            ->join('organization', 'campaign.Organization_ID', '=', 'organization.Organization_ID')
-            ->join('users', 'organization.Organizer_ID', '=', 'users.id')
-            ->select(
-                DB::raw("'campaign' as type"),
-                'users.name as actor',
-                DB::raw($concatCampaign.' as description'),
-                'campaign.created_at as activity_date'
-            )
-            ->orderByDesc('campaign.created_at')
-            ->limit(5);
+        if ($this->activityFilter === 'all' || $this->activityFilter === 'campaign') {
+            $recentCampaigns = DB::table('campaign')
+                ->join('organization', 'campaign.Organization_ID', '=', 'organization.Organization_ID')
+                ->join('users', 'organization.Organizer_ID', '=', 'users.id')
+                ->select(
+                    DB::raw("'campaign' as type"),
+                    'users.name as actor',
+                    DB::raw($concatCampaign.' as description'),
+                    'campaign.created_at as activity_date'
+                )
+                ->orderByDesc('campaign.created_at')
+                ->limit($this->activityFilter === 'campaign' ? 10 : 5);
+        }
 
-        $this->recentActivity = $recentDonations
-            ->union($recentCampaigns)
-            ->orderByDesc('activity_date')
-            ->limit(10)
-            ->get();
+        if ($this->activityFilter === 'all') {
+            $this->recentActivity = $recentDonations
+                ->union($recentCampaigns)
+                ->orderByDesc('activity_date')
+                ->limit(10)
+                ->get();
+        } elseif ($this->activityFilter === 'donation') {
+            $this->recentActivity = $recentDonations->get();
+        } else {
+            $this->recentActivity = $recentCampaigns->get();
+        }
     }
 
     private function loadChartData()
     {
-        // Donations chart - aggregated by date (last 90 days for performance)
+        // Donations chart - last 90 days
         $donations = Donation::where('Donation_Date', '>=', now()->subDays(90))
             ->orderBy('Donation_Date')
             ->get();
@@ -349,7 +350,7 @@ class AdminDashboard extends Component
             ->values()
             ->toArray();
 
-        // User growth chart - grouped by role (last 90 days for performance)
+        // User growth chart - last 90 days, all roles
         $users = User::where('created_at', '>=', now()->subDays(90))
             ->with('roles')
             ->orderBy('created_at')
@@ -397,6 +398,23 @@ class AdminDashboard extends Component
                 'count' => $stat->count,
             ];
         })->toArray();
+    }
+
+    public function sortRecipients($column)
+    {
+        if ($this->recipientSortBy === $column) {
+            $this->recipientSortDirection = $this->recipientSortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->recipientSortBy = $column;
+            $this->recipientSortDirection = 'desc';
+        }
+
+        $this->loadStatistics();
+    }
+
+    public function updatedActivityFilter()
+    {
+        $this->loadStatistics();
     }
 
     public function render()
