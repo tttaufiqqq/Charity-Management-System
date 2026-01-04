@@ -125,6 +125,30 @@ class VolunteerController extends Controller
             return back()->with('error', 'You are already registered for this event.');
         }
 
+        // Check for date conflicts with other registered events
+        $conflictingEvent = $volunteer->events()
+            ->where('event.Event_ID', '!=', $event->Event_ID)
+            ->where(function ($query) use ($event) {
+                $query->where(function ($q) use ($event) {
+                    // New event starts during existing event
+                    $q->where('event.Start_Date', '<=', $event->Start_Date)
+                        ->where('event.End_Date', '>=', $event->Start_Date);
+                })->orWhere(function ($q) use ($event) {
+                    // New event ends during existing event
+                    $q->where('event.Start_Date', '<=', $event->End_Date)
+                        ->where('event.End_Date', '>=', $event->End_Date);
+                })->orWhere(function ($q) use ($event) {
+                    // New event completely contains existing event
+                    $q->where('event.Start_Date', '>=', $event->Start_Date)
+                        ->where('event.End_Date', '<=', $event->End_Date);
+                });
+            })
+            ->first();
+
+        if ($conflictingEvent) {
+            return back()->with('error', 'You are already registered for "'.$conflictingEvent->Title.'" which overlaps with this event ('.\Carbon\Carbon::parse($conflictingEvent->Start_Date)->format('M d, Y').' - '.\Carbon\Carbon::parse($conflictingEvent->End_Date)->format('M d, Y').').');
+        }
+
         // Check capacity
         if ($event->Capacity) {
             $currentVolunteers = $event->volunteers()->count();

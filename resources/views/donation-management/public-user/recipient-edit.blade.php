@@ -15,16 +15,6 @@
     <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <div class="max-w-3xl w-full">
-            <!-- Back Button -->
-            <div class="mb-6">
-                <a href="{{ route('public.recipients.show', $recipient->Recipient_ID) }}" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center">
-                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    Back to Recipient Details
-                </a>
-            </div>
-
             <!-- Edit Form Card -->
             <div class="bg-white rounded-lg shadow-xl p-8">
                 <div class="mb-6">

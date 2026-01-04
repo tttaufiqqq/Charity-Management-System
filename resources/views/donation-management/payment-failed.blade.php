@@ -107,16 +107,10 @@
                             Try Again
                         </a>
 
-                        <div class="grid md:grid-cols-2 gap-3">
-                            <a href="{{ route('campaigns.show.donate', $donation->campaign->Campaign_ID) }}"
-                               class="block text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                                Back to Campaign
-                            </a>
-                            <a href="{{ route('campaigns.browse') }}"
-                               class="block text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                                Browse Campaigns
-                            </a>
-                        </div>
+                        <a href="{{ route('campaigns.browse') }}"
+                           class="block text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                            Browse Campaigns
+                        </a>
 
                         <a href="{{ route('dashboard') }}"
                            class="block text-center text-gray-600 hover:text-gray-900 px-6 py-3 rounded-lg font-medium transition-colors">

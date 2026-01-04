@@ -18,10 +18,7 @@
             </svg>
             <h1 class="text-2xl font-bold text-gray-900 mb-2">Donor Profile</h1>
             <p class="text-gray-600 mb-6">Your donor account information is managed through your main account settings.</p>
-            <p class="text-sm text-gray-500 mb-8">To update your name and email, please use the main Profile settings.</p>
-            <a href="{{ route('profile.edit') }}" class="inline-block px-6 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-medium">
-                Back to Profile
-            </a>
+            <p class="text-sm text-gray-500">To update your name and email, please use the main Profile settings.</p>
         </div>
     </main>
 </div>

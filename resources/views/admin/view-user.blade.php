@@ -12,16 +12,6 @@
 
     <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Back Button -->
-        <div class="mb-6">
-            <a href="{{ route('admin.manage.users') }}" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center">
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Back to User Management
-            </a>
-        </div>
-
         <!-- User Detail Card -->
         <div class="bg-white rounded-lg shadow-xl overflow-hidden">
             <!-- Header -->

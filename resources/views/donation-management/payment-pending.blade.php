@@ -72,16 +72,10 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="space-y-3">
-                <button onclick="location.reload()"
-                        class="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
-                    Check Status Now
-                </button>
-                <a href="{{ route('campaigns.browse') }}"
-                   class="block w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                    Back to Campaigns
-                </a>
-            </div>
+            <button onclick="location.reload()"
+                    class="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors">
+                Check Status Now
+            </button>
 
             <!-- Troubleshooting -->
             <div class="mt-6 pt-6 border-t border-gray-200">

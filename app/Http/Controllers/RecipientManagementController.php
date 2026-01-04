@@ -499,7 +499,11 @@ class RecipientManagementController extends Controller
 
         $suggestion->update(['Status' => 'Accepted']);
 
-        return redirect()->back()->with('success', 'Suggestion accepted! You can now allocate funds to this recipient.');
+        // Smart redirect: Go to allocation page with recipient highlighted
+        return redirect()
+            ->route('recipients.allocate', $suggestion->Campaign_ID)
+            ->with('success', 'Suggestion accepted! Recipient "'.($suggestion->recipient->Name ?? '').'" is now available for allocation.')
+            ->with('highlight_recipient', $suggestion->Recipient_ID);
     }
 
     /**

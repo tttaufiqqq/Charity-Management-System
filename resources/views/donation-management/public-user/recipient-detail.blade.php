@@ -14,16 +14,6 @@
 
     <!-- Main Content -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <!-- Back Button -->
-        <div class="mb-6">
-            <a href="{{ route('public.recipients.index') }}" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center">
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Back to Recipients
-            </a>
-        </div>
-
         <!-- Success Message -->
         @if(session('success'))
             <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">

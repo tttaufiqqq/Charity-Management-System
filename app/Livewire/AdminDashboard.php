@@ -52,8 +52,6 @@ class AdminDashboard extends Component
 
     public $geographicDistribution;
 
-    public $paymentMethodStats;
-
     public $allocationEfficiency;
 
     public $recentActivity;
@@ -66,8 +64,6 @@ class AdminDashboard extends Component
     public $eventsChart;
 
     public $userGrowthChart;
-
-    public $donationsByMethodChart;
 
     public $campaignStatusChart;
 
@@ -246,19 +242,6 @@ class AdminDashboard extends Component
             ->limit(15)
             ->get();
 
-        // Payment Method Statistics
-        $this->paymentMethodStats = DB::table('donation')
-            ->select(
-                'Payment_Method',
-                DB::raw('COUNT(*) as transaction_count'),
-                DB::raw('SUM('.$quotedColumn('donation', 'Amount').') as total_amount'),
-                DB::raw('AVG('.$quotedColumn('donation', 'Amount').') as avg_amount')
-            )
-            ->where('created_at', '>=', $startDate)
-            ->groupBy('Payment_Method')
-            ->orderByDesc('total_amount')
-            ->get();
-
         // Allocation Efficiency - JOIN across multiple tables
         $this->allocationEfficiency = DB::table('campaign')
             ->leftJoin('donation_allocation', 'campaign.Campaign_ID', '=', 'donation_allocation.Campaign_ID')
@@ -376,32 +359,42 @@ class AdminDashboard extends Component
             ->values()
             ->toArray();
 
-        // User growth chart
+        // User growth chart - grouped by role
         $users = User::where('created_at', '>=', $startDate)
+            ->with('roles')
             ->orderBy('created_at')
             ->get();
 
-        $this->userGrowthChart = $users
-            ->groupBy(function ($user) {
-                return Carbon::parse($user->created_at)->format('Y-m-d');
-            })
-            ->map(function ($group, $date) {
-                return [
-                    'date' => $date,
-                    'count' => $group->count(),
-                ];
-            })
-            ->values()
-            ->toArray();
+        // Group users by date and role
+        $groupedByDate = $users->groupBy(function ($user) {
+            return Carbon::parse($user->created_at)->format('Y-m-d');
+        });
 
-        // Donations by payment method - Pie chart data
-        $this->donationsByMethodChart = $this->paymentMethodStats->map(function ($stat) {
-            return [
-                'method' => $stat->Payment_Method,
-                'count' => $stat->transaction_count,
-                'amount' => (float) $stat->total_amount,
+        $this->userGrowthChart = $groupedByDate->map(function ($usersOnDate, $date) {
+            // Count users by role
+            $roleCounts = [
+                'volunteer' => 0,
+                'donor' => 0,
+                'organizer' => 0,
+                'public' => 0,
             ];
-        })->toArray();
+
+            foreach ($usersOnDate as $user) {
+                foreach ($user->roles as $role) {
+                    if (isset($roleCounts[$role->name])) {
+                        $roleCounts[$role->name]++;
+                    }
+                }
+            }
+
+            return [
+                'date' => $date,
+                'volunteer' => $roleCounts['volunteer'],
+                'donor' => $roleCounts['donor'],
+                'organizer' => $roleCounts['organizer'],
+                'public' => $roleCounts['public'],
+            ];
+        })->values()->toArray();
 
         // Campaign status distribution - Pie chart
         $statusCounts = Campaign::select('Status', DB::raw('COUNT(*) as count'))

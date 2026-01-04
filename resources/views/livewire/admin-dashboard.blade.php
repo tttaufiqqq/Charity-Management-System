@@ -126,6 +126,57 @@
         </div>
     </div>
 
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <a href="{{ route('admin.campaigns.suggestions') }}"
+           class="bg-white rounded-lg shadow-lg p-6 border-2 border-transparent hover:border-indigo-500 transition-all transform hover:scale-105 group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                            Suggest Recipients for Campaigns
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        Review active campaigns and suggest approved recipients who match campaign needs. Help organizers find suitable beneficiaries for their fundraising efforts.
+                    </p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+        </a>
+
+        <a href="{{ route('admin.reports.campaign-recipients') }}"
+           class="bg-white rounded-lg shadow-lg p-6 border-2 border-transparent hover:border-purple-500 transition-all transform hover:scale-105 group">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                            Campaign Recipients Report
+                        </h3>
+                    </div>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        View detailed reports of fund allocations across all campaigns. Track which recipients received funds, allocation amounts, and campaign performance metrics.
+                    </p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all ml-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+        </a>
+    </div>
+
     <!-- Pending Approvals Alert -->
     @if($pendingApprovals['campaigns'] > 0 || $pendingApprovals['events'] > 0 || $pendingApprovals['recipients'] > 0)
         <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg shadow">
@@ -224,8 +275,8 @@
             <!-- User Growth Chart -->
             <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">User Growth</h3>
-                    <span class="text-xs text-gray-500">New Users</span>
+                    <h3 class="text-lg font-semibold text-gray-900">User Growth by Role</h3>
+                    <span class="text-xs text-gray-500">New Registrations</span>
                 </div>
                 <div class="h-64" wire:ignore>
                     <canvas id="userGrowthChart"></canvas>
@@ -240,17 +291,6 @@
                 </div>
                 <div class="h-64" wire:ignore>
                     <canvas id="campaignStatusChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Payment Methods -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Payment Methods</h3>
-                    <span class="text-xs text-gray-500">By Amount</span>
-                </div>
-                <div class="h-64" wire:ignore>
-                    <canvas id="paymentMethodChart"></canvas>
                 </div>
             </div>
         </div>
@@ -683,7 +723,7 @@
             waitForChart(function() {
                 console.log('Chart.js loaded successfully!');
 
-                let donationsChart, userGrowthChart, campaignStatusChart, paymentMethodChart;
+                let donationsChart, userGrowthChart, campaignStatusChart;
                 let geoDistributionChart, allocationChart, campaignFunnelChart;
                 let topCampaignsChart, orgPerformanceChart, topDonorsChart, eventMetricsChart;
 
@@ -699,7 +739,10 @@
                     donationsChart = new Chart(donationsCtx, {
                         type: 'line',
                         data: {
-                            labels: donationsData.map(d => d.date),
+                            labels: donationsData.map(d => {
+                                const date = new Date(d.date);
+                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }),
                             datasets: [{
                                 label: 'Amount (RM)',
                                 data: donationsData.map(d => d.amount),
@@ -720,6 +763,9 @@
                                 legend: { display: true, position: 'bottom' },
                                 tooltip: {
                                     callbacks: {
+                                        title: function(context) {
+                                            return donationsData[context[0].dataIndex].date;
+                                        },
                                         label: function(context) {
                                             return 'RM ' + context.parsed.y.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                                         }
@@ -727,6 +773,14 @@
                                 }
                             },
                             scales: {
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        autoSkip: true,
+                                        maxTicksLimit: 10
+                                    }
+                                },
                                 y: {
                                     beginAtZero: true,
                                     ticks: {
@@ -740,7 +794,7 @@
                     });
                 }
 
-                // User Growth Chart
+                // User Growth Chart - Stacked by Role
                 const userGrowthCanvas = document.getElementById('userGrowthChart');
                 if (userGrowthCanvas) {
                     const userGrowthCtx = userGrowthCanvas.getContext('2d');
@@ -750,28 +804,98 @@
                     userGrowthChart = new Chart(userGrowthCtx, {
                         type: 'line',
                         data: {
-                            labels: userGrowthData.map(d => d.date),
-                            datasets: [{
-                                label: 'New Users',
-                                data: userGrowthData.map(d => d.count),
-                                borderColor: 'rgb(99, 102, 241)',
-                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: 'rgb(99, 102, 241)',
-                                pointBorderColor: '#fff',
-                                pointBorderWidth: 2,
-                                pointRadius: 4
-                            }]
+                            labels: userGrowthData.map(d => {
+                                const date = new Date(d.date);
+                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            }),
+                            datasets: [
+                                {
+                                    label: 'Volunteers',
+                                    data: userGrowthData.map(d => d.volunteer),
+                                    borderColor: 'rgb(99, 102, 241)',
+                                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointBackgroundColor: 'rgb(99, 102, 241)',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: 'Donors',
+                                    data: userGrowthData.map(d => d.donor),
+                                    borderColor: 'rgb(236, 72, 153)',
+                                    backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointBackgroundColor: 'rgb(236, 72, 153)',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: 'Organizers',
+                                    data: userGrowthData.map(d => d.organizer),
+                                    borderColor: 'rgb(168, 85, 247)',
+                                    backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointBackgroundColor: 'rgb(168, 85, 247)',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 3
+                                },
+                                {
+                                    label: 'Public Users',
+                                    data: userGrowthData.map(d => d.public),
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointBackgroundColor: 'rgb(34, 197, 94)',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 3
+                                }
+                            ]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
                             plugins: {
-                                legend: { display: true, position: 'bottom' }
+                                legend: {
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        padding: 15,
+                                        font: { size: 11 }
+                                    }
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            return userGrowthData[context[0].dataIndex].date;
+                                        }
+                                    }
+                                }
                             },
                             scales: {
+                                x: {
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 45,
+                                        autoSkip: true,
+                                        maxTicksLimit: 10
+                                    }
+                                },
                                 y: {
+                                    stacked: true,
                                     beginAtZero: true,
                                     ticks: {
                                         precision: 0
@@ -815,53 +939,6 @@
                                     labels: {
                                         padding: 15,
                                         font: { size: 12 }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Payment Method Chart (Pie)
-                const paymentMethodCanvas = document.getElementById('paymentMethodChart');
-                if (paymentMethodCanvas) {
-                    const paymentMethodCtx = paymentMethodCanvas.getContext('2d');
-                    const paymentMethodData = @json($donationsByMethodChart ?? []);
-
-                    if (paymentMethodChart) paymentMethodChart.destroy();
-                    paymentMethodChart = new Chart(paymentMethodCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: paymentMethodData.map(d => d.method),
-                            datasets: [{
-                                data: paymentMethodData.map(d => d.amount),
-                                backgroundColor: [
-                                    'rgb(99, 102, 241)',   // Online Banking - indigo
-                                    'rgb(249, 115, 22)',   // Credit/Debit - orange
-                                    'rgb(168, 85, 247)',   // E-Wallet - purple
-                                    'rgb(236, 72, 153)'    // Other - pink
-                                ],
-                                borderWidth: 2,
-                                borderColor: '#fff'
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: 'bottom',
-                                    labels: {
-                                        padding: 15,
-                                        font: { size: 12 }
-                                    }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.label + ': RM ' + context.parsed.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                        }
                                     }
                                 }
                             }

@@ -22,13 +22,6 @@
 
         <!-- Livewire Component -->
         @livewire('donation-detail-report')
-
-        <!-- Back Link -->
-        <div class="mt-8">
-            <a href="{{ route('admin.dashboard') }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-                ← Back to Dashboard
-            </a>
-        </div>
     </main>
 </div>
 @livewireScripts

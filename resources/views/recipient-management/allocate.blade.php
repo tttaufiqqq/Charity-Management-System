@@ -17,12 +17,6 @@
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <!-- Header -->
         <div class="mb-8">
-            <a href="{{ route('welcome') }}" class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center mb-4">
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Back to Dashboard
-            </a>
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Allocate Funds to Recipients</h1>
@@ -71,7 +65,19 @@
                 </div>
                 <div class="divide-y divide-gray-200">
                     @foreach($recipients as $recipient)
-                        <div class="p-6 hover:bg-gray-50">
+                        @php
+                            $isHighlighted = session('highlight_recipient') == $recipient->Recipient_ID;
+                        @endphp
+                        <div class="p-6 hover:bg-gray-50 transition-all {{ $isHighlighted ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 animate-pulse' : '' }}"
+                             id="recipient-{{ $recipient->Recipient_ID }}">
+                            @if($isHighlighted)
+                                <div class="mb-3 flex items-center gap-2 text-green-700 font-medium text-sm">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span>✨ Suggestion Accepted - Ready for Allocation</span>
+                                </div>
+                            @endif
                             <div class="flex items-start justify-between">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ $recipient->Name }}</h3>
@@ -208,6 +214,25 @@
             closeAllocateModal();
         }
     });
+
+    // Auto-scroll to highlighted recipient (from accepted suggestion)
+    @if(session('highlight_recipient'))
+    document.addEventListener('DOMContentLoaded', function() {
+        const highlightedRecipient = document.getElementById('recipient-{{ session("highlight_recipient") }}');
+        if (highlightedRecipient) {
+            setTimeout(() => {
+                highlightedRecipient.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                // Remove pulse animation after 3 seconds
+                setTimeout(() => {
+                    highlightedRecipient.classList.remove('animate-pulse');
+                }, 3000);
+            }, 500);
+        }
+    });
+    @endif
 </script>
 
 </body>

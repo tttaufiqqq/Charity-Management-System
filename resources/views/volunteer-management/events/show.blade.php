@@ -210,10 +210,6 @@
                                         <span x-show="!selectedRole">Select a Role to Register</span>
                                         <span x-show="selectedRole">Register for This Event</span>
                                     </button>
-                                    <a href="{{ route('volunteer.events.browse') }}"
-                                       class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-                                        Back to Events
-                                    </a>
                                 </div>
                             </form>
                         @else
@@ -224,14 +220,7 @@
                                 @endforeach
                             </div>
 
-                            @if($isRegistered)
-                                <div class="mt-6">
-                                    <a href="{{ route('volunteer.events.browse') }}"
-                                       class="block text-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-                                        Back to Events
-                                    </a>
-                                </div>
-                            @else
+                            @if(!$isRegistered)
                                 <div class="mt-6 text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                                     <p class="text-gray-600 font-medium">Registration is currently closed for this event.</p>
                                     <a href="{{ route('volunteer.events.browse') }}"
