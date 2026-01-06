@@ -22,6 +22,8 @@ class AdminDashboard extends Component
 
     public $recipientSortDirection = 'desc';
 
+    public $efficiencyFilter = 'all'; // all, most_efficient, least_efficient
+
     public $activityFilter = 'all'; // all, donation, campaign
 
     // Statistics
@@ -36,6 +38,8 @@ class AdminDashboard extends Component
     public $totalVolunteers;
 
     public $totalOrganizations;
+
+    public $totalRecipientsHelped;
 
     // Financial
     public $totalRaised;
@@ -94,6 +98,11 @@ class AdminDashboard extends Component
         // Financial
         $this->totalRaised = Campaign::sum('Collected_Amount') ?? 0;
         $this->totalAllocated = DB::table('donation_allocation')->sum('Amount_Allocated') ?? 0;
+
+        // Recipients helped - count DISTINCT recipients who have received allocations
+        $this->totalRecipientsHelped = DB::table('donation_allocation')
+            ->distinct('Recipient_ID')
+            ->count('Recipient_ID');
 
         // Pending approvals
         $this->pendingApprovals = [
@@ -223,7 +232,7 @@ class AdminDashboard extends Component
         ];
 
         // Allocation Efficiency - JOIN across multiple tables with sorting
-        $this->allocationEfficiency = DB::table('campaign')
+        $query = DB::table('campaign')
             ->leftJoin('donation_allocation', 'campaign.Campaign_ID', '=', 'donation_allocation.Campaign_ID')
             ->select(
                 'campaign.Campaign_ID',
@@ -235,10 +244,33 @@ class AdminDashboard extends Component
                 DB::raw('COUNT(DISTINCT '.$quotedColumn('donation_allocation', 'Recipient_ID').') as recipient_count')
             )
             ->where('campaign.Status', '!=', 'Pending')
-            ->groupBy('campaign.Campaign_ID', 'campaign.Title', 'campaign.Collected_Amount')
-            ->orderBy($this->recipientSortBy, $this->recipientSortDirection)
-            ->limit(10)
-            ->get();
+            ->groupBy('campaign.Campaign_ID', 'campaign.Title', 'campaign.Collected_Amount');
+
+        // Apply efficiency filter
+        if ($this->efficiencyFilter === 'most_efficient') {
+            $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) DESC');
+        } elseif ($this->efficiencyFilter === 'least_efficient') {
+            $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) ASC');
+        } else {
+            // Default sorting based on column selection
+            if (in_array($this->recipientSortBy, ['allocated_amount', 'unallocated_amount', 'allocation_percentage', 'recipient_count'])) {
+                // For calculated columns, use orderByRaw
+                if ($this->recipientSortBy === 'allocated_amount') {
+                    $query->orderByRaw('COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) '.$this->recipientSortDirection);
+                } elseif ($this->recipientSortBy === 'unallocated_amount') {
+                    $query->orderByRaw($quotedColumn('campaign', 'Collected_Amount').' - COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) '.$this->recipientSortDirection);
+                } elseif ($this->recipientSortBy === 'allocation_percentage') {
+                    $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) '.$this->recipientSortDirection);
+                } elseif ($this->recipientSortBy === 'recipient_count') {
+                    $query->orderByRaw('COUNT(DISTINCT '.$quotedColumn('donation_allocation', 'Recipient_ID').') '.$this->recipientSortDirection);
+                }
+            } else {
+                // For regular columns (Title, Collected_Amount), use regular orderBy
+                $query->orderBy('campaign.'.$this->recipientSortBy, $this->recipientSortDirection);
+            }
+        }
+
+        $this->allocationEfficiency = $query->limit(10)->get();
 
         // Recent Activity - Combined from multiple sources
         // Use database-agnostic string concatenation
@@ -413,6 +445,11 @@ class AdminDashboard extends Component
     }
 
     public function updatedActivityFilter()
+    {
+        $this->loadStatistics();
+    }
+
+    public function updatedEfficiencyFilter()
     {
         $this->loadStatistics();
     }

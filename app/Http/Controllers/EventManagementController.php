@@ -369,11 +369,31 @@ class EventManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Base validation
         $validated = $request->validate([
             'status' => ['required', 'in:Registered,Attended,No-Show,Cancelled'],
-            'total_hours' => ['required', 'numeric', 'min:0', 'max:24'],
+            'total_hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
             'role_id' => ['nullable', 'exists:event_role,Role_ID'],
         ]);
+
+        // Additional validation: If status is "Attended", hours must be provided and greater than 0
+        if ($validated['status'] === 'Attended') {
+            if (! isset($validated['total_hours']) || $validated['total_hours'] <= 0) {
+                return back()->withErrors([
+                    'total_hours' => 'Hours must be provided and greater than 0 when marking attendance as "Attended".',
+                ])->withInput();
+            }
+        }
+
+        // For No-Show status, validate hours cannot be > 0
+        if ($validated['status'] === 'No-Show') {
+            if (isset($validated['total_hours']) && $validated['total_hours'] > 0) {
+                return back()->withErrors([
+                    'total_hours' => 'Hours must be 0 for "No-Show" status. Volunteers who did not show cannot have hours logged.',
+                ])->withInput();
+            }
+            $validated['total_hours'] = 0;
+        }
 
         DB::beginTransaction();
 
@@ -501,7 +521,25 @@ class EventManagementController extends Controller
             'hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
         ]);
 
-        $hours = $validated['hours'] ?? $event->Start_Date->diffInHours($event->End_Date);
+        // Validate: If status is "Attended", hours must be provided
+        if ($validated['status'] === 'Attended') {
+            if (! isset($validated['hours']) || $validated['hours'] <= 0) {
+                return back()->withErrors([
+                    'hours' => 'Hours must be provided and greater than 0 when marking volunteers as "Attended".',
+                ])->withInput();
+            }
+        }
+
+        // Validate: If status is "No-Show", hours must be 0
+        if ($validated['status'] === 'No-Show') {
+            if (isset($validated['hours']) && $validated['hours'] > 0) {
+                return back()->withErrors([
+                    'hours' => 'Hours must be 0 for "No-Show" status. Volunteers who did not show cannot have hours logged.',
+                ])->withInput();
+            }
+        }
+
+        $hours = $validated['hours'] ?? 0;
 
         DB::table('event_participation')
             ->where('Event_ID', $event->Event_ID)

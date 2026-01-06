@@ -349,8 +349,8 @@
                         </svg>
                     </div>
                 </div>
-                <div class="h-72" wire:ignore>
-                    <canvas id="allocationChart"></canvas>
+                <div class="h-72">
+                    <canvas id="allocationChart" wire:ignore.self data-allocation='@json($allocationEfficiency ?? [])'></canvas>
                 </div>
             </div>
         </div>
@@ -362,6 +362,16 @@
                 <div class="flex-1">
                     <h2 class="text-2xl font-bold text-gray-900">Campaign Recipients Report</h2>
                     <p class="text-sm text-gray-600 mt-1">Track fund allocations and recipient impact across all campaigns</p>
+                </div>
+                <!-- Efficiency Filter -->
+                <div class="flex items-center gap-2">
+                    <label for="efficiencyFilter" class="text-sm font-medium text-gray-700">Filter:</label>
+                    <select wire:model.live="efficiencyFilter" id="efficiencyFilter"
+                            class="px-4 py-2 border border-purple-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all">
+                        <option value="all">All Campaigns</option>
+                        <option value="most_efficient">Most Efficient First</option>
+                        <option value="least_efficient">Least Efficient First</option>
+                    </select>
                 </div>
             </div>
 
@@ -412,7 +422,8 @@
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-gray-900">{{ $allocationEfficiency->sum('recipient_count') }}</div>
+                    <div class="text-3xl font-bold text-gray-900">{{ number_format($totalRecipientsHelped) }}</div>
+                    <div class="text-xs text-amber-600 mt-2">Unique recipients across all campaigns</div>
                 </div>
             </div>
 
@@ -1459,6 +1470,24 @@
                 Livewire.hook('commit', ({ component, commit, respond, succeed, fail }) => {
                     succeed(({ snapshot, effect }) => {
                         queueMicrotask(() => {
+                            // Update allocation chart with new data from data attribute
+                            const allocCanvas = document.getElementById('allocationChart');
+                            if (allocCanvas && allocationChart) {
+                                try {
+                                    const allocData = JSON.parse(allocCanvas.getAttribute('data-allocation') || '[]');
+                                    const totalRaised = allocData.reduce((sum, item) => sum + parseFloat(item.Collected_Amount || 0), 0);
+                                    const totalAllocated = allocData.reduce((sum, item) => sum + parseFloat(item.allocated_amount || 0), 0);
+                                    const unallocated = totalRaised - totalAllocated;
+
+                                    console.log('Updating allocation chart - Raised:', totalRaised, 'Allocated:', totalAllocated);
+                                    allocationChart.data.datasets[0].data = [totalAllocated, unallocated];
+                                    allocationChart.update('none'); // Update without animation for faster response
+                                } catch (e) {
+                                    console.error('Error updating allocation chart:', e);
+                                }
+                            }
+
+                            // Re-init other charts
                             initCharts();
                         });
                     });
