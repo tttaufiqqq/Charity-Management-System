@@ -133,6 +133,8 @@ class CampaignSeeder extends Seeder
             // Distribute recipients among public profiles
             $publicProfile = $publicProfiles->random();
 
+            $createdAt = Carbon::now()->subDays(rand(1, 14))->subHours(rand(0, 23));
+
             $recipientCreate = [
                 'Public_ID' => $publicProfile->Public_ID,
                 'Name' => $data['Name'],
@@ -140,7 +142,9 @@ class CampaignSeeder extends Seeder
                 'Contact' => $data['Contact'],
                 'Need_Description' => $data['Need_Description'],
                 'Status' => $data['Status'],
-                'Approved_At' => null,
+                'Approved_At' => $data['Status'] === 'Approved' ? $createdAt->copy()->addDays(rand(1, 3)) : null,
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
             ];
 
             $recipient = Recipient::create($recipientCreate);
@@ -263,6 +267,35 @@ class CampaignSeeder extends Seeder
                 'Start_Date' => Carbon::now()->subDays(90),
                 'End_Date' => Carbon::now()->subDays(50),
                 'Status' => 'Completed',
+            ],
+
+            // Pending Campaigns (Awaiting Admin Approval)
+            [
+                'Title' => 'Rural Library Development Project',
+                'Description' => 'Building community libraries in 3 rural villages in Sabah and Sarawak where children have limited access to books and learning resources. Project includes: Construction of small library buildings (RM 30,000), Purchase of 2,000+ books in Malay and English (RM 15,000), Educational materials and learning aids (RM 5,000), Computer stations with internet (RM 8,000), Training for local librarians (RM 2,000). Target beneficiaries: 500+ children and young adults in remote areas. Partner: Ministry of Rural Development and local community leaders. Timeline: 6 months construction and setup. This will be the first proper library facility in these communities.',
+                'Goal_Amount' => 60000.00,
+                'Collected_Amount' => 0.00,
+                'Start_Date' => Carbon::now()->addDays(14),
+                'End_Date' => Carbon::now()->addDays(180),
+                'Status' => 'Pending',
+            ],
+            [
+                'Title' => 'Women Entrepreneurship Fund',
+                'Description' => 'Empowering single mothers and disadvantaged women through entrepreneurship training and seed capital. Program components: 8-week business skills training (RM 12,000), Seed capital grants RM 2,000-5,000 per participant (RM 40,000), Business mentoring for 6 months (RM 8,000), Marketing and branding support (RM 5,000). Target: 20 women from B40 households. Business sectors: Food & beverage, tailoring, childcare, handicrafts. Success metrics: 70% business survival rate after 1 year, income increase of 50%+. Collaboration with Women\'s Development Department and local women\'s organizations. Creating sustainable livelihoods, not just handouts.',
+                'Goal_Amount' => 65000.00,
+                'Collected_Amount' => 0.00,
+                'Start_Date' => Carbon::now()->addDays(21),
+                'End_Date' => Carbon::now()->addDays(150),
+                'Status' => 'Pending',
+            ],
+            [
+                'Title' => 'Diabetic Care & Education Program',
+                'Description' => 'Comprehensive diabetes management program for 100 low-income diabetic patients. Services include: Free HbA1c and glucose monitoring (RM 15,000), Diabetic-friendly food packages monthly (RM 20,000), Diabetes education workshops (RM 8,000), Foot care and complications screening (RM 10,000), Blood glucose monitors distribution (RM 12,000). Focus on prevention of complications - blindness, kidney failure, amputation. Partnership with government hospitals and endocrinologists. Monthly support groups and cooking classes. Many Type 2 diabetics in B40 communities cannot afford proper management, leading to severe complications. Early intervention saves lives and reduces long-term healthcare costs.',
+                'Goal_Amount' => 65000.00,
+                'Collected_Amount' => 0.00,
+                'Start_Date' => Carbon::now()->addDays(28),
+                'End_Date' => Carbon::now()->addDays(120),
+                'Status' => 'Pending',
             ],
         ];
 

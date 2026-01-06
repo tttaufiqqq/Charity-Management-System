@@ -10,6 +10,7 @@ class Recipient extends Model
     use HasFactory;
 
     protected $table = 'recipient';
+
     protected $primaryKey = 'Recipient_ID';
 
     protected $fillable = [
@@ -19,11 +20,11 @@ class Recipient extends Model
         'Contact',
         'Need_Description',
         'Status',
-        'Approved_At'
+        'Approved_At',
     ];
 
     protected $casts = [
-        'Approved_At' => 'decimal:2',
+        'Approved_At' => 'datetime',
     ];
 
     // Relationships

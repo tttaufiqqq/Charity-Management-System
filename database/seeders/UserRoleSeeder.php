@@ -276,9 +276,8 @@ class UserRoleSeeder extends Seeder
     {
         $organizers = [
             [
-                'name' => 'Yayasan Kebajikan Rakyat',
+                'name' => 'Yayasan Kebajikan Rakyat Malaysia',
                 'email' => 'admin@ykr.org.my',
-                'Organization_Name' => 'Yayasan Kebajikan Rakyat Malaysia',
                 'Phone_No' => '+603-7956-4321',
                 'Register_No' => 'PPM-002-10-11012020',
                 'Address' => 'No. 45-47, Jalan Sultan Ismail, Bukit Bintang',
@@ -287,9 +286,8 @@ class UserRoleSeeder extends Seeder
                 'Description' => 'Established in 2020, YKR is a registered welfare foundation dedicated to alleviating poverty and improving quality of life for underprivileged communities across Malaysia. We focus on education support, healthcare assistance, and emergency relief programs.',
             ],
             [
-                'name' => 'Pertubuhan Amal Sejahtera',
+                'name' => 'Pertubuhan Amal Sejahtera Negeri Selangor',
                 'email' => 'info@amalsejahtera.org.my',
-                'Organization_Name' => 'Pertubuhan Amal Sejahtera Negeri Selangor',
                 'Phone_No' => '+603-5544-7890',
                 'Register_No' => 'PPM-003-14-25072019',
                 'Address' => 'No. 23, Jalan SS 2/24, Petaling Jaya',
@@ -298,9 +296,8 @@ class UserRoleSeeder extends Seeder
                 'Description' => 'A community-driven charitable organization providing comprehensive support to families in need. Our programs include food assistance, skills training, micro-financing for small businesses, and youth development initiatives. Serving Selangor communities since 2019.',
             ],
             [
-                'name' => 'Malaysian Hearts Foundation',
+                'name' => 'Malaysian Hearts Charitable Foundation',
                 'email' => 'contact@malaysianhearts.org',
-                'Organization_Name' => 'Malaysian Hearts Charitable Foundation',
                 'Phone_No' => '+604-229-6543',
                 'Register_No' => 'PPM-007-10-14032018',
                 'Address' => 'No. 156, Jalan Masjid Kapitan Keling, George Town',
@@ -311,7 +308,6 @@ class UserRoleSeeder extends Seeder
             [
                 'name' => 'Persatuan Kebajikan Masyarakat Johor',
                 'email' => 'info@pkm-johor.org.my',
-                'Organization_Name' => 'Persatuan Kebajikan Masyarakat Johor',
                 'Phone_No' => '+607-223-8901',
                 'Register_No' => 'PPM-001-01-03112017',
                 'Address' => 'No. 78, Jalan Trus, Bandar Johor Bahru',

@@ -631,27 +631,66 @@ class EventManagementController extends Controller
     /**
      * Display pending campaigns for admin approval
      */
-    public function adminPendingCampaigns()
+    public function adminPendingCampaigns(Request $request)
     {
+        $search = $request->get('search');
+
         $campaigns = Campaign::where('Status', 'Pending')
             ->with('organization.user')
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('Title', 'like', "%{$search}%")
+                        ->orWhere('Description', 'like', "%{$search}%")
+                        ->orWhereHas('organization.user', function ($orgQuery) use ($search) {
+                            $orgQuery->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->appends(['search' => $search]);
 
-        return view('event-management.admin.campaigns-pending', compact('campaigns'));
+        // Load organizer statistics for each campaign
+        $campaigns->getCollection()->transform(function ($campaign) {
+            $campaign->organizerStats = $this->getOrganizerCampaignStats($campaign->Organization_ID);
+
+            return $campaign;
+        });
+
+        return view('event-management.admin.campaigns-pending', compact('campaigns', 'search'));
     }
 
     /**
      * Display pending events for admin approval
      */
-    public function adminPendingEvents()
+    public function adminPendingEvents(Request $request)
     {
-        $events = Event::where('Status', 'Pending')
-            ->with('organization.user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $search = $request->get('search');
 
-        return view('event-management.admin.events-pending', compact('events'));
+        $events = Event::where('Status', 'Pending')
+            ->with(['organization.user', 'roles'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('Title', 'like', "%{$search}%")
+                        ->orWhere('Description', 'like', "%{$search}%")
+                        ->orWhere('Location', 'like', "%{$search}%")
+                        ->orWhereHas('organization.user', function ($orgQuery) use ($search) {
+                            $orgQuery->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->appends(['search' => $search]);
+
+        // Load organizer statistics for each event
+        $events->getCollection()->transform(function ($event) {
+            $event->organizerStats = $this->getOrganizerEventStats($event->Organizer_ID);
+
+            return $event;
+        });
+
+        return view('event-management.admin.events-pending', compact('events', 'search'));
     }
 
     /**
@@ -760,5 +799,43 @@ class EventManagementController extends Controller
             'recentEvents',
             'stats'
         ));
+    }
+
+    /**
+     * Get campaign statistics for an organizer
+     */
+    private function getOrganizerCampaignStats($organizationId)
+    {
+        return [
+            'total' => Campaign::where('Organization_ID', $organizationId)->count(),
+            'approved' => Campaign::where('Organization_ID', $organizationId)
+                ->whereIn('Status', ['Active', 'Completed'])->count(),
+            'rejected' => Campaign::where('Organization_ID', $organizationId)
+                ->where('Status', 'Rejected')->count(),
+            'recent' => Campaign::where('Organization_ID', $organizationId)
+                ->whereIn('Status', ['Active', 'Completed', 'Rejected'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(['Campaign_ID', 'Title', 'Status', 'created_at']),
+        ];
+    }
+
+    /**
+     * Get event statistics for an organizer
+     */
+    private function getOrganizerEventStats($organizationId)
+    {
+        return [
+            'total' => Event::where('Organizer_ID', $organizationId)->count(),
+            'approved' => Event::where('Organizer_ID', $organizationId)
+                ->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed'])->count(),
+            'rejected' => Event::where('Organizer_ID', $organizationId)
+                ->where('Status', 'Rejected')->count(),
+            'recent' => Event::where('Organizer_ID', $organizationId)
+                ->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed', 'Rejected'])
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(['Event_ID', 'Title', 'Status', 'created_at']),
+        ];
     }
 }
