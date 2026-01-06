@@ -6,9 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: sashvini (MariaDB)
+     */
+    protected $connection = 'sashvini';
+
     public function up(): void
     {
-        Schema::create('volunteer_skill', function (Blueprint $table) {
+        Schema::connection('sashvini')->create('volunteer_skill', function (Blueprint $table) {
+            // ✅ Same database FKs - KEEP (both skill and volunteer are in sashvini)
             $table->foreignId('Skill_ID')->constrained('skill', 'Skill_ID')->onDelete('cascade');
             $table->foreignId('Volunteer_ID')->constrained('volunteer', 'Volunteer_ID')->onDelete('cascade');
             $table->string('Skill_Level')->nullable();
@@ -20,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('volunteer_skill');
+        Schema::connection('sashvini')->dropIfExists('volunteer_skill');
     }
 };
 

@@ -6,9 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: sashvini (MariaDB)
+     */
+    protected $connection = 'sashvini';
+
     public function up(): void
     {
-        Schema::create('skill', function (Blueprint $table) {
+        Schema::connection('sashvini')->create('skill', function (Blueprint $table) {
             $table->id('Skill_ID');
             $table->string('Skill_Name');
             $table->text('Description')->nullable();
@@ -18,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('skill');
+        Schema::connection('sashvini')->dropIfExists('skill');
     }
 };
