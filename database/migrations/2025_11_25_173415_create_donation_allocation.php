@@ -6,11 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: hannah (MySQL)
+     */
+    protected $connection = 'hannah';
+
     public function up(): void
     {
-        Schema::create('donation_allocation', function (Blueprint $table) {
-            $table->foreignId('Recipient_ID')->constrained('recipient', 'Recipient_ID')->onDelete('cascade');
-            $table->foreignId('Campaign_ID')->constrained('campaign', 'Campaign_ID')->onDelete('cascade');
+        Schema::connection('hannah')->create('donation_allocation', function (Blueprint $table) {
+            // ⚠️ Cross-database reference: Recipient_ID references recipient table in adam database
+            // Cannot use foreign key constraint across databases
+            $table->unsignedBigInteger('Recipient_ID')->index();
+
+            // ⚠️ Cross-database reference: Campaign_ID references campaign table in izzati database
+            // Cannot use foreign key constraint across databases
+            $table->unsignedBigInteger('Campaign_ID')->index();
+
             $table->decimal('Amount_Allocated', 10, 2);
             $table->date('Allocated_At');
             $table->timestamps();
@@ -21,6 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('donation_allocation');
+        Schema::connection('hannah')->dropIfExists('donation_allocation');
     }
 };

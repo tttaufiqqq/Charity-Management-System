@@ -6,9 +6,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: izzhilmy (PostgreSQL)
+     */
+    protected $connection = 'izzhilmy';
+
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::connection('izzhilmy')->create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -16,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('sessions', function (Blueprint $table) {
+        Schema::connection('izzhilmy')->create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
@@ -28,8 +34,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('sessions');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('users');
+        Schema::connection('izzhilmy')->dropIfExists('sessions');
+        Schema::connection('izzhilmy')->dropIfExists('password_reset_tokens');
+        Schema::connection('izzhilmy')->dropIfExists('users');
     }
 };

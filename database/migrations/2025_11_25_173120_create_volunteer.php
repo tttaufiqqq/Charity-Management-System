@@ -6,11 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: sashvini (MariaDB)
+     */
+    protected $connection = 'sashvini';
+
     public function up(): void
     {
-        Schema::create('volunteer', function (Blueprint $table) {
+        Schema::connection('sashvini')->create('volunteer', function (Blueprint $table) {
             $table->id('Volunteer_ID');
-            $table->foreignId('User_ID')->constrained('users')->onDelete('cascade');
+            // ⚠️ Cross-database reference: User_ID references users table in izzhilmy database
+            // Cannot use foreign key constraint across databases
+            $table->unsignedBigInteger('User_ID')->index();
             $table->string('Availability');
             $table->text('Address');
             $table->string('City', 100);
@@ -24,6 +32,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('volunteer');
+        Schema::connection('sashvini')->dropIfExists('volunteer');
     }
 };
