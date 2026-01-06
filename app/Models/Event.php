@@ -11,6 +11,13 @@ class Event extends Model
 {
     use HasFactory;
 
+    /**
+     * Database connection for this model
+     * Connection: izzati (PostgreSQL)
+     * Tables: organization, event, campaign, event_role
+     */
+    protected $connection = 'izzati';
+
     protected $table = 'event';
 
     protected $primaryKey = 'Event_ID';
@@ -41,26 +48,43 @@ class Event extends Model
     }
 
     // Relationships
+
+    /**
+     * Get the organization that owns this event (same database - izzati)
+     */
     public function organization()
     {
         return $this->belongsTo(Organization::class, 'Organizer_ID', 'Organization_ID');
     }
 
+    /**
+     * Get all event participations for this event (sashvini database - MariaDB)
+     * ⚠️ Cross-database relationship
+     */
     public function eventParticipations()
     {
-        return $this->hasMany(EventParticipation::class, 'Event_ID', 'Event_ID');
+        return $this->setConnection('sashvini')
+            ->hasMany(EventParticipation::class, 'Event_ID', 'Event_ID');
     }
 
+    /**
+     * Get all volunteers for this event through event_participation (sashvini database - MariaDB)
+     * ⚠️ Cross-database relationship with pivot in sashvini database
+     */
     public function volunteers()
     {
-        return $this->belongsToMany(
-            Volunteer::class,
-            'event_participation',
-            'Event_ID',
-            'Volunteer_ID'
-        )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
+        return $this->setConnection('sashvini')
+            ->belongsToMany(
+                Volunteer::class,
+                'event_participation',
+                'Event_ID',
+                'Volunteer_ID'
+            )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
     }
 
+    /**
+     * Get all roles for this event (same database - izzati)
+     */
     public function roles()
     {
         return $this->hasMany(EventRole::class, 'Event_ID', 'Event_ID');

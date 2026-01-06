@@ -9,8 +9,14 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+    use HasFactory, HasRoles, Notifiable;
 
-    use HasFactory, Notifiable, HasRoles;
+    /**
+     * Database connection for this model
+     * Connection: izzhilmy (PostgreSQL)
+     * Tables: users, roles, permissions, password_reset_tokens, sessions
+     */
+    protected $connection = 'izzhilmy';
 
     protected $fillable = [
         'name',
@@ -30,24 +36,42 @@ class User extends Authenticatable
         ];
     }
 
-    // Relationships
+    // Cross-Database Relationships
+    // ⚠️ These relationships span different database connections
+
+    /**
+     * Get the donor profile (hannah database - MySQL)
+     */
     public function donor()
     {
-        return $this->hasOne(Donor::class, 'User_ID');
+        return $this->setConnection('hannah')
+            ->hasOne(Donor::class, 'User_ID');
     }
 
+    /**
+     * Get the public profile (adam database - MySQL)
+     */
     public function publicProfile()
     {
-        return $this->hasOne(PublicProfile::class, 'User_ID');
+        return $this->setConnection('adam')
+            ->hasOne(PublicProfile::class, 'User_ID');
     }
 
+    /**
+     * Get the organization profile (izzati database - PostgreSQL)
+     */
     public function organization()
     {
-        return $this->hasOne(Organization::class, 'Organizer_ID');
+        return $this->setConnection('izzati')
+            ->hasOne(Organization::class, 'Organizer_ID');
     }
 
+    /**
+     * Get the volunteer profile (sashvini database - MariaDB)
+     */
     public function volunteer()
     {
-        return $this->hasOne(Volunteer::class, 'User_ID');
+        return $this->setConnection('sashvini')
+            ->hasOne(Volunteer::class, 'User_ID');
     }
 }

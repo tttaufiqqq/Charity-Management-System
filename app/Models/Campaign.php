@@ -11,6 +11,13 @@ class Campaign extends Model
 {
     use HasFactory;
 
+    /**
+     * Database connection for this model
+     * Connection: izzati (PostgreSQL)
+     * Tables: organization, event, campaign, event_role
+     */
+    protected $connection = 'izzati';
+
     protected $table = 'campaign';
 
     protected $primaryKey = 'Campaign_ID';
@@ -34,31 +41,53 @@ class Campaign extends Model
     ];
 
     // Relationships
+
+    /**
+     * Get the organization that owns this campaign (same database - izzati)
+     */
     public function organization()
     {
         return $this->belongsTo(Organization::class, 'Organization_ID', 'Organization_ID');
     }
 
+    /**
+     * Get all donations for this campaign (hannah database - MySQL)
+     * ⚠️ Cross-database relationship
+     */
     public function donations()
     {
-        return $this->hasMany(Donation::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->setConnection('hannah')
+            ->hasMany(Donation::class, 'Campaign_ID', 'Campaign_ID');
     }
 
+    /**
+     * Get all donation allocations for this campaign (hannah database - MySQL)
+     * ⚠️ Cross-database relationship
+     */
     public function donationAllocations()
     {
-        return $this->hasMany(DonationAllocation::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->setConnection('hannah')
+            ->hasMany(DonationAllocation::class, 'Campaign_ID', 'Campaign_ID');
     }
 
+    /**
+     * Get recipients through donation allocations (adam database - MySQL)
+     * ⚠️ Cross-database relationship with pivot in hannah database
+     */
     public function recipients()
     {
-        return $this->belongsToMany(
-            Recipient::class,
-            'donation_allocation',
-            'Campaign_ID',
-            'Recipient_ID'
-        )->withPivot('Amount_Allocated', 'Allocated_At')->withTimestamps();
+        return $this->setConnection('hannah')
+            ->belongsToMany(
+                Recipient::class,
+                'donation_allocation',
+                'Campaign_ID',
+                'Recipient_ID'
+            )->withPivot('Amount_Allocated', 'Allocated_At')->withTimestamps();
     }
 
+    /**
+     * Get recipient suggestions for this campaign (izzati database - same DB)
+     */
     public function recipientSuggestions()
     {
         return $this->hasMany(CampaignRecipientSuggestion::class, 'Campaign_ID', 'Campaign_ID');

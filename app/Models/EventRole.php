@@ -9,6 +9,13 @@ class EventRole extends Model
 {
     use HasFactory;
 
+    /**
+     * Database connection for this model
+     * Connection: izzati (PostgreSQL)
+     * Tables: organization, event, campaign, event_role
+     */
+    protected $connection = 'izzati';
+
     protected $table = 'event_role';
 
     protected $primaryKey = 'Role_ID';
@@ -27,19 +34,28 @@ class EventRole extends Model
     ];
 
     // Relationships
+
+    /**
+     * Get the event for this role (same database - izzati)
+     */
     public function event()
     {
         return $this->belongsTo(Event::class, 'Event_ID', 'Event_ID');
     }
 
+    /**
+     * Get all volunteers for this role through event_participation (sashvini database - MariaDB)
+     * ⚠️ Cross-database relationship with pivot in sashvini database
+     */
     public function volunteers()
     {
-        return $this->belongsToMany(
-            Volunteer::class,
-            'event_participation',
-            'Role_ID',
-            'Volunteer_ID'
-        )->withPivot('Status', 'Total_Hours', 'Event_ID')->withTimestamps();
+        return $this->setConnection('sashvini')
+            ->belongsToMany(
+                Volunteer::class,
+                'event_participation',
+                'Role_ID',
+                'Volunteer_ID'
+            )->withPivot('Status', 'Total_Hours', 'Event_ID')->withTimestamps();
     }
 
     // Check if role is full

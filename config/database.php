@@ -30,59 +30,95 @@ return [
     */
 
     'connections' => [
-        //workshop2
-        'hannah' => [
-            'driver' => 'mysql',
-            'host' => env('DB1_HOST'),
-            'port' => env('DB1_PORT', 3306),
-            'database' => env('DB1_DATABASE'),
-            'username' => env('DB1_USERNAME'),
-            'password' => env('DB1_PASSWORD'),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
+        /*
+        |--------------------------------------------------------------------------
+        | Heterogeneous Distributed Database Connections
+        |--------------------------------------------------------------------------
+        | Charity-Izz uses a distributed database architecture across 5 databases:
+        | - izzhilmy (PostgreSQL): User, Role, Admin
+        | - sashvini (MariaDB): Volunteer, Volunteer_skill, Skill, Event_participation
+        | - izzati (PostgreSQL): Organization, Event, Campaign, Event_role
+        | - hannah (MySQL): Donor, Donation, Donation_allocation
+        | - adam (MySQL): Public_profile, Recipient
+        */
+
+        // Connection 1: Izzhilmy (PostgreSQL) - Authentication & Authorization
+        'izzhilmy' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_IZZHILMY_HOST', '127.0.0.1'),
+            'port' => env('DB_IZZHILMY_PORT', 5432),
+            'database' => env('DB_IZZHILMY_DATABASE', 'charity_auth'),
+            'username' => env('DB_IZZHILMY_USERNAME', 'postgres'),
+            'password' => env('DB_IZZHILMY_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
         ],
 
-        'adam' => [
-            'driver' => 'mysql',
-            'host' => env('DB2_HOST'),
-            'port' => env('DB2_PORT', 3306),
-            'database' => env('DB2_DATABASE'),
-            'username' => env('DB2_USERNAME'),
-            'password' => env('DB2_PASSWORD'),
-        ],
-
-        'sahsvini' => [
-            'driver' => 'mysql', // MariaDB uses the MySQL driver
-            'host' => env('DB4_HOST'),
-            'port' => env('DB4_PORT', 3306),
-            'database' => env('DB4_DATABASE'),
-            'username' => env('DB4_USERNAME'),
-            'password' => env('DB4_PASSWORD'),
+        // Connection 2: Sashvini (MariaDB) - Volunteer Management
+        'sashvini' => [
+            'driver' => 'mariadb', // MariaDB is MySQL-compatible
+            'host' => env('DB_SASHVINI_HOST', '127.0.0.1'),
+            'port' => env('DB_SASHVINI_PORT', 3306),
+            'database' => env('DB_SASHVINI_DATABASE', 'charity_volunteers'),
+            'username' => env('DB_SASHVINI_USERNAME', 'root'),
+            'password' => env('DB_SASHVINI_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
+            'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
         ],
 
-        'izzhilmy' => [
+        // Connection 3: Izzati (PostgreSQL) - Campaign & Event Operations
+        'izzati' => [
             'driver' => 'pgsql',
-            'host' => env('DB5_HOST'),
-            'port' => env('DB5_PORT', 5432),
-            'database' => env('DB5_DATABASE'),
-            'username' => env('DB5_USERNAME'),
-            'password' => env('DB5_PASSWORD'),
+            'host' => env('DB_IZZATI_HOST', '127.0.0.1'),
+            'port' => env('DB_IZZATI_PORT', 5432),
+            'database' => env('DB_IZZATI_DATABASE', 'charity_operations'),
+            'username' => env('DB_IZZATI_USERNAME', 'postgres'),
+            'password' => env('DB_IZZATI_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
         ],
 
-        'izati' => [
-            'driver' => 'pgsql',
-            'host' => env('DB4_HOST'),
-            'port' => env('DB4_PORT', 5432),
-            'database' => env('DB4_DATABASE'),
-            'username' => env('DB4_USERNAME'),
-            'password' => env('DB4_PASSWORD'),
+        // Connection 4: Hannah (MySQL) - Financial Transactions
+        'hannah' => [
+            'driver' => 'mysql',
+            'host' => env('DB_HANNAH_HOST', '127.0.0.1'),
+            'port' => env('DB_HANNAH_PORT', 3306),
+            'database' => env('DB_HANNAH_DATABASE', 'charity_finance'),
+            'username' => env('DB_HANNAH_USERNAME', 'root'),
+            'password' => env('DB_HANNAH_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
         ],
-        //workshop2
+
+        // Connection 5: Adam (MySQL) - Public & Recipient Data
+        'adam' => [
+            'driver' => 'mysql',
+            'host' => env('DB_ADAM_HOST', '127.0.0.1'),
+            'port' => env('DB_ADAM_PORT', 3306),
+            'database' => env('DB_ADAM_DATABASE', 'charity_public'),
+            'username' => env('DB_ADAM_USERNAME', 'root'),
+            'password' => env('DB_ADAM_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',

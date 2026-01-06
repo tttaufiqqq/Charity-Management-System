@@ -9,6 +9,13 @@ class Donation extends Model
 {
     use HasFactory;
 
+    /**
+     * Database connection for this model
+     * Connection: hannah (MySQL)
+     * Tables: donor, donation, donation_allocation
+     */
+    protected $connection = 'hannah';
+
     // Table name (because your table is not plural)
     protected $table = 'donation';
 
@@ -43,14 +50,21 @@ class Donation extends Model
      * Relationships
      */
 
-    // Relationships
+    /**
+     * Get the donor who made this donation (same database - hannah)
+     */
     public function donor()
     {
         return $this->belongsTo(Donor::class, 'Donor_ID', 'Donor_ID');
     }
 
+    /**
+     * Get the campaign this donation belongs to (izzati database - PostgreSQL)
+     * ⚠️ Cross-database relationship
+     */
     public function campaign()
     {
-        return $this->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->setConnection('izzati')
+            ->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
     }
 }
