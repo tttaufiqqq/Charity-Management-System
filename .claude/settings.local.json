@@ -58,7 +58,9 @@
       "Bash(done)",
       "Bash(do sed -i 's/FROM transaction/FROM [transaction]/g; s/INTO transaction /INTO [transaction] /g; s/UPDATE transaction/UPDATE [transaction]/g; s/ON transaction/ON [transaction]/g; s/DELETE FROM transaction/DELETE FROM [transaction]/g' \"$file\")",
       "Bash(vendor/bin/pint:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(composer clear-cache:*)",
+      "Bash(composer cache-clear:*)"
     ]
   }
 }

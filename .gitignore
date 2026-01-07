@@ -29,3 +29,7 @@ Thumbs.db
 /MIGRATION_DISTRIBUTION_MAP.md
 /MIGRATION_UPDATE_GUIDE.md
 /CROSS_DATABASE_VALIDATION_GUIDE.md
+/TEST_CROSS_DATABASE_VALIDATION.md
+/verify-model-connections.php
+/test-db-connections.php
+/test-campaign-connection.php

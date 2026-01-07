@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\PublicProfile;
 use App\Models\User;
 use App\Models\Volunteer;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
+
     /**
      * Display the registration view.
      */
@@ -174,43 +177,90 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Create role-specific profile
+     * Create role-specific profile with cross-database validation
      */
     private function createRoleProfile(User $user, string $role, array $data): void
     {
+        // Validate user exists in izzhilmy database (cross-database validation)
+        $this->validateUserExists($user->id);
+
         match ($role) {
-            'donor' => Donor::create([
-                'User_ID' => $user->id,
-                'Full_Name' => $data['full_name'],
-                'Phone_Num' => $data['phone_num'],
-                'Total_Donated' => 0,
-            ]),
-            'public' => PublicProfile::create([
-                'User_ID' => $user->id,
-                'Full_Name' => $data['full_name'],
-                'Phone' => $data['phone'],
-                'Email' => $data['email'],
-                'Position' => $data['position'] ?? null,
-            ]),
-            'organizer' => Organization::create([
-                'Organizer_ID' => $user->id,
-                'Phone_No' => $data['phone_no'],
-                'Register_No' => $data['register_no'],
-                'Address' => $data['address'],
-                'State' => $data['state'],
-                'City' => $data['city'],
-                'Description' => $data['description'] ?? null,
-            ]),
-            'volunteer' => Volunteer::create([
-                'User_ID' => $user->id,
-                'Availability' => $data['availability'],
-                'Address' => $data['address'],
-                'City' => $data['city'],
-                'State' => $data['state'],
-                'Gender' => $data['gender'],
-                'Phone_Num' => $data['phone_num'],
-                'Description' => $data['description'] ?? null,
-            ]),
+            'donor' => $this->createDonorProfile($user, $data),
+            'public' => $this->createPublicProfile($user, $data),
+            'organizer' => $this->createOrganizerProfile($user, $data),
+            'volunteer' => $this->createVolunteerProfile($user, $data),
         };
+    }
+
+    /**
+     * Create donor profile with cross-database validation
+     */
+    private function createDonorProfile(User $user, array $data): void
+    {
+        // Validate user doesn't already have a donor profile (cross-database validation)
+        $this->validateUserDoesNotHaveProfile($user->id, 'donor');
+
+        Donor::create([
+            'User_ID' => $user->id,
+            'Full_Name' => $data['full_name'],
+            'Phone_Num' => $data['phone_num'],
+            'Total_Donated' => 0,
+        ]);
+    }
+
+    /**
+     * Create public profile with cross-database validation
+     */
+    private function createPublicProfile(User $user, array $data): void
+    {
+        // Validate user doesn't already have a public profile (cross-database validation)
+        $this->validateUserDoesNotHaveProfile($user->id, 'publicProfile');
+
+        PublicProfile::create([
+            'User_ID' => $user->id,
+            'Full_Name' => $data['full_name'],
+            'Phone' => $data['phone'],
+            'Email' => $data['email'],
+            'Position' => $data['position'] ?? null,
+        ]);
+    }
+
+    /**
+     * Create organizer profile with cross-database validation
+     */
+    private function createOrganizerProfile(User $user, array $data): void
+    {
+        // Validate user doesn't already have an organization profile (cross-database validation)
+        $this->validateUserDoesNotHaveProfile($user->id, 'organization');
+
+        Organization::create([
+            'Organizer_ID' => $user->id,
+            'Phone_No' => $data['phone_no'],
+            'Register_No' => $data['register_no'],
+            'Address' => $data['address'],
+            'State' => $data['state'],
+            'City' => $data['city'],
+            'Description' => $data['description'] ?? null,
+        ]);
+    }
+
+    /**
+     * Create volunteer profile with cross-database validation
+     */
+    private function createVolunteerProfile(User $user, array $data): void
+    {
+        // Validate user doesn't already have a volunteer profile (cross-database validation)
+        $this->validateUserDoesNotHaveProfile($user->id, 'volunteer');
+
+        Volunteer::create([
+            'User_ID' => $user->id,
+            'Availability' => $data['availability'],
+            'Address' => $data['address'],
+            'City' => $data['city'],
+            'State' => $data['state'],
+            'Gender' => $data['gender'],
+            'Phone_Num' => $data['phone_num'],
+            'Description' => $data['description'] ?? null,
+        ]);
     }
 }

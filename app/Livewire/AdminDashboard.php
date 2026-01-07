@@ -97,10 +97,10 @@ class AdminDashboard extends Component
 
         // Financial
         $this->totalRaised = Campaign::sum('Collected_Amount') ?? 0;
-        $this->totalAllocated = DB::table('donation_allocation')->sum('Amount_Allocated') ?? 0;
+        $this->totalAllocated = DB::connection('hannah')->table('donation_allocation')->sum('Amount_Allocated') ?? 0;
 
         // Recipients helped - count DISTINCT recipients who have received allocations
-        $this->totalRecipientsHelped = DB::table('donation_allocation')
+        $this->totalRecipientsHelped = DB::connection('hannah')->table('donation_allocation')
             ->distinct('Recipient_ID')
             ->count('Recipient_ID');
 
@@ -130,95 +130,123 @@ class AdminDashboard extends Component
             return "`{$table}`.`{$column}`";
         };
 
-        // Top Performing Campaigns - Complex JOIN query
-        $this->topCampaigns = DB::table('campaign')
-            ->join('organization', 'campaign.Organization_ID', '=', 'organization.Organization_ID')
-            ->join('users', 'organization.Organizer_ID', '=', 'users.id')
-            ->leftJoin('donation', 'campaign.Campaign_ID', '=', 'donation.Campaign_ID')
-            ->select(
-                'campaign.Campaign_ID',
-                'campaign.Title as campaign_title',
-                'users.name as organizer_name',
-                'campaign.Collected_Amount',
-                'campaign.Goal_Amount',
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('donation', 'Donation_ID').') as donation_count'),
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('donation', 'Donor_ID').') as donor_count'),
-                DB::raw('ROUND(CAST('.$quotedColumn('campaign', 'Collected_Amount').' AS DECIMAL) / NULLIF('.$quotedColumn('campaign', 'Goal_Amount').', 0) * 100, 2) as achievement_percentage')
-            )
-            ->where('campaign.Status', 'Active')
-            ->groupBy('campaign.Campaign_ID', 'campaign.Title', 'users.name', 'campaign.Collected_Amount', 'campaign.Goal_Amount')
-            ->orderByDesc('campaign.Collected_Amount')
+        // Top Performing Campaigns - Cross-database query (izzati + izzhilmy + hannah)
+        // TODO: Refactor with proper application-level joins for production
+        // Simplified query for now to avoid cross-database JOIN errors
+        $this->topCampaigns = Campaign::with('organization.user')
+            ->where('Status', 'Active')
+            ->orderByDesc('Collected_Amount')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($campaign) {
+                $donationCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->count();
+                $donorCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->distinct('Donor_ID')->count('Donor_ID');
 
-        // Organization Leaderboard - Multiple JOINs
-        $this->organizationLeaderboard = DB::table('organization')
-            ->join('users', 'organization.Organizer_ID', '=', 'users.id')
-            ->leftJoin('campaign', 'organization.Organization_ID', '=', 'campaign.Organization_ID')
-            ->leftJoin('event', 'organization.Organization_ID', '=', 'event.Organizer_ID')
-            ->select(
-                'organization.Organization_ID',
-                'users.name as organizer_name',
-                'organization.City',
-                'organization.State',
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('campaign', 'Campaign_ID').') as total_campaigns'),
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('event', 'Event_ID').') as total_events'),
-                DB::raw('SUM('.$quotedColumn('campaign', 'Collected_Amount').') as total_raised'),
-                DB::raw('COUNT(DISTINCT CASE WHEN '.$quotedColumn('campaign', 'Status')." = 'Active' THEN ".$quotedColumn('campaign', 'Campaign_ID').' END) as active_campaigns')
-            )
-            ->groupBy('organization.Organization_ID', 'users.name', 'organization.City', 'organization.State')
-            ->orderByDesc('total_raised')
-            ->limit(10)
-            ->get();
+                return (object) [
+                    'Campaign_ID' => $campaign->Campaign_ID,
+                    'campaign_title' => $campaign->Title,
+                    'organizer_name' => $campaign->organization->user->name ?? 'Unknown',
+                    'Collected_Amount' => $campaign->Collected_Amount,
+                    'Goal_Amount' => $campaign->Goal_Amount,
+                    'donation_count' => $donationCount,
+                    'donor_count' => $donorCount,
+                    'achievement_percentage' => $campaign->Goal_Amount > 0 ? round(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 2) : 0,
+                ];
+            });
 
-        // Donor Insights - Advanced aggregation
-        $this->donorInsights = DB::table('donation')
-            ->join('donor', 'donation.Donor_ID', '=', 'donor.Donor_ID')
-            ->join('users', 'donor.User_ID', '=', 'users.id')
-            ->select(
-                'users.name as donor_name',
-                'users.email',
-                DB::raw('COUNT('.$quotedColumn('donation', 'Donation_ID').') as donation_count'),
-                DB::raw('SUM('.$quotedColumn('donation', 'Amount').') as total_donated'),
-                DB::raw('AVG('.$quotedColumn('donation', 'Amount').') as avg_donation'),
-                DB::raw('MIN('.$quotedColumn('donation', 'Donation_Date').') as first_donation'),
-                DB::raw('MAX('.$quotedColumn('donation', 'Donation_Date').') as last_donation'),
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('donation', 'Campaign_ID').') as campaigns_supported')
-            )
-            ->groupBy('donation.Donor_ID', 'users.name', 'users.email')
-            ->orderByDesc('total_donated')
-            ->limit(10)
-            ->get();
+        // Organization Leaderboard - Cross-database query (izzati + izzhilmy)
+        // TODO: Refactor with proper application-level joins for production
+        $this->organizationLeaderboard = Organization::with('user')
+            ->limit(20) // Get more for aggregation
+            ->get()
+            ->map(function ($org) {
+                $totalCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->count();
+                $totalEvents = Event::where('Organizer_ID', $org->Organization_ID)->count();
+                $totalRaised = Campaign::where('Organization_ID', $org->Organization_ID)->sum('Collected_Amount') ?? 0;
+                $activeCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->where('Status', 'Active')->count();
 
-        // Event Metrics - Complex JOIN with participation data
-        $this->eventMetrics = DB::table('event')
-            ->join('organization', 'event.Organizer_ID', '=', 'organization.Organization_ID')
-            ->join('users', 'organization.Organizer_ID', '=', 'users.id')
-            ->leftJoin('event_participation', 'event.Event_ID', '=', 'event_participation.Event_ID')
-            ->select(
-                'event.Event_ID',
-                'event.Title as event_title',
-                'users.name as organizer_name',
-                'event.Capacity',
-                'event.Status',
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('event_participation', 'Volunteer_ID').') as volunteers_registered'),
-                DB::raw('SUM('.$quotedColumn('event_participation', 'Total_Hours').') as total_hours'),
-                DB::raw('ROUND(CAST(COUNT(DISTINCT '.$quotedColumn('event_participation', 'Volunteer_ID').') AS DECIMAL) / NULLIF('.$quotedColumn('event', 'Capacity').', 0) * 100, 2) as fill_rate')
-            )
-            ->whereIn('event.Status', ['Upcoming', 'Ongoing', 'Completed'])
-            ->groupBy('event.Event_ID', 'event.Title', 'users.name', 'event.Capacity', 'event.Status')
-            ->orderByDesc('volunteers_registered')
-            ->limit(10)
-            ->get();
+                return (object) [
+                    'Organization_ID' => $org->Organization_ID,
+                    'organizer_name' => $org->user->name ?? 'Unknown',
+                    'City' => $org->City,
+                    'State' => $org->State,
+                    'total_campaigns' => $totalCampaigns,
+                    'total_events' => $totalEvents,
+                    'total_raised' => $totalRaised,
+                    'active_campaigns' => $activeCampaigns,
+                ];
+            })
+            ->sortByDesc('total_raised')
+            ->take(10)
+            ->values();
 
-        // Campaign Success Rate Analysis
-        $campaignStats = DB::table('campaign')
+        // Donor Insights - Cross-database query (hannah + izzhilmy)
+        // TODO: Refactor with proper application-level joins for production
+        $this->donorInsights = Donor::with('user')
+            ->limit(20)
+            ->get()
+            ->map(function ($donor) {
+                $donations = Donation::where('Donor_ID', $donor->Donor_ID)->get();
+                $donationCount = $donations->count();
+                $totalDonated = $donations->sum('Amount');
+                $avgDonation = $donationCount > 0 ? $totalDonated / $donationCount : 0;
+                $firstDonation = $donations->min('Donation_Date');
+                $lastDonation = $donations->max('Donation_Date');
+                $campaignsSupported = $donations->unique('Campaign_ID')->count();
+
+                return (object) [
+                    'donor_name' => $donor->user->name ?? 'Unknown',
+                    'email' => $donor->user->email ?? '',
+                    'donation_count' => $donationCount,
+                    'total_donated' => $totalDonated,
+                    'avg_donation' => round($avgDonation, 2),
+                    'first_donation' => $firstDonation,
+                    'last_donation' => $lastDonation,
+                    'campaigns_supported' => $campaignsSupported,
+                ];
+            })
+            ->sortByDesc('total_donated')
+            ->take(10)
+            ->values();
+
+        // Event Metrics - Cross-database query (izzati + izzhilmy + sashvini)
+        // TODO: Refactor with proper application-level joins for production
+        $this->eventMetrics = Event::with('organization.user')
+            ->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed'])
+            ->limit(20)
+            ->get()
+            ->map(function ($event) {
+                $participations = DB::connection('sashvini')->table('event_participation')
+                    ->where('Event_ID', $event->Event_ID)
+                    ->get();
+
+                $volunteersRegistered = $participations->unique('Volunteer_ID')->count();
+                $totalHours = $participations->sum('Total_Hours');
+                $fillRate = $event->Capacity > 0 ? round(($volunteersRegistered / $event->Capacity) * 100, 2) : 0;
+
+                return (object) [
+                    'Event_ID' => $event->Event_ID,
+                    'event_title' => $event->Title,
+                    'organizer_name' => $event->organization->user->name ?? 'Unknown',
+                    'Capacity' => $event->Capacity,
+                    'Status' => $event->Status,
+                    'volunteers_registered' => $volunteersRegistered,
+                    'total_hours' => $totalHours,
+                    'fill_rate' => $fillRate,
+                ];
+            })
+            ->sortByDesc('volunteers_registered')
+            ->take(10)
+            ->values();
+
+        // Campaign Success Rate Analysis (izzati database)
+        $campaignStats = DB::connection('izzati')->table('campaign')
             ->select(
                 DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN '.$quotedColumn('campaign', 'Collected_Amount').' >= '.$quotedColumn('campaign', 'Goal_Amount').' THEN 1 ELSE 0 END) as successful'),
-                DB::raw('SUM(CASE WHEN '.$quotedColumn('campaign', 'Status')." = 'Active' THEN 1 ELSE 0 END) as active"),
-                DB::raw('SUM(CASE WHEN '.$quotedColumn('campaign', 'Status')." = 'Pending' THEN 1 ELSE 0 END) as pending"),
-                DB::raw('AVG(CAST('.$quotedColumn('campaign', 'Collected_Amount').' AS DECIMAL) / NULLIF('.$quotedColumn('campaign', 'Goal_Amount').', 0) * 100) as avg_achievement_rate')
+                DB::raw('SUM(CASE WHEN "Collected_Amount" >= "Goal_Amount" THEN 1 ELSE 0 END) as successful'),
+                DB::raw('SUM(CASE WHEN "Status" = \'Active\' THEN 1 ELSE 0 END) as active'),
+                DB::raw('SUM(CASE WHEN "Status" = \'Pending\' THEN 1 ELSE 0 END) as pending'),
+                DB::raw('AVG(CAST("Collected_Amount" AS DECIMAL) / NULLIF("Goal_Amount", 0) * 100) as avg_achievement_rate')
             )
             ->first();
 
@@ -231,98 +259,98 @@ class AdminDashboard extends Component
             'avg_achievement_rate' => round($campaignStats->avg_achievement_rate ?? 0, 2),
         ];
 
-        // Allocation Efficiency - JOIN across multiple tables with sorting
-        $query = DB::table('campaign')
-            ->leftJoin('donation_allocation', 'campaign.Campaign_ID', '=', 'donation_allocation.Campaign_ID')
-            ->select(
-                'campaign.Campaign_ID',
-                'campaign.Title',
-                'campaign.Collected_Amount',
-                DB::raw('COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) as allocated_amount'),
-                DB::raw($quotedColumn('campaign', 'Collected_Amount').' - COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) as unallocated_amount'),
-                DB::raw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) as allocation_percentage'),
-                DB::raw('COUNT(DISTINCT '.$quotedColumn('donation_allocation', 'Recipient_ID').') as recipient_count')
-            )
-            ->where('campaign.Status', '!=', 'Pending')
-            ->groupBy('campaign.Campaign_ID', 'campaign.Title', 'campaign.Collected_Amount');
+        // Allocation Efficiency - Cross-database query (izzati + hannah)
+        // Load campaigns from izzati database
+        $campaigns = DB::connection('izzati')->table('campaign')
+            ->select('Campaign_ID', 'Title', 'Collected_Amount')
+            ->where('Status', '!=', 'Pending')
+            ->get();
 
-        // Apply efficiency filter
+        // Load allocation data from hannah database
+        $allocations = DB::connection('hannah')->table('donation_allocation')
+            ->select(
+                'Campaign_ID',
+                DB::raw('SUM(Amount_Allocated) as total_allocated'),
+                DB::raw('COUNT(DISTINCT Recipient_ID) as recipient_count')
+            )
+            ->groupBy('Campaign_ID')
+            ->get()
+            ->keyBy('Campaign_ID');
+
+        // Combine data in PHP (application-level join)
+        $efficiencyData = $campaigns->map(function ($campaign) use ($allocations) {
+            $allocation = $allocations->get($campaign->Campaign_ID);
+            $allocatedAmount = $allocation ? (float) $allocation->total_allocated : 0;
+            $recipientCount = $allocation ? (int) $allocation->recipient_count : 0;
+            $collectedAmount = (float) $campaign->Collected_Amount;
+
+            return (object) [
+                'Campaign_ID' => $campaign->Campaign_ID,
+                'Title' => $campaign->Title,
+                'Collected_Amount' => $collectedAmount,
+                'allocated_amount' => $allocatedAmount,
+                'unallocated_amount' => $collectedAmount - $allocatedAmount,
+                'allocation_percentage' => $collectedAmount > 0 ? round(($allocatedAmount / $collectedAmount) * 100, 2) : 0,
+                'recipient_count' => $recipientCount,
+            ];
+        });
+
+        // Apply sorting
         if ($this->efficiencyFilter === 'most_efficient') {
-            $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) DESC');
+            $efficiencyData = $efficiencyData->sortByDesc('allocation_percentage');
         } elseif ($this->efficiencyFilter === 'least_efficient') {
-            $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) ASC');
+            $efficiencyData = $efficiencyData->sortBy('allocation_percentage');
         } else {
             // Default sorting based on column selection
-            if (in_array($this->recipientSortBy, ['allocated_amount', 'unallocated_amount', 'allocation_percentage', 'recipient_count'])) {
-                // For calculated columns, use orderByRaw
-                if ($this->recipientSortBy === 'allocated_amount') {
-                    $query->orderByRaw('COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) '.$this->recipientSortDirection);
-                } elseif ($this->recipientSortBy === 'unallocated_amount') {
-                    $query->orderByRaw($quotedColumn('campaign', 'Collected_Amount').' - COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) '.$this->recipientSortDirection);
-                } elseif ($this->recipientSortBy === 'allocation_percentage') {
-                    $query->orderByRaw('ROUND((COALESCE(SUM('.$quotedColumn('donation_allocation', 'Amount_Allocated').'), 0) / NULLIF('.$quotedColumn('campaign', 'Collected_Amount').', 0)) * 100, 2) '.$this->recipientSortDirection);
-                } elseif ($this->recipientSortBy === 'recipient_count') {
-                    $query->orderByRaw('COUNT(DISTINCT '.$quotedColumn('donation_allocation', 'Recipient_ID').') '.$this->recipientSortDirection);
-                }
+            if ($this->recipientSortDirection === 'desc') {
+                $efficiencyData = $efficiencyData->sortByDesc($this->recipientSortBy);
             } else {
-                // For regular columns (Title, Collected_Amount), use regular orderBy
-                $query->orderBy('campaign.'.$this->recipientSortBy, $this->recipientSortDirection);
+                $efficiencyData = $efficiencyData->sortBy($this->recipientSortBy);
             }
         }
 
-        $this->allocationEfficiency = $query->limit(10)->get();
+        $this->allocationEfficiency = $efficiencyData->take(10)->values();
 
-        // Recent Activity - Combined from multiple sources
-        // Use database-agnostic string concatenation
-        $driver = DB::connection()->getDriverName();
-        $concatDonation = $driver === 'pgsql'
-            ? "CONCAT('donated RM ', ".$quotedColumn('donation', 'Amount').", ' to ', ".$quotedColumn('campaign', 'Title').')'
-            : "CONCAT('donated RM ', ".$quotedColumn('donation', 'Amount').", ' to ', ".$quotedColumn('campaign', 'Title').')';
-        $concatCampaign = $driver === 'pgsql'
-            ? "CONCAT('created campaign: ', ".$quotedColumn('campaign', 'Title').')'
-            : "CONCAT('created campaign: ', ".$quotedColumn('campaign', 'Title').')';
+        // Recent Activity - Cross-database query (hannah + izzati + izzhilmy)
+        // TODO: Refactor with proper application-level joins for production
+        $activities = collect();
 
-        // Recent Activity with filtering
         if ($this->activityFilter === 'all' || $this->activityFilter === 'donation') {
-            $recentDonations = DB::table('donation')
-                ->join('donor', 'donation.Donor_ID', '=', 'donor.Donor_ID')
-                ->join('users', 'donor.User_ID', '=', 'users.id')
-                ->join('campaign', 'donation.Campaign_ID', '=', 'campaign.Campaign_ID')
-                ->select(
-                    DB::raw("'donation' as type"),
-                    'users.name as actor',
-                    DB::raw($concatDonation.' as description'),
-                    'donation.created_at as activity_date'
-                )
-                ->orderByDesc('donation.created_at')
-                ->limit($this->activityFilter === 'donation' ? 10 : 5);
+            $recentDonations = Donation::with('donor.user', 'campaign')
+                ->orderByDesc('created_at')
+                ->limit($this->activityFilter === 'donation' ? 10 : 5)
+                ->get()
+                ->map(function ($donation) {
+                    return (object) [
+                        'type' => 'donation',
+                        'actor' => $donation->donor->user->name ?? 'Unknown',
+                        'description' => 'donated RM '.$donation->Amount.' to '.$donation->campaign->Title,
+                        'activity_date' => $donation->created_at,
+                    ];
+                });
+            $activities = $activities->merge($recentDonations);
         }
 
         if ($this->activityFilter === 'all' || $this->activityFilter === 'campaign') {
-            $recentCampaigns = DB::table('campaign')
-                ->join('organization', 'campaign.Organization_ID', '=', 'organization.Organization_ID')
-                ->join('users', 'organization.Organizer_ID', '=', 'users.id')
-                ->select(
-                    DB::raw("'campaign' as type"),
-                    'users.name as actor',
-                    DB::raw($concatCampaign.' as description'),
-                    'campaign.created_at as activity_date'
-                )
-                ->orderByDesc('campaign.created_at')
-                ->limit($this->activityFilter === 'campaign' ? 10 : 5);
+            $recentCampaigns = Campaign::with('organization.user')
+                ->orderByDesc('created_at')
+                ->limit($this->activityFilter === 'campaign' ? 10 : 5)
+                ->get()
+                ->map(function ($campaign) {
+                    return (object) [
+                        'type' => 'campaign',
+                        'actor' => $campaign->organization->user->name ?? 'Unknown',
+                        'description' => 'created campaign: '.$campaign->Title,
+                        'activity_date' => $campaign->created_at,
+                    ];
+                });
+            $activities = $activities->merge($recentCampaigns);
         }
 
-        if ($this->activityFilter === 'all') {
-            $this->recentActivity = $recentDonations
-                ->union($recentCampaigns)
-                ->orderByDesc('activity_date')
-                ->limit(10)
-                ->get();
-        } elseif ($this->activityFilter === 'donation') {
-            $this->recentActivity = $recentDonations->get();
-        } else {
-            $this->recentActivity = $recentCampaigns->get();
-        }
+        $this->recentActivity = $activities
+            ->sortByDesc('activity_date')
+            ->take(10)
+            ->values();
     }
 
     private function loadChartData()

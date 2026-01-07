@@ -80,10 +80,45 @@ php artisan migrate
 
 # Fresh migration with seeding (development)
 php artisan migrate:fresh --seed
+# OR use composer script (includes cache clearing)
+composer fresh
 
 # Create new migration
 php artisan make:migration create_table_name
 ```
+
+### Cache Management
+
+**⚠️ IMPORTANT**: Always clear caches after modifying `.env`, config files, or model connections!
+
+```bash
+# Clear all caches (RECOMMENDED - clears config, route, view, application, event caches)
+php artisan cache:clear-all
+# OR use composer script
+composer cache-clear
+
+# Clear individual caches
+php artisan config:clear  # Configuration cache
+php artisan route:clear   # Route cache
+php artisan view:clear    # Compiled Blade views
+php artisan cache:clear   # Application cache
+php artisan event:clear   # Event cache
+
+# When to clear cache:
+# 1. After modifying .env file (especially database connections)
+# 2. After updating config/*.php files
+# 3. After adding/modifying model $connection properties
+# 4. When experiencing unexpected "table does not exist" errors
+# 5. Before starting development server: composer dev (auto-clears)
+```
+
+**🔄 Automatic Cache Clearing**:
+- `composer dev` - Auto-clears all caches before starting servers
+- `composer fresh` - Clears cache before running fresh migrations
+
+**💡 Pro Tip**: If you experience connection or "table not found" errors:
+1. Run `composer cache-clear`
+2. Restart your development server (`Ctrl+C`, then `composer dev`)
 
 ## Application Architecture
 

@@ -299,20 +299,28 @@ class VolunteerController extends Controller
             ->limit(5)
             ->get();
 
-        // Calculate statistics
+        // Calculate statistics (cross-database safe - no JOINs)
         $totalHours = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
             ->sum('Total_Hours');
 
-        $totalEvents = $volunteer->events()->count();
+        // Get event IDs from event_participation (sashvini database)
+        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID');
 
-        $completedEvents = $volunteer->events()
-            ->where('event.Status', 'Completed')
+        // Query events directly (izzati database)
+        $totalEvents = Event::whereIn('Event_ID', $eventIds)->count();
+
+        $completedEvents = Event::whereIn('Event_ID', $eventIds)
+            ->where('Status', 'Completed')
             ->count();
 
-        // Get recent activity
-        $recentEvents = $volunteer->events()
-            ->orderBy('event_participation.created_at', 'desc')
+        // Get recent event participations with event details
+        $recentParticipations = $volunteer->eventParticipations()
+            ->orderBy('created_at', 'desc')
             ->limit(5)
+            ->get();
+
+        $recentEvents = Event::whereIn('Event_ID', $recentParticipations->pluck('Event_ID'))
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('volunteer-management.dashboard', compact(
@@ -504,18 +512,22 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
-        // Get statistics
+        // Get statistics (cross-database safe - no JOINs)
         $totalHours = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
             ->sum('Total_Hours');
 
-        $totalEvents = $volunteer->events()->count();
+        // Get event IDs from event_participation (sashvini database)
+        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID');
 
-        $completedEvents = $volunteer->events()
-            ->where('event.Status', 'Completed')
+        // Query events directly (izzati database)
+        $totalEvents = Event::whereIn('Event_ID', $eventIds)->count();
+
+        $completedEvents = Event::whereIn('Event_ID', $eventIds)
+            ->where('Status', 'Completed')
             ->count();
 
-        $upcomingEvents = $volunteer->events()
-            ->whereIn('event.Status', ['Upcoming', 'Ongoing'])
+        $upcomingEvents = Event::whereIn('Event_ID', $eventIds)
+            ->whereIn('Status', ['Upcoming', 'Ongoing'])
             ->count();
 
         // Get skills

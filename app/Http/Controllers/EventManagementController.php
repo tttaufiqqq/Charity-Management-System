@@ -225,6 +225,9 @@ class EventManagementController extends Controller
                 'Status' => 'Pending',
             ]);
 
+            // Validate event was created successfully before creating roles (cross-database validation)
+            $this->validateEventExists($event->Event_ID);
+
             // Create roles for the event
             foreach ($validated['roles'] as $role) {
                 EventRole::create([

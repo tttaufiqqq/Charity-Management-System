@@ -51,7 +51,15 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
+            "@cache-clear",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+        ],
+        "cache-clear": [
+            "@php artisan cache:clear-all --ansi"
+        ],
+        "fresh": [
+            "@cache-clear",
+            "@php artisan migrate:fresh --seed --ansi"
         ],
         "test": [
             "@php artisan config:clear --ansi",

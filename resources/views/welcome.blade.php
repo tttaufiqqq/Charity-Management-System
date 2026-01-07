@@ -391,10 +391,21 @@
                     @php
                         $volunteer = auth()->user()->volunteer;
                         $totalHours = $volunteer ? \App\Models\EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)->sum('Total_Hours') : 0;
-                        $totalEvents = $volunteer ? $volunteer->events()->count() : 0;
-                        $completedEvents = $volunteer ? $volunteer->events()->where('event.Status', 'Completed')->count() : 0;
-                        $upcomingEventsCount = $volunteer ? $volunteer->events()->whereIn('event.Status', ['Upcoming', 'Ongoing'])->count() : 0;
-                        $upcomingEventsList = $volunteer ? $volunteer->events()->whereIn('event.Status', ['Upcoming', 'Ongoing'])->orderBy('Start_Date')->take(3)->get() : collect();
+
+                        // Cross-database safe queries - no JOINs
+                        if ($volunteer) {
+                            $eventIds = $volunteer->eventParticipations()->pluck('Event_ID');
+                            $totalEvents = \App\Models\Event::whereIn('Event_ID', $eventIds)->count();
+                            $completedEvents = \App\Models\Event::whereIn('Event_ID', $eventIds)->where('Status', 'Completed')->count();
+                            $upcomingEventsCount = \App\Models\Event::whereIn('Event_ID', $eventIds)->whereIn('Status', ['Upcoming', 'Ongoing'])->count();
+                            $upcomingEventsList = \App\Models\Event::whereIn('Event_ID', $eventIds)->whereIn('Status', ['Upcoming', 'Ongoing'])->orderBy('Start_Date')->take(3)->get();
+                        } else {
+                            $totalEvents = 0;
+                            $completedEvents = 0;
+                            $upcomingEventsCount = 0;
+                            $upcomingEventsList = collect();
+                        }
+
                         $skillsCount = $volunteer ? $volunteer->skills()->count() : 0;
                         $availableEvents = \App\Models\Event::whereIn('Status', ['Upcoming', 'Ongoing'])->count();
                     @endphp

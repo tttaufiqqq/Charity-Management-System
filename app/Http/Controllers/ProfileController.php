@@ -26,10 +26,14 @@ class ProfileController extends Controller
                 return view('profile.edit', ['user' => $user]);
             }
 
-            // Calculate statistics
-            $totalEvents = $volunteer->events()->count();
-            $completedEvents = $volunteer->events()->where('event.Status', 'Completed')->count();
-            $upcomingEvents = $volunteer->events()->whereIn('event.Status', ['Upcoming', 'Ongoing'])->count();
+            // Calculate statistics (cross-database safe - no JOINs)
+            // Get event IDs from event_participation (sashvini database)
+            $eventIds = $volunteer->eventParticipations()->pluck('Event_ID');
+
+            // Query events directly (izzati database)
+            $totalEvents = \App\Models\Event::whereIn('Event_ID', $eventIds)->count();
+            $completedEvents = \App\Models\Event::whereIn('Event_ID', $eventIds)->where('Status', 'Completed')->count();
+            $upcomingEvents = \App\Models\Event::whereIn('Event_ID', $eventIds)->whereIn('Status', ['Upcoming', 'Ongoing'])->count();
             $totalHours = $volunteer->eventParticipations()->sum('Total_Hours');
             $skills = $volunteer->skills;
 
