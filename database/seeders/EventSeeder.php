@@ -14,11 +14,15 @@ class EventSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Databases:
+     * - izzati (PostgreSQL): Organizations, Events, EventRoles
+     * - sashvini (MariaDB): Volunteers, EventParticipation
      */
     public function run(): void
     {
-        // Get existing organizations
-        $organizations = Organization::all();
+        // Get existing organizations from izzati
+        $organizations = Organization::on('izzati')->get();
 
         if ($organizations->isEmpty()) {
             $this->command->warn('No organizations found. Please run UserRoleSeeder first.');
@@ -26,8 +30,8 @@ class EventSeeder extends Seeder
             return;
         }
 
-        // Get existing volunteers
-        $volunteers = Volunteer::all();
+        // Get existing volunteers from sashvini
+        $volunteers = Volunteer::on('sashvini')->get();
 
         if ($volunteers->isEmpty()) {
             $this->command->warn('No volunteers found. Please run UserRoleSeeder first.');
@@ -35,12 +39,14 @@ class EventSeeder extends Seeder
             return;
         }
 
+        $this->command->info("Found {$organizations->count()} organizations and {$volunteers->count()} volunteers");
+
         // Create events for each organization
         foreach ($organizations as $organization) {
             $this->createEventsForOrganization($organization, $volunteers);
         }
 
-        $this->command->info('Events and participations seeded successfully!');
+        $this->command->info('✓ Events and participations seeded successfully!');
     }
 
     private function createEventsForOrganization($organization, $volunteers)
@@ -203,7 +209,8 @@ class EventSeeder extends Seeder
             // Random created_at within the last week
             $createdAt = Carbon::now()->subDays(rand(0, 7))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
 
-            $event = Event::create([
+            // Create event in izzati database
+            $event = new Event([
                 'Organizer_ID' => $organization->Organization_ID,
                 'Title' => $eventData['Title'],
                 'Description' => $eventData['Description'],
@@ -215,8 +222,10 @@ class EventSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $event->setConnection('izzati');
+            $event->save();
 
-            // Create volunteer roles for this event
+            // Create volunteer roles for this event (izzati)
             $this->createRolesForEvent($event);
 
             // Attach volunteers to events with different statuses
@@ -283,20 +292,23 @@ class EventSeeder extends Seeder
         $roles = $roleTemplates[$eventType];
 
         foreach ($roles as $roleData) {
-            EventRole::create([
+            // Create event role in izzati database
+            $eventRole = new EventRole([
                 'Event_ID' => $event->Event_ID,
                 'Role_Name' => $roleData['name'],
                 'Role_Description' => $roleData['description'],
                 'Volunteers_Needed' => $roleData['needed'],
                 'Volunteers_Filled' => 0,
             ]);
+            $eventRole->setConnection('izzati');
+            $eventRole->save();
         }
     }
 
     private function attachVolunteersToEvent($event, $volunteers)
     {
-        // Get roles for this event
-        $eventRoles = EventRole::where('Event_ID', $event->Event_ID)->get();
+        // Get roles for this event from izzati
+        $eventRoles = EventRole::on('izzati')->where('Event_ID', $event->Event_ID)->get();
 
         if ($eventRoles->isEmpty()) {
             return;
@@ -337,15 +349,18 @@ class EventSeeder extends Seeder
                 default => 0
             };
 
-            EventParticipation::create([
+            // Create event participation in sashvini database
+            $participation = new EventParticipation([
                 'Volunteer_ID' => $volunteer->Volunteer_ID,
                 'Event_ID' => $event->Event_ID,
                 'Role_ID' => $assignedRole->Role_ID,
                 'Status' => $participationStatus,
                 'Total_Hours' => $totalHours,
             ]);
+            $participation->setConnection('sashvini');
+            $participation->save();
 
-            // Increment role filled count
+            // Increment role filled count (in izzati)
             $assignedRole->increment('Volunteers_Filled');
         }
     }

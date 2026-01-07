@@ -84,11 +84,20 @@ class FreshAllDatabases extends Command
             // Test connection first
             \DB::connection($connection)->getPdo();
 
+            // Set environment variable to indicate which database is being migrated
+            // This allows migrations to check if they should run
+            putenv("MIGRATING_DATABASE={$connection}");
+            $_ENV['MIGRATING_DATABASE'] = $connection;
+
             // Fresh migrate
             Artisan::call('migrate:fresh', [
                 '--database' => $connection,
                 '--force' => true,
             ], $this->getOutput());
+
+            // Clear the environment variable
+            putenv('MIGRATING_DATABASE');
+            unset($_ENV['MIGRATING_DATABASE']);
 
             $this->info("✅  {$connection} migrated successfully!");
 

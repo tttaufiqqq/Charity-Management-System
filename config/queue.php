@@ -17,12 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Queue Connections
+    | Queue Connections (CENTRALIZED INFRASTRUCTURE)
     |--------------------------------------------------------------------------
     |
     | Here you may configure the connection options for every queue backend
     | used by your application. An example configuration is provided for
     | each backend supported by Laravel. You're also free to add more.
+    |
+    | ⭐ IMPORTANT: Database queue uses Izzhilmy (PostgreSQL) as centralized
+    |    infrastructure. ALL 5 databases (Izzhilmy, Sashvini, Izzati, Hannah,
+    |    Adam) share the SAME queue stored in Izzhilmy's jobs table.
     |
     | Drivers: "sync", "database", "beanstalkd", "sqs", "redis",
     |          "deferred", "background", "failover", "null"
@@ -37,7 +41,7 @@ return [
 
         'database' => [
             'driver' => 'database',
-            'connection' => env('DB_QUEUE_CONNECTION'),
+            'connection' => env('DB_QUEUE_CONNECTION', 'izzhilmy'), // Centralized infrastructure
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
@@ -93,28 +97,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Job Batching
+    | Job Batching (CENTRALIZED INFRASTRUCTURE)
     |--------------------------------------------------------------------------
     |
     | The following options configure the database and table that store job
     | batching information. These options can be updated to any database
     | connection and table which has been defined by your application.
     |
+    | ⭐ Uses Izzhilmy as centralized infrastructure for job batches.
+    |
     */
 
     'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_CONNECTION', 'izzhilmy'), // Centralized infrastructure
         'table' => 'job_batches',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Failed Queue Jobs
+    | Failed Queue Jobs (CENTRALIZED INFRASTRUCTURE)
     |--------------------------------------------------------------------------
     |
     | These options configure the behavior of failed queue job logging so you
     | can control how and where failed jobs are stored. Laravel ships with
     | support for storing failed jobs in a simple file or in a database.
+    |
+    | ⭐ Uses Izzhilmy as centralized infrastructure for failed jobs.
     |
     | Supported drivers: "database-uuids", "dynamodb", "file", "null"
     |
@@ -122,7 +130,7 @@ return [
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
+        'database' => env('DB_CONNECTION', 'izzhilmy'), // Centralized infrastructure
         'table' => 'failed_jobs',
     ],
 

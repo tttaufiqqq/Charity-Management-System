@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->create('volunteer', function (Blueprint $table) {
             $table->id('Volunteer_ID');
             // ⚠️ Cross-database reference: User_ID references users table in izzhilmy database
@@ -32,6 +37,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->dropIfExists('volunteer');
     }
 };

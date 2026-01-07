@@ -19,12 +19,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cache Stores
+    | Cache Stores (CENTRALIZED INFRASTRUCTURE)
     |--------------------------------------------------------------------------
     |
     | Here you may define all of the cache "stores" for your application as
     | well as their drivers. You may even define multiple stores for the
     | same cache driver to group types of items stored in your caches.
+    |
+    | ⭐ IMPORTANT: Database cache uses Izzhilmy (PostgreSQL) as centralized
+    |    infrastructure. ALL 5 databases (Izzhilmy, Sashvini, Izzati, Hannah,
+    |    Adam) share the SAME cache stored in Izzhilmy's cache table.
     |
     | Supported drivers: "array", "database", "file", "memcached",
     |                    "redis", "dynamodb", "octane",
@@ -41,9 +45,9 @@ return [
 
         'database' => [
             'driver' => 'database',
-            'connection' => env('DB_CACHE_CONNECTION'),
+            'connection' => env('DB_CACHE_CONNECTION', 'izzhilmy'), // Centralized infrastructure
             'table' => env('DB_CACHE_TABLE', 'cache'),
-            'lock_connection' => env('DB_CACHE_LOCK_CONNECTION'),
+            'lock_connection' => env('DB_CACHE_LOCK_CONNECTION', 'izzhilmy'),
             'lock_table' => env('DB_CACHE_LOCK_TABLE'),
         ],
 

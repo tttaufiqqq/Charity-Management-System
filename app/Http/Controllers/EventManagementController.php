@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Event;
 use App\Models\EventRole;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EventManagementController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
     // ========================================
     // CAMPAIGN METHODS
     // ========================================
@@ -78,7 +80,7 @@ class EventManagementController extends Controller
             'Status' => 'Pending',
         ]);
 
-        return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully! It will be visible once admin approved it.');
+        return redirect()->route('campaigns.index')->with('success', 'Campaign created successfully! It will be visible once admin approved it. (Database: Izzati)');
     }
 
     /**
@@ -136,7 +138,7 @@ class EventManagementController extends Controller
         ]);
 
         return redirect()->route('campaigns.show', $campaign->Campaign_ID)
-            ->with('success', 'Campaign updated successfully!');
+            ->with('success', 'Campaign updated successfully! (Database: Izzati)');
     }
 
     /**
@@ -152,7 +154,7 @@ class EventManagementController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaigns.index')
-            ->with('success', 'Campaign deleted successfully!');
+            ->with('success', 'Campaign deleted successfully! (Database: Izzati)');
     }
 
     // ========================================
@@ -235,7 +237,7 @@ class EventManagementController extends Controller
             }
         });
 
-        return redirect()->route('events.index')->with('success', 'Event created successfully! It will be visible once admin approve it');
+        return redirect()->route('events.index')->with('success', 'Event created successfully! It will be visible once admin approve it (Database: Izzati)');
     }
 
     /**
@@ -309,7 +311,7 @@ class EventManagementController extends Controller
         ]);
 
         return redirect()->route('events.show', $event->Event_ID)
-            ->with('success', 'Event updated successfully!');
+            ->with('success', 'Event updated successfully! (Database: Izzati)');
     }
 
     /**
@@ -325,7 +327,7 @@ class EventManagementController extends Controller
         $event->delete();
 
         return redirect()->route('events.index')
-            ->with('success', 'Event deleted successfully!');
+            ->with('success', 'Event deleted successfully! (Database: Izzati)');
     }
 
     /**
@@ -361,6 +363,7 @@ class EventManagementController extends Controller
 
     /**
      * Update volunteer attendance and hours
+     * Cross-database operation: Event (Izzati) -> event_participation (Sashvini)
      */
     public function updateVolunteerHours(Request $request, Event $event, $volunteerId)
     {
@@ -368,6 +371,9 @@ class EventManagementController extends Controller
         if ($event->Organizer_ID !== Auth::user()->organization->Organization_ID) {
             abort(403, 'Unauthorized action.');
         }
+
+        // Note: Volunteer validation happens via event_participation table query
+        // Cross-database: Event (Izzati) updates volunteer participation (Sashvini)
 
         // Base validation
         $validated = $request->validate([
@@ -465,7 +471,7 @@ class EventManagementController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Volunteer updated successfully!');
+            return back()->with('success', 'Volunteer updated successfully! (Database: Sashvini)');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -475,6 +481,7 @@ class EventManagementController extends Controller
 
     /**
      * Auto-calculate and update all volunteer hours for completed event
+     * Cross-database operation: Event (Izzati) -> event_participation (Sashvini)
      */
     public function autoCalculateHours(Event $event)
     {
@@ -491,7 +498,7 @@ class EventManagementController extends Controller
         // Calculate event duration in hours
         $eventHours = $event->Start_Date->diffInHours($event->End_Date);
 
-        // Update all volunteers with "Registered" or "Attended" status
+        // Cross-database: Update volunteer participation records in Sashvini
         $updated = DB::table('event_participation')
             ->where('Event_ID', $event->Event_ID)
             ->whereIn('Status', ['Registered', 'Attended'])
@@ -501,11 +508,12 @@ class EventManagementController extends Controller
                 'updated_at' => now(),
             ]);
 
-        return back()->with('success', "Auto-calculated {$eventHours} hours for {$updated} volunteers!");
+        return back()->with('success', "Auto-calculated {$eventHours} hours for {$updated} volunteers! (Database: Sashvini)");
     }
 
     /**
      * Bulk update volunteer statuses
+     * Cross-database operation: Event (Izzati) -> event_participation (Sashvini)
      */
     public function bulkUpdateVolunteers(Request $request, Event $event)
     {
@@ -552,11 +560,12 @@ class EventManagementController extends Controller
 
         $count = count($validated['volunteer_ids']);
 
-        return back()->with('success', "Updated {$count} volunteers!");
+        return back()->with('success', "Updated {$count} volunteers! (Database: Sashvini)");
     }
 
     /**
      * Update a volunteer's assigned role
+     * Cross-database operation: Event (Izzati) -> event_participation (Sashvini)
      */
     public function updateVolunteerRole(Request $request, Event $event, $volunteerId)
     {
@@ -616,7 +625,7 @@ class EventManagementController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'Volunteer role updated successfully!');
+            return back()->with('success', 'Volunteer role updated successfully! (Database: Sashvini)');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -704,7 +713,7 @@ class EventManagementController extends Controller
 
         $campaign->update(['Status' => 'Active']);
 
-        return back()->with('success', 'Campaign approved successfully!');
+        return back()->with('success', 'Campaign approved successfully! (Database: Izzati)');
     }
 
     /**
@@ -718,7 +727,7 @@ class EventManagementController extends Controller
 
         $campaign->update(['Status' => 'Rejected']);
 
-        return back()->with('success', 'Campaign rejected.');
+        return back()->with('success', 'Campaign rejected. (Database: Izzati)');
     }
 
     /**
@@ -732,7 +741,7 @@ class EventManagementController extends Controller
 
         $event->update(['Status' => 'Upcoming']);
 
-        return back()->with('success', 'Event approved successfully!');
+        return back()->with('success', 'Event approved successfully! (Database: Izzati)');
     }
 
     /**
@@ -746,7 +755,7 @@ class EventManagementController extends Controller
 
         $event->update(['Status' => 'Rejected']);
 
-        return back()->with('success', 'Event rejected.');
+        return back()->with('success', 'Event rejected. (Database: Izzati)');
     }
 
     /**

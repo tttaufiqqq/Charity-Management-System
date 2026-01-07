@@ -12,11 +12,15 @@ class DonationSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Databases:
+     * - hannah (MySQL): Donors, Donations
+     * - izzati (PostgreSQL): Campaigns (cross-database updates)
      */
     public function run(): void
     {
-        // Get all donors
-        $donors = Donor::all();
+        // Get all donors from hannah
+        $donors = Donor::on('hannah')->get();
 
         if ($donors->isEmpty()) {
             $this->command->warn('No donors found. Please run UserRoleSeeder first.');
@@ -24,8 +28,8 @@ class DonationSeeder extends Seeder
             return;
         }
 
-        // Get all campaigns (only active or completed)
-        $campaigns = Campaign::whereIn('Status', ['Active', 'Completed'])->get();
+        // Get all campaigns (only active or completed) from izzati
+        $campaigns = Campaign::on('izzati')->whereIn('Status', ['Active', 'Completed'])->get();
 
         if ($campaigns->isEmpty()) {
             $this->command->warn('No campaigns found. Please run CampaignSeeder first.');
@@ -33,7 +37,7 @@ class DonationSeeder extends Seeder
             return;
         }
 
-        $this->command->info("Found {$campaigns->count()} campaigns to receive donations");
+        $this->command->info("Found {$donors->count()} donors and {$campaigns->count()} campaigns");
 
         // Create donations for each donor
         foreach ($donors as $donor) {
@@ -43,7 +47,7 @@ class DonationSeeder extends Seeder
         // Display final statistics
         $this->displayStatistics();
 
-        $this->command->info('Donations seeded successfully!');
+        $this->command->info('✓ Donations seeded successfully!');
     }
 
     private function createDonationsForDonor($donor, $campaigns)
@@ -70,7 +74,8 @@ class DonationSeeder extends Seeder
             $paymentMethods = ['Credit Card', 'Online Banking', 'E-Wallet', 'Debit Card'];
             $paymentMethod = $paymentMethods[array_rand($paymentMethods)];
 
-            $donation = Donation::create([
+            // Create donation in hannah database
+            $donation = new Donation([
                 'Donor_ID' => $donor->Donor_ID,
                 'Campaign_ID' => $campaign->Campaign_ID,
                 'Amount' => $amount,
@@ -83,16 +88,18 @@ class DonationSeeder extends Seeder
                 'created_at' => $donationDate,
                 'updated_at' => $donationDate,
             ]);
+            $donation->setConnection('hannah');
+            $donation->save();
 
             $totalDonated += $amount;
 
-            // Update campaign collected amount immediately
+            // Update campaign collected amount immediately (cross-database update to izzati)
             $campaign->increment('Collected_Amount', $amount);
 
             $this->command->info("Created donation: RM {$amount} to '{$campaign->Title}' (ID: {$campaign->Campaign_ID})");
         }
 
-        // Update donor's total donated amount
+        // Update donor's total donated amount (in hannah)
         $donor->update(['Total_Donated' => $totalDonated]);
 
         $this->command->info("Donor '{$donor->Full_Name}' total donated: RM {$totalDonated}");
@@ -150,8 +157,8 @@ class DonationSeeder extends Seeder
 
     private function displayStatistics()
     {
-        $totalDonations = Donation::count();
-        $totalAmount = Donation::sum('Amount');
+        $totalDonations = Donation::on('hannah')->count();
+        $totalAmount = Donation::on('hannah')->sum('Amount');
 
         $this->command->info('========================');
         $this->command->info('Donation Statistics:');
@@ -159,16 +166,21 @@ class DonationSeeder extends Seeder
         $this->command->info('Total Amount: RM '.number_format($totalAmount, 2));
         $this->command->info('========================');
 
-        // Show per campaign
-        $campaigns = Campaign::with('donations')->get();
+        // Show per campaign (from izzati, count donations from hannah)
+        $campaigns = Campaign::on('izzati')->get();
         foreach ($campaigns as $campaign) {
             $collected = $campaign->Collected_Amount;
             $goal = $campaign->Goal_Amount;
             $percentage = $goal > 0 ? ($collected / $goal * 100) : 0;
 
-            $this->command->info("Campaign: {$campaign->Title}");
-            $this->command->info('  Collected: RM '.number_format($collected, 2).' / RM '.number_format($goal, 2)." ({$percentage}%)");
-            $this->command->info("  Donations count: {$campaign->donations->count()}");
+            // Count donations for this campaign from hannah
+            $donationCount = Donation::on('hannah')->where('Campaign_ID', $campaign->Campaign_ID)->count();
+
+            if ($donationCount > 0) {
+                $this->command->info("Campaign: {$campaign->Title}");
+                $this->command->info('  Collected: RM '.number_format($collected, 2).' / RM '.number_format($goal, 2).' ('.number_format($percentage, 1).'%)');
+                $this->command->info("  Donations count: {$donationCount}");
+            }
         }
     }
 }

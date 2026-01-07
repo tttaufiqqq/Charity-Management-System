@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Event;
 use App\Models\Recipient;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\DB; // You'll need: composer require barryvdh/lar
 
 class DonationManagementController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
+
     /**
      * Browse all active campaigns
      */
@@ -127,15 +130,13 @@ class DonationManagementController extends Controller
             'payment_method' => 'required|in:FPX Online Banking',
         ]);
 
-        $campaign = Campaign::findOrFail($campaignId);
+        // Validate campaign exists and is active (cross-database validation: hannah -> izzati)
+        $campaign = $this->validateCampaignIsActive($campaignId);
+
         $donor = Auth::user()->donor;
 
         if (! $donor) {
             return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
-        }
-
-        if ($campaign->Status !== 'Active') {
-            return redirect()->back()->with('error', 'This campaign is not accepting donations.')->withInput();
         }
 
         // Check if donation would exceed campaign goal
@@ -430,7 +431,7 @@ class DonationManagementController extends Controller
 
             return redirect()
                 ->route('public.recipients.index')
-                ->with('success', 'Recipient registered successfully! Pending review.');
+                ->with('success', 'Recipient registered successfully! Pending review. (Database: Adam)');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -529,7 +530,7 @@ class DonationManagementController extends Controller
 
         return redirect()
             ->route('public.recipients.show', $recipient->Recipient_ID)
-            ->with('success', 'Recipient updated successfully!');
+            ->with('success', 'Recipient updated successfully! (Database: Adam)');
     }
 
     /**
@@ -553,7 +554,7 @@ class DonationManagementController extends Controller
 
         return redirect()
             ->route('public.recipients.index')
-            ->with('success', 'Recipient deleted successfully!');
+            ->with('success', 'Recipient deleted successfully! (Database: Adam)');
     }
 
     /**

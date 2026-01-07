@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating izzhilmy database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzhilmy') {
+            return;
+        }
+
         $tableNames = config('permission.table_names');
         $columnNames = config('permission.column_names');
 
@@ -56,6 +61,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating izzhilmy database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzhilmy') {
+            return;
+        }
+
         $tableNames = config('permission.table_names');
 
         if (empty($tableNames)) {

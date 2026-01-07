@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
+
     public function manageUsers(Request $request)
     {
         $query = User::with('roles');
@@ -45,6 +48,11 @@ class AdminController extends Controller
 
     public function viewUser(User $user)
     {
+        // Cross-database relationship loading:
+        // - donor: Izzhilmy -> Hannah
+        // - organization: Izzhilmy -> Izzati
+        // - volunteer: Izzhilmy -> Sashvini
+        // - publicProfile: Izzhilmy -> Adam
         $user->load(['roles', 'donor', 'organization', 'volunteer', 'publicProfile']);
 
         return view('admin.view-user', compact('user'));
@@ -77,6 +85,6 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.manage.users')
-            ->with('success', 'User updated successfully');
+            ->with('success', 'User updated successfully (Database: Izzhilmy)');
     }
 }

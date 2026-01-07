@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->create('skill', function (Blueprint $table) {
             $table->id('Skill_ID');
             $table->string('Skill_Name');
@@ -24,6 +29,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->dropIfExists('skill');
     }
 };

@@ -5,42 +5,58 @@ namespace Database\Seeders;
 use App\Models\Donor;
 use App\Models\Organization;
 use App\Models\PublicProfile;
+use App\Models\Role;
 use App\Models\Skill;
 use App\Models\User;
 use App\Models\Volunteer;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 
 class UserRoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Databases:
+     * - izzhilmy (PostgreSQL): Users & Roles
+     * - hannah (MySQL): Donors
+     * - sashvini (MariaDB): Volunteers & Skills
+     * - izzati (PostgreSQL): Organizations
+     * - adam (MySQL): Public Profiles
      */
     public function run(): void
     {
-        // Create roles if they don't exist
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $donorRole = Role::firstOrCreate(['name' => 'donor']);
-        $volunteerRole = Role::firstOrCreate(['name' => 'volunteer']);
-        $organizerRole = Role::firstOrCreate(['name' => 'organizer']);
-        $publicRole = Role::firstOrCreate(['name' => 'public']);
+        // Temporarily set default database to izzhilmy for Users and Spatie Permission
+        $originalConnection = config('database.default');
+        config(['database.default' => 'izzhilmy']);
 
-        // Create Admin account
-        $this->createAdmin($adminRole);
+        try {
+            // Create roles if they don't exist (in izzhilmy)
+            $adminRole = Role::firstOrCreate(['name' => 'admin']);
+            $donorRole = Role::firstOrCreate(['name' => 'donor']);
+            $volunteerRole = Role::firstOrCreate(['name' => 'volunteer']);
+            $organizerRole = Role::firstOrCreate(['name' => 'organizer']);
+            $publicRole = Role::firstOrCreate(['name' => 'public']);
 
-        // Create Donor accounts
-        $this->createDonors($donorRole);
+            // Create Admin account (izzhilmy only)
+            $this->createAdmin($adminRole);
 
-        // Create Volunteer accounts
-        $this->createVolunteers($volunteerRole);
+            // Create Donor accounts (izzhilmy + hannah)
+            $this->createDonors($donorRole);
 
-        // Create Organizer accounts
-        $this->createOrganizers($organizerRole);
+            // Create Volunteer accounts (izzhilmy + sashvini)
+            $this->createVolunteers($volunteerRole);
 
-        // Create Public accounts
-        $this->createPublicProfiles($publicRole);
+            // Create Organizer accounts (izzhilmy + izzati)
+            $this->createOrganizers($organizerRole);
+
+            // Create Public accounts (izzhilmy + adam)
+            $this->createPublicProfiles($publicRole);
+        } finally {
+            // Restore original default connection
+            config(['database.default' => $originalConnection]);
+        }
     }
 
     private function getRandomCreatedAt()
@@ -61,6 +77,10 @@ class UserRoleSeeder extends Seeder
         $this->command->info('Admin account verified (admin@gmail.com / password)');
     }
 
+    /**
+     * Create donor accounts.
+     * User → izzhilmy, Donor → hannah
+     */
     private function createDonors($role)
     {
         $donors = [
@@ -122,12 +142,13 @@ class UserRoleSeeder extends Seeder
             ],
         ];
 
-        foreach ($donors as $donorData) {
+        foreach ($donors as $data) {
             $createdAt = $this->getRandomCreatedAt();
 
+            // Create user in izzhilmy (default connection is already set to izzhilmy)
             $user = User::create([
-                'name' => $donorData['name'],
-                'email' => $donorData['email'],
+                'name' => $data['name'],
+                'email' => $data['email'],
                 'password' => Hash::make('password'),
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
@@ -135,19 +156,26 @@ class UserRoleSeeder extends Seeder
 
             $user->assignRole($role);
 
-            Donor::create([
+            // Create donor profile in hannah database
+            $donor = new Donor([
                 'User_ID' => $user->id,
-                'Full_Name' => $donorData['Full_Name'],
-                'Phone_Num' => $donorData['Phone_Num'],
-                'Total_Donated' => $donorData['Total_Donated'],
+                'Full_Name' => $data['Full_Name'],
+                'Phone_Num' => $data['Phone_Num'],
+                'Total_Donated' => $data['Total_Donated'],
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $donor->setConnection('hannah');
+            $donor->save();
         }
 
-        $this->command->info('Created 8 donor accounts with realistic Malaysian names');
+        $this->command->info('✓ Created 8 donor accounts (izzhilmy + hannah)');
     }
 
+    /**
+     * Create volunteer accounts.
+     * User → izzhilmy, Volunteer & Skills → sashvini
+     */
     private function createVolunteers($role)
     {
         $volunteers = [
@@ -219,19 +247,20 @@ class UserRoleSeeder extends Seeder
             ],
         ];
 
-        // Create some skills first
+        // Get skills from sashvini database
         $skills = [
-            Skill::firstOrCreate(['Skill_Name' => 'Teaching']),
-            Skill::firstOrCreate(['Skill_Name' => 'First Aid']),
-            Skill::firstOrCreate(['Skill_Name' => 'Event Planning']),
-            Skill::firstOrCreate(['Skill_Name' => 'Cooking']),
-            Skill::firstOrCreate(['Skill_Name' => 'Computer Literacy']),
-            Skill::firstOrCreate(['Skill_Name' => 'Public Speaking']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'Teaching']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'First Aid']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'Event Planning']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'Cooking']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'Computer Literacy']),
+            Skill::on('sashvini')->firstOrCreate(['Skill_Name' => 'Public Speaking']),
         ];
 
         foreach ($volunteers as $index => $volunteerData) {
             $createdAt = $this->getRandomCreatedAt();
 
+            // Create user in izzhilmy (default connection is already set to izzhilmy)
             $user = User::create([
                 'name' => $volunteerData['name'],
                 'email' => $volunteerData['email'],
@@ -242,7 +271,8 @@ class UserRoleSeeder extends Seeder
 
             $user->assignRole($role);
 
-            $volunteer = Volunteer::create([
+            // Create volunteer in sashvini database
+            $volunteer = new Volunteer([
                 'User_ID' => $user->id,
                 'Availability' => $volunteerData['Availability'],
                 'Address' => $volunteerData['Address'],
@@ -254,6 +284,8 @@ class UserRoleSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $volunteer->setConnection('sashvini');
+            $volunteer->save();
 
             // Attach random skills (2-3 skills per volunteer)
             $skillCount = rand(2, 3);
@@ -261,6 +293,7 @@ class UserRoleSeeder extends Seeder
 
             foreach ($selectedSkills as $skill) {
                 $skillLevels = ['Beginner', 'Intermediate', 'Advanced'];
+                // Use the volunteer's connection for the relationship
                 $volunteer->skills()->attach($skill->Skill_ID, [
                     'Skill_Level' => $skillLevels[array_rand($skillLevels)],
                     'created_at' => $createdAt,
@@ -269,9 +302,13 @@ class UserRoleSeeder extends Seeder
             }
         }
 
-        $this->command->info('Created 6 volunteer accounts with diverse Malaysian backgrounds');
+        $this->command->info('✓ Created 6 volunteer accounts (izzhilmy + sashvini)');
     }
 
+    /**
+     * Create organizer accounts.
+     * User → izzhilmy, Organization → izzati
+     */
     private function createOrganizers($role)
     {
         $organizers = [
@@ -320,6 +357,7 @@ class UserRoleSeeder extends Seeder
         foreach ($organizers as $organizerData) {
             $createdAt = $this->getRandomCreatedAt();
 
+            // Create user in izzhilmy (default connection is already set to izzhilmy)
             $user = User::create([
                 'name' => $organizerData['name'],
                 'email' => $organizerData['email'],
@@ -330,7 +368,8 @@ class UserRoleSeeder extends Seeder
 
             $user->assignRole($role);
 
-            Organization::create([
+            // Create organization in izzati database
+            $organization = new Organization([
                 'Organizer_ID' => $user->id,
                 'Phone_No' => $organizerData['Phone_No'],
                 'Register_No' => $organizerData['Register_No'],
@@ -341,11 +380,17 @@ class UserRoleSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $organization->setConnection('izzati');
+            $organization->save();
         }
 
-        $this->command->info('Created 4 organizer accounts with authentic Malaysian charitable organizations');
+        $this->command->info('✓ Created 4 organizer accounts (izzhilmy + izzati)');
     }
 
+    /**
+     * Create public profile accounts.
+     * User → izzhilmy, PublicProfile → adam
+     */
     private function createPublicProfiles($role)
     {
         $publicProfiles = [
@@ -382,6 +427,7 @@ class UserRoleSeeder extends Seeder
         foreach ($publicProfiles as $publicData) {
             $createdAt = $this->getRandomCreatedAt();
 
+            // Create user in izzhilmy (default connection is already set to izzhilmy)
             $user = User::create([
                 'name' => $publicData['name'],
                 'email' => $publicData['email'],
@@ -392,7 +438,8 @@ class UserRoleSeeder extends Seeder
 
             $user->assignRole($role);
 
-            PublicProfile::create([
+            // Create public profile in adam database
+            $publicProfile = new PublicProfile([
                 'User_ID' => $user->id,
                 'Full_Name' => $publicData['Full_Name'],
                 'Phone' => $publicData['Phone'],
@@ -401,8 +448,10 @@ class UserRoleSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $publicProfile->setConnection('adam');
+            $publicProfile->save();
         }
 
-        $this->command->info('Created 4 public accounts (for recipient applications)');
+        $this->command->info('✓ Created 4 public accounts (izzhilmy + adam)');
     }
 }

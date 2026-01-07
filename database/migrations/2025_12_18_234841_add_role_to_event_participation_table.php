@@ -17,6 +17,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->table('event_participation', function (Blueprint $table) {
             // ⚠️ Cross-database reference: Role_ID references event_role table in izzati database
             // Cannot use foreign key constraint across databases
@@ -29,6 +34,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->table('event_participation', function (Blueprint $table) {
             $table->dropColumn('Role_ID');
         });

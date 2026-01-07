@@ -11,9 +11,11 @@ return [
          *
          * The model you want to use as a Permission model needs to implement the
          * `Spatie\Permission\Contracts\Permission` contract.
+         *
+         * Custom models configured to use 'izzhilmy' database connection.
          */
 
-        'permission' => Spatie\Permission\Models\Permission::class,
+        'permission' => App\Models\Permission::class,
 
         /*
          * When using the "HasRoles" trait from this package, we need to know which
@@ -22,11 +24,23 @@ return [
          *
          * The model you want to use as a Role model needs to implement the
          * `Spatie\Permission\Contracts\Role` contract.
+         *
+         * Custom models configured to use 'izzhilmy' database connection.
          */
 
-        'role' => Spatie\Permission\Models\Role::class,
+        'role' => App\Models\Role::class,
 
     ],
+
+    /*
+     * Specify the database connection to use for permission/role tables.
+     * Set to null to use the default connection.
+     *
+     * In Charity-Izz distributed architecture, permissions/roles are stored
+     * in the 'izzhilmy' database (centralized infrastructure + auth).
+     */
+
+    'database_connection' => 'izzhilmy',
 
     'table_names' => [
 

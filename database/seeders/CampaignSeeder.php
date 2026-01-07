@@ -13,11 +13,15 @@ class CampaignSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * Databases:
+     * - izzati (PostgreSQL): Organizations, Campaigns
+     * - adam (MySQL): Public Profiles, Recipients
      */
     public function run(): void
     {
-        // Get existing organizations
-        $organizations = Organization::all();
+        // Get existing organizations from izzati
+        $organizations = Organization::on('izzati')->get();
 
         if ($organizations->isEmpty()) {
             $this->command->warn('No organizations found. Please run UserRoleSeeder first.');
@@ -25,8 +29,8 @@ class CampaignSeeder extends Seeder
             return;
         }
 
-        // Get existing public profiles
-        $publicProfiles = PublicProfile::all();
+        // Get existing public profiles from adam
+        $publicProfiles = PublicProfile::on('adam')->get();
 
         if ($publicProfiles->isEmpty()) {
             $this->command->warn('No public profiles found. Please run UserRoleSeeder first.');
@@ -34,15 +38,17 @@ class CampaignSeeder extends Seeder
             return;
         }
 
-        // Create recipients first
+        $this->command->info("Found {$organizations->count()} organizations and {$publicProfiles->count()} public profiles");
+
+        // Create recipients first (in adam)
         $recipients = $this->createRecipients($publicProfiles);
 
-        // Create campaigns for each organization
+        // Create campaigns for each organization (in izzati)
         foreach ($organizations as $organization) {
             $this->createCampaignsForOrganization($organization, $recipients);
         }
 
-        $this->command->info('Campaigns, recipients, and allocations seeded successfully!');
+        $this->command->info('✓ Campaigns and recipients seeded successfully!');
     }
 
     private function createRecipients($publicProfiles)
@@ -135,7 +141,8 @@ class CampaignSeeder extends Seeder
 
             $createdAt = Carbon::now()->subDays(rand(1, 14))->subHours(rand(0, 23));
 
-            $recipientCreate = [
+            // Create recipient in adam database
+            $recipient = new Recipient([
                 'Public_ID' => $publicProfile->Public_ID,
                 'Name' => $data['Name'],
                 'Address' => $data['Address'],
@@ -145,11 +152,14 @@ class CampaignSeeder extends Seeder
                 'Approved_At' => $data['Status'] === 'Approved' ? $createdAt->copy()->addDays(rand(1, 3)) : null,
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
-            ];
+            ]);
+            $recipient->setConnection('adam');
+            $recipient->save();
 
-            $recipient = Recipient::create($recipientCreate);
             $recipients->push($recipient);
         }
+
+        $this->command->info('✓ Created '.count($recipientData).' recipients in adam database');
 
         return $recipients;
     }
@@ -303,7 +313,8 @@ class CampaignSeeder extends Seeder
             // Random created_at within the last week
             $createdAt = Carbon::now()->subDays(rand(0, 7))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
 
-            $campaign = Campaign::create([
+            // Create campaign in izzati database
+            $campaign = new Campaign([
                 'Organization_ID' => $organization->Organization_ID,
                 'Title' => $campaignData['Title'],
                 'Description' => $campaignData['Description'],
@@ -315,6 +326,8 @@ class CampaignSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $campaign->setConnection('izzati');
+            $campaign->save();
 
             // Note: Collected_Amount will be updated by DonationSeeder
             // We're setting it to 0 here so DonationSeeder can properly increment it

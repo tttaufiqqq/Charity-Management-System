@@ -6,11 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Database connection for this migration
+     * Connection: adam (MySQL)
+     */
+    protected $connection = 'adam';
+
     public function up(): void
     {
-        Schema::create('public', function (Blueprint $table) {
+        // Only run when migrating adam database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'adam') {
+            return;
+        }
+
+        Schema::connection('adam')->create('public', function (Blueprint $table) {
             $table->id('Public_ID');
-            $table->foreignId('User_ID')->constrained('users')->onDelete('cascade');
+
+            // ⚠️ Cross-database reference: User_ID references users table in izzhilmy database
+            // Cannot use foreign key constraint across databases
+            $table->unsignedBigInteger('User_ID')->index();
+
             $table->string('Full_Name');
             $table->string('Phone', 20);
             $table->string('Email');
@@ -21,6 +36,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('public');
+        // Only run when migrating adam database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'adam') {
+            return;
+        }
+
+        Schema::connection('adam')->dropIfExists('public');
     }
 };

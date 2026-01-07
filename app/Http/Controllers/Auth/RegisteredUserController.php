@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Donor;
-use App\Models\PublicProfile;
 use App\Models\Organization;
+use App\Models\PublicProfile;
+use App\Models\User;
 use App\Models\Volunteer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\DB;
 
 class RegisteredUserController extends Controller
 {
@@ -35,14 +35,14 @@ class RegisteredUserController extends Controller
         $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:donor,public,organizer,volunteer']
+            'role' => ['required', 'string', 'in:donor,public,organizer,volunteer'],
         ]);
 
         // Store temporary data in session
         session([
             'registration_email' => $request->email,
             'registration_password' => $request->password,
-            'registration_role' => $request->role
+            'registration_role' => $request->role,
         ]);
 
         return redirect()->route('register.role-details');
@@ -54,11 +54,12 @@ class RegisteredUserController extends Controller
     public function showRoleDetails(Request $request): View
     {
         // Check if session data exists
-        if (!session()->has('registration_role')) {
+        if (! session()->has('registration_role')) {
             return redirect()->route('register');
         }
 
         $role = session('registration_role');
+
         return view('auth.role-details', ['role' => $role]);
     }
 
@@ -73,7 +74,7 @@ class RegisteredUserController extends Controller
         $role = session('registration_role');
 
         // Safety check
-        if (!$email || !$password || !$role) {
+        if (! $email || ! $password || ! $role) {
             return back()->withErrors(['error' => 'Session expired. Please start registration again.'])->withInput();
         }
 
@@ -111,9 +112,10 @@ class RegisteredUserController extends Controller
             return redirect(route('welcome', absolute: false));
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Registration failed: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            \Log::error('Registration failed: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
+
             return back()->withErrors(['error' => 'Registration failed. Please try again.'])->withInput();
         }
     }
@@ -123,7 +125,7 @@ class RegisteredUserController extends Controller
      */
     private function extractNameFromRoleData(string $role, array $data): string
     {
-        return match($role) {
+        return match ($role) {
             'donor' => $data['full_name'],
             'public' => $data['full_name'],
             'organizer' => $data['organization_name'] ?? 'Organization User',
@@ -136,7 +138,7 @@ class RegisteredUserController extends Controller
      */
     private function validateRoleData(Request $request, string $role): array
     {
-        $rules = match($role) {
+        $rules = match ($role) {
             'donor' => [
                 'full_name' => ['required', 'string', 'max:255'],
                 'phone_num' => ['required', 'string', 'max:20'],
@@ -176,7 +178,7 @@ class RegisteredUserController extends Controller
      */
     private function createRoleProfile(User $user, string $role, array $data): void
     {
-        match($role) {
+        match ($role) {
             'donor' => Donor::create([
                 'User_ID' => $user->id,
                 'Full_Name' => $data['full_name'],

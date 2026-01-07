@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating izzhilmy database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzhilmy') {
+            return;
+        }
+
         Schema::connection('izzhilmy')->create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -34,6 +39,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating izzhilmy database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzhilmy') {
+            return;
+        }
+
         Schema::connection('izzhilmy')->dropIfExists('sessions');
         Schema::connection('izzhilmy')->dropIfExists('password_reset_tokens');
         Schema::connection('izzhilmy')->dropIfExists('users');

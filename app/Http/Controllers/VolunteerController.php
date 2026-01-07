@@ -7,12 +7,15 @@ use App\Models\EventParticipation;
 use App\Models\EventRole;
 use App\Models\Skill;
 use App\Models\Volunteer;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class VolunteerController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
+
     /**
      * Display all available events for volunteers
      */
@@ -79,6 +82,7 @@ class VolunteerController extends Controller
 
     /**
      * Register volunteer for an event
+     * Note: Event validated via route model binding (cross-database: sashvini -> izzati)
      */
     public function registerForEvent(Request $request, Event $event)
     {
@@ -87,6 +91,10 @@ class VolunteerController extends Controller
         if (! $volunteer) {
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
+
+        // Validate event exists (cross-database validation: sashvini -> izzati)
+        // Event already validated via route model binding, but explicitly validate here for clarity
+        $this->validateEventExists($event->Event_ID);
 
         // Validate role selection if event has roles
         $roleId = null;
@@ -179,7 +187,7 @@ class VolunteerController extends Controller
 
             return redirect()
                 ->route('volunteer.events.show', ['event' => $event->Event_ID])
-                ->with('success', 'Successfully registered for the event!');
+                ->with('success', 'Successfully registered for the event! (Database: Sashvini)');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -232,7 +240,7 @@ class VolunteerController extends Controller
 
         return redirect()
             ->route('volunteer.events.browse')
-            ->with('success', 'Event registration cancelled successfully.');
+            ->with('success', 'Event registration cancelled successfully. (Database: Sashvini)');
     }
 
     /**
@@ -358,7 +366,7 @@ class VolunteerController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('volunteer.skills.index')->with('success', 'Skill added successfully!');
+        return redirect()->route('volunteer.skills.index')->with('success', 'Skill added successfully! (Database: Sashvini)');
     }
 
     // Update skill level
@@ -385,7 +393,7 @@ class VolunteerController extends Controller
             'updated_at' => now(),
         ]);
 
-        return redirect()->route('volunteer.skills.index')->with('success', 'Skill level updated successfully!');
+        return redirect()->route('volunteer.skills.index')->with('success', 'Skill level updated successfully! (Database: Sashvini)');
     }
 
     // Delete skill
@@ -405,7 +413,7 @@ class VolunteerController extends Controller
         // Detach skill from volunteer
         $volunteer->skills()->detach($skillId);
 
-        return redirect()->route('volunteer.skills.index')->with('success', 'Skill removed successfully!');
+        return redirect()->route('volunteer.skills.index')->with('success', 'Skill removed successfully! (Database: Sashvini)');
     }
 
     /**
@@ -568,6 +576,6 @@ class VolunteerController extends Controller
 
         return redirect()
             ->route('profile.edit')
-            ->with('success', 'Profile updated successfully!');
+            ->with('success', 'Profile updated successfully! (Database: Sashvini)');
     }
 }

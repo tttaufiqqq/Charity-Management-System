@@ -64,16 +64,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Database Connection
+    | Session Database Connection (CENTRALIZED INFRASTRUCTURE)
     |--------------------------------------------------------------------------
     |
     | When using the "database" or "redis" session drivers, you may specify a
     | connection that should be used to manage these sessions. This should
     | correspond to a connection in your database configuration options.
     |
+    | ⭐ IMPORTANT: This application uses a HETEROGENEOUS DISTRIBUTED architecture:
+    |    - Izzhilmy (PostgreSQL): CENTRALIZED infrastructure for ALL databases
+    |      → Sessions, Cache, Queue, Users, Roles, Permissions
+    |    - Sashvini (MariaDB): Volunteer domain data
+    |    - Izzati (PostgreSQL): Operations/campaigns domain data
+    |    - Hannah (MySQL): Finance domain data
+    |    - Adam (MySQL): Public/recipients domain data
+    |
+    |    ALL 5 databases share the SAME session/cache/queue stored in Izzhilmy.
+    |
     */
 
-    'connection' => env('SESSION_CONNECTION'),
+    'connection' => env('SESSION_CONNECTION', 'izzhilmy'),
 
     /*
     |--------------------------------------------------------------------------

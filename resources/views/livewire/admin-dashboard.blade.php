@@ -252,10 +252,24 @@
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- Donations Chart -->
                 <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-8 border border-gray-100">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">Donations Over Time</h3>
-                            <p class="text-sm text-gray-500 mt-2">Total amount received per day (RM)</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <h3 class="text-xl font-bold text-gray-900">Donations Over Time</h3>
+                                <x-chart-help title="Understanding Donations Over Time" description="This chart shows the total amount of donations received each day over the last 90 days.">
+                                    <div class="mt-3 pt-3 border-t border-gray-200">
+                                        <p class="text-xs font-semibold text-gray-700 mb-2">📊 How to Read:</p>
+                                        <ul class="text-xs text-gray-600 space-y-1">
+                                            <li>• <span class="font-medium">Blue line</span> = Daily donation amounts in RM</li>
+                                            <li>• <span class="font-medium">Peaks</span> = High donation days</li>
+                                            <li>• <span class="font-medium">Valleys</span> = Low donation days</li>
+                                        </ul>
+                                        <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">💡 What to Look For:</p>
+                                        <p class="text-xs text-gray-600">• Upward trends indicate growing donor engagement<br>• Spikes may correlate with campaigns or events<br>• Flat periods may need marketing push</p>
+                                    </div>
+                                </x-chart-help>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Total amount received per day (RM) - Last 90 days</p>
                         </div>
                         <div class="p-3 bg-green-50 rounded-lg">
                             <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,14 +280,44 @@
                     <div class="h-96" wire:ignore>
                         <canvas id="donationsChart"></canvas>
                     </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                        <p class="text-xs text-green-800"><span class="font-semibold">💡 Tip:</span> Monitor spikes to identify successful campaigns. Use insights to plan future fundraising strategies.</p>
+                    </div>
                 </div>
 
                 <!-- User Growth Chart -->
                 <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-8 border border-gray-100">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-900">User Growth by Role</h3>
-                            <p class="text-sm text-gray-500 mt-2">Daily new user registrations by role</p>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <h3 class="text-xl font-bold text-gray-900">User Growth by Role</h3>
+                                <x-chart-help title="Understanding User Growth" description="This stacked area chart shows how many new users registered each day, broken down by their role type.">
+                                    <div class="mt-3 pt-3 border-t border-gray-200">
+                                        <p class="text-xs font-semibold text-gray-700 mb-2">🎨 Color Legend:</p>
+                                        <div class="space-y-1.5 text-xs">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded bg-blue-500"></div>
+                                                <span class="text-gray-700"><span class="font-medium">Blue</span> = Volunteers</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded bg-green-500"></div>
+                                                <span class="text-gray-700"><span class="font-medium">Green</span> = Donors</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded bg-purple-500"></div>
+                                                <span class="text-gray-700"><span class="font-medium">Purple</span> = Organizers</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-3 h-3 rounded bg-gray-400"></div>
+                                                <span class="text-gray-700"><span class="font-medium">Gray</span> = Public Users</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">💡 What This Means:</p>
+                                        <p class="text-xs text-gray-600">Stacked areas show total growth. Wider sections indicate more registrations of that role type.</p>
+                                    </div>
+                                </x-chart-help>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Daily new user registrations by role - Last 90 days</p>
                         </div>
                         <div class="p-3 bg-purple-50 rounded-lg">
                             <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -283,6 +327,9 @@
                     </div>
                     <div class="h-96" wire:ignore>
                         <canvas id="userGrowthChart"></canvas>
+                    </div>
+                    <div class="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <p class="text-xs text-purple-800"><span class="font-semibold">💡 Insight:</span> Growing volunteer and donor numbers indicate healthy platform growth. Focus marketing on underrepresented roles.</p>
                     </div>
                 </div>
             </div>
@@ -296,10 +343,25 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900">Campaign Status</h3>
-                        <p class="text-sm text-gray-500 mt-1">Distribution</p>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <h3 class="text-lg font-bold text-gray-900">Campaign Status Distribution</h3>
+                            <x-chart-help title="Campaign Status Breakdown" description="This pie chart shows the proportion of campaigns in each status category.">
+                                <div class="mt-3 pt-3 border-t border-gray-200">
+                                    <p class="text-xs font-semibold text-gray-700 mb-2">📊 Status Types:</p>
+                                    <ul class="text-xs text-gray-600 space-y-1">
+                                        <li>• <span class="font-medium text-green-600">Active</span> = Currently accepting donations</li>
+                                        <li>• <span class="font-medium text-yellow-600">Pending</span> = Awaiting admin approval</li>
+                                        <li>• <span class="font-medium text-blue-600">Completed</span> = Goal reached or ended</li>
+                                        <li>• <span class="font-medium text-gray-600">Cancelled</span> = Stopped/rejected campaigns</li>
+                                    </ul>
+                                    <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">⚡ Action Items:</p>
+                                    <p class="text-xs text-gray-600">Large "Pending" slice? Review and approve campaigns. Low "Active"? Encourage organizers to create new campaigns.</p>
+                                </div>
+                            </x-chart-help>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Percentage breakdown of all campaigns</p>
                     </div>
                     <div class="p-3 bg-blue-50 rounded-lg">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,6 +372,9 @@
                 </div>
                 <div class="h-64" wire:ignore>
                     <canvas id="campaignStatusChart"></canvas>
+                </div>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <p class="text-xs text-blue-800"><span class="font-semibold">💡 Tip:</span> Hover over each slice to see exact numbers. Click legend items to show/hide specific statuses.</p>
                 </div>
             </div>
         </div>
@@ -338,9 +403,36 @@
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900">Fund Allocation Overview</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center">
+                            <h3 class="text-lg font-bold text-gray-900">Fund Allocation Overview</h3>
+                            <x-chart-help title="Fund Allocation Efficiency" description="This horizontal bar chart shows what percentage of raised funds have been allocated to recipients for the top 10 campaigns.">
+                                <div class="mt-3 pt-3 border-t border-gray-200">
+                                    <p class="text-xs font-semibold text-gray-700 mb-2">🎨 Bar Colors:</p>
+                                    <div class="space-y-1.5 text-xs">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 rounded bg-green-500"></div>
+                                            <span class="text-gray-700"><span class="font-medium">Green</span> = 80-100% allocated (Excellent)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 rounded bg-blue-500"></div>
+                                            <span class="text-gray-700"><span class="font-medium">Blue</span> = 50-79% allocated (Good)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 rounded bg-orange-500"></div>
+                                            <span class="text-gray-700"><span class="font-medium">Orange</span> = 1-49% allocated (Needs attention)</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-3 h-3 rounded bg-gray-400"></div>
+                                            <span class="text-gray-700"><span class="font-medium">Gray</span> = 0% allocated (Not started)</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">⚡ What to Do:</p>
+                                    <p class="text-xs text-gray-600">Low percentages indicate funds waiting to be distributed. Work with organizers to allocate to approved recipients.</p>
+                                </div>
+                            </x-chart-help>
+                        </div>
                         <p class="text-sm text-gray-500 mt-1">Top 10 Campaigns - Allocation Efficiency %</p>
                     </div>
                     <div class="p-3 bg-amber-50 rounded-lg">
@@ -647,8 +739,24 @@
         <!-- Top Campaigns Chart -->
         <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Top 10 Campaigns by Amount Raised</h3>
-                <span class="text-xs text-gray-500">Visual Comparison</span>
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Top 10 Campaigns by Amount Raised</h3>
+                        <x-chart-help title="Top Performing Campaigns" description="This bar chart ranks the 10 campaigns that have raised the most funds, helping you identify your most successful fundraising efforts.">
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 mb-2">📊 How to Read:</p>
+                                <ul class="text-xs text-gray-600 space-y-1">
+                                    <li>• <span class="font-medium">Longer bars</span> = More money raised</li>
+                                    <li>• <span class="font-medium">Top position</span> = Highest-performing campaign</li>
+                                    <li>• <span class="font-medium">Bar color gradient</span> = Visual distinction</li>
+                                </ul>
+                                <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">💡 Use This To:</p>
+                                <p class="text-xs text-gray-600">• Identify what makes successful campaigns work<br>• Replicate winning strategies<br>• Recognize top-performing organizers</p>
+                            </div>
+                        </x-chart-help>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1 block">Visual comparison of fundraising performance</span>
+                </div>
             </div>
             <div class="h-96" wire:ignore>
                 <canvas id="topCampaignsChart"></canvas>
@@ -801,11 +909,30 @@
         <!-- Top Donors Chart -->
         <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Top 10 Donors by Total Contribution</h3>
-                <span class="text-xs text-gray-500">Donor Leaderboard</span>
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Top 10 Donors by Total Contribution</h3>
+                        <x-chart-help title="Top Donor Recognition" description="This bar chart highlights your most generous donors based on their total lifetime contributions to all campaigns.">
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 mb-2">📊 What You See:</p>
+                                <ul class="text-xs text-gray-600 space-y-1">
+                                    <li>• <span class="font-medium">Each bar</span> = One donor's total contributions</li>
+                                    <li>• <span class="font-medium">Bar height</span> = Amount donated (RM)</li>
+                                    <li>• <span class="font-medium">Ranking</span> = From highest to lowest contributor</li>
+                                </ul>
+                                <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">💡 Actions to Take:</p>
+                                <p class="text-xs text-gray-600">• Thank and recognize top donors<br>• Engage them for recurring campaigns<br>• Identify potential major gift prospects</p>
+                            </div>
+                        </x-chart-help>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1 block">Your most generous supporters - Donor leaderboard</span>
+                </div>
             </div>
             <div class="h-96" wire:ignore>
                 <canvas id="topDonorsChart"></canvas>
+            </div>
+            <div class="mt-4 p-3 bg-pink-50 rounded-lg border border-pink-100">
+                <p class="text-xs text-pink-800"><span class="font-semibold">💡 Tip:</span> Consider creating VIP donor recognition programs for these top contributors to maintain their engagement.</p>
             </div>
         </div>
 
@@ -858,11 +985,31 @@
         <!-- Event Fill Rates Chart -->
         <div class="bg-white rounded-lg shadow-lg p-6 border border-gray-200 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Event Fill Rates & Volunteer Hours</h3>
-                <span class="text-xs text-gray-500">Participation Analysis</span>
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Event Fill Rates & Volunteer Hours</h3>
+                        <x-chart-help title="Event Participation Metrics" description="This dual-axis chart shows both volunteer registration fill rates (bars) and total hours contributed (line) for your top 10 events.">
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <p class="text-xs font-semibold text-gray-700 mb-2">📊 Reading the Chart:</p>
+                                <ul class="text-xs text-gray-600 space-y-1">
+                                    <li>• <span class="font-medium text-blue-600">Blue bars</span> = Fill rate % (registrations vs capacity)</li>
+                                    <li>• <span class="font-medium text-green-600">Green line</span> = Total volunteer hours contributed</li>
+                                    <li>• <span class="font-medium">Left axis</span> = Fill rate percentage (0-100%)</li>
+                                    <li>• <span class="font-medium">Right axis</span> = Total hours</li>
+                                </ul>
+                                <p class="text-xs font-semibold text-gray-700 mt-3 mb-1">💡 What This Shows:</p>
+                                <p class="text-xs text-gray-600">• High fill rates (>80%) = Strong interest<br>• Low fill rates (<50%) = May need more promotion<br>• High hours = High volunteer engagement</p>
+                            </div>
+                        </x-chart-help>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1 block">Volunteer participation and time contribution analysis</span>
+                </div>
             </div>
             <div class="h-96" wire:ignore>
                 <canvas id="eventMetricsChart"></canvas>
+            </div>
+            <div class="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-100">
+                <p class="text-xs text-orange-800"><span class="font-semibold">💡 Tip:</span> Events with low fill rates but high hours indicate dedicated volunteers. Events with high fill rates but low hours may need better volunteer engagement strategies.</p>
             </div>
         </div>
 

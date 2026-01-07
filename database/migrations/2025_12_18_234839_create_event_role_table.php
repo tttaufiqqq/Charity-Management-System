@@ -7,13 +7,26 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Database connection for this migration
+     * Connection: izzati (PostgreSQL)
+     */
+    protected $connection = 'izzati';
+
+    /**
      * Run the migrations.
      * Creates the event_role table to define specific volunteer roles for each event.
      */
     public function up(): void
     {
-        Schema::create('event_role', function (Blueprint $table) {
+        // Only run when migrating izzati database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzati') {
+            return;
+        }
+
+        Schema::connection('izzati')->create('event_role', function (Blueprint $table) {
             $table->id('Role_ID');
+
+            // ✅ Same database FK - KEEP (event table is in izzati)
             $table->foreignId('Event_ID')->constrained('event', 'Event_ID')->onDelete('cascade');
             $table->string('Role_Name'); // e.g., "Food Distributor", "Setup Crew", "Registration Desk"
             $table->text('Role_Description')->nullable();
@@ -28,6 +41,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('event_role');
+        // Only run when migrating izzati database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzati') {
+            return;
+        }
+
+        Schema::connection('izzati')->dropIfExists('event_role');
     }
 };

@@ -2,34 +2,55 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class RoleSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     *
+     * Database: izzhilmy (PostgreSQL) - Users & Roles
+     */
     public function run(): void
     {
-        // Create roles
-        $roles = ['admin', 'donor', 'public', 'organizer', 'volunteer'];
+        // Temporarily set default database to izzhilmy for Spatie Permission
+        $originalConnection = config('database.default');
+        config(['database.default' => 'izzhilmy']);
 
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role]);
-        }
+        try {
+            // Set connection for Spatie Permission models
+            // Roles and permissions are stored in izzhilmy database
+            DB::connection('izzhilmy')->transaction(function () {
+                // Create roles (stored in izzhilmy)
+                $roles = ['admin', 'donor', 'public', 'organizer', 'volunteer'];
 
-        // Create admin user
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('password')
-            ]
-        );
+                foreach ($roles as $roleName) {
+                    Role::firstOrCreate(['name' => $roleName]);
+                }
 
-        // Assign admin role
-        if (!$admin->hasRole('admin')) {
-            $admin->assignRole('admin');
+                // Create admin user (stored in izzhilmy)
+                $admin = User::firstOrCreate(
+                    ['email' => 'admin@gmail.com'],
+                    [
+                        'name' => 'Admin',
+                        'password' => Hash::make('password'),
+                    ]
+                );
+
+                // Assign admin role
+                if (! $admin->hasRole('admin')) {
+                    $admin->assignRole('admin');
+                }
+
+                $this->command->info('✓ Created roles and admin user in izzhilmy database');
+            });
+        } finally {
+            // Restore original default connection
+            config(['database.default' => $originalConnection]);
         }
     }
 }

@@ -10,12 +10,15 @@ use App\Models\Campaign;
 use App\Models\CampaignRecipientSuggestion;
 use App\Models\DonationAllocation;
 use App\Models\Recipient;
+use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class RecipientManagementController extends Controller
 {
+    use ValidatesCrossDatabaseReferences;
+
     /**
      * Show list of admin-suggested recipients for allocation
      */
@@ -52,36 +55,21 @@ class RecipientManagementController extends Controller
     public function allocateFunds(Request $request, $campaignId)
     {
         $request->validate([
-            'recipient_id' => 'required|exists:recipient,Recipient_ID',
+            'recipient_id' => 'required',
             'amount' => 'required|numeric|min:1',
         ]);
 
-        $campaign = Campaign::findOrFail($campaignId);
+        // Cross-database validation: hannah -> izzati (Campaign) and hannah -> adam (Recipient)
+        $campaign = $this->validateCampaignExists($campaignId);
+        $recipient = $this->validateRecipientIsApproved($request->recipient_id);
 
         // Verify user is the organizer
         if (Auth::user()->organization->Organization_ID !== $campaign->Organization_ID) {
             abort(403, 'Unauthorized action.');
         }
 
-        $recipient = Recipient::findOrFail($request->recipient_id);
-
-        // Check if recipient is approved
-        if ($recipient->Status !== 'Approved') {
-            return redirect()->back()->with('error', 'Can only allocate to approved recipients.');
-        }
-
-        // Calculate total already allocated
-        $totalAllocated = DonationAllocation::where('Campaign_ID', $campaignId)
-            ->sum('Amount_Allocated');
-
-        $remainingAmount = $campaign->Collected_Amount - $totalAllocated;
-
-        // Check if enough funds available
-        if ($request->amount > $remainingAmount) {
-            return redirect()->back()
-                ->with('error', 'Insufficient funds. Available: RM '.number_format($remainingAmount, 2))
-                ->withInput();
-        }
+        // Validate campaign has sufficient funds for allocation (cross-database validation)
+        $this->validateCampaignHasSufficientFunds($campaignId, $request->amount);
 
         DB::beginTransaction();
         try {
@@ -107,7 +95,7 @@ class RecipientManagementController extends Controller
             DB::commit();
 
             return redirect()->route('recipients.allocate', $campaignId)
-                ->with('success', 'Funds allocated successfully!');
+                ->with('success', 'Funds allocated successfully! (Database: Hannah)');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -222,7 +210,7 @@ class RecipientManagementController extends Controller
             $allocation->delete();
             DB::commit();
 
-            return redirect()->back()->with('success', 'Allocation removed successfully!');
+            return redirect()->back()->with('success', 'Allocation removed successfully! (Database: Hannah)');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -325,7 +313,7 @@ class RecipientManagementController extends Controller
 
         $recipient->update(['Status' => 'Approved']);
 
-        return redirect()->back()->with('success', 'Recipient approved successfully!');
+        return redirect()->back()->with('success', 'Recipient approved successfully! (Database: Adam)');
     }
 
     /**
@@ -341,7 +329,7 @@ class RecipientManagementController extends Controller
 
         $recipient->update(['Status' => 'Rejected']);
 
-        return redirect()->back()->with('success', 'Recipient rejected.');
+        return redirect()->back()->with('success', 'Recipient rejected. (Database: Adam)');
     }
 
     /**
@@ -356,7 +344,7 @@ class RecipientManagementController extends Controller
         $recipient = Recipient::findOrFail($id);
         $recipient->update(['Status' => $request->status]);
 
-        return redirect()->back()->with('success', 'Recipient status updated to '.$request->status);
+        return redirect()->back()->with('success', 'Recipient status updated to '.$request->status.' (Database: Adam)');
     }
 
     /**
@@ -373,7 +361,7 @@ class RecipientManagementController extends Controller
 
         $recipient->delete();
 
-        return redirect()->route('admin.recipients.all')->with('success', 'Recipient deleted successfully.');
+        return redirect()->route('admin.recipients.all')->with('success', 'Recipient deleted successfully. (Database: Adam)');
     }
 
     /**
@@ -461,7 +449,7 @@ class RecipientManagementController extends Controller
             'Status' => 'Pending',
         ]);
 
-        return redirect()->back()->with('success', 'Recipient suggested successfully!');
+        return redirect()->back()->with('success', 'Recipient suggested successfully! (Database: Izzati)');
     }
 
     /**
@@ -506,7 +494,7 @@ class RecipientManagementController extends Controller
         // Smart redirect: Go to allocation page with recipient highlighted
         return redirect()
             ->route('recipients.allocate', $suggestion->Campaign_ID)
-            ->with('success', 'Suggestion accepted! Recipient "'.($suggestion->recipient->Name ?? '').'" is now available for allocation.')
+            ->with('success', 'Suggestion accepted! Recipient "'.($suggestion->recipient->Name ?? '').'" is now available for allocation. (Database: Izzati)')
             ->with('highlight_recipient', $suggestion->Recipient_ID);
     }
 
@@ -528,7 +516,7 @@ class RecipientManagementController extends Controller
 
         $suggestion->update(['Status' => 'Rejected']);
 
-        return redirect()->back()->with('success', 'Suggestion rejected.');
+        return redirect()->back()->with('success', 'Suggestion rejected. (Database: Izzati)');
     }
 
     /**
@@ -595,7 +583,7 @@ class RecipientManagementController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success',
-                'Suggestion accepted and RM '.number_format($request->amount, 2).' allocated successfully! 🎉');
+                'Suggestion accepted and RM '.number_format($request->amount, 2).' allocated successfully! 🎉 (Databases: Izzati + Hannah)');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -697,7 +685,7 @@ class RecipientManagementController extends Controller
 
             return redirect()
                 ->route('admin.recipients.show', $recipient->Recipient_ID)
-                ->with('success', 'Recipient registered and approved successfully!');
+                ->with('success', 'Recipient registered and approved successfully! (Database: Adam)');
         } catch (\Exception $e) {
             DB::rollBack();
 

@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->create('event_participation', function (Blueprint $table) {
             // ✅ Same database FK - KEEP (volunteer table is in sashvini)
             $table->foreignId('Volunteer_ID')->constrained('volunteer', 'Volunteer_ID')->onDelete('cascade');
@@ -32,6 +37,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating sashvini database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'sashvini') {
+            return;
+        }
+
         Schema::connection('sashvini')->dropIfExists('event_participation');
     }
 };

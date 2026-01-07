@@ -7,14 +7,27 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Database connection for this migration
+     * Connection: izzati (PostgreSQL)
+     */
+    protected $connection = 'izzati';
+
+    /**
      * Run the migrations.
      * Creates the event table for volunteer events.
      * Status values: 'Pending' (awaiting approval), 'Upcoming', 'Ongoing', 'Completed', 'Cancelled'
      */
     public function up(): void
     {
-        Schema::create('event', function (Blueprint $table) {
+        // Only run when migrating izzati database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzati') {
+            return;
+        }
+
+        Schema::connection('izzati')->create('event', function (Blueprint $table) {
             $table->id('Event_ID');
+
+            // ✅ Same database FK - KEEP (organization table is in izzati)
             $table->foreignId('Organizer_ID')->constrained('organization', 'Organization_ID')->onDelete('cascade');
             $table->string('Title');
             $table->text('Description')->nullable();
@@ -35,6 +48,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('event');
+        // Only run when migrating izzati database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'izzati') {
+            return;
+        }
+
+        Schema::connection('izzati')->dropIfExists('event');
     }
 };

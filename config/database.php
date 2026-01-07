@@ -32,24 +32,61 @@ return [
     'connections' => [
         /*
         |--------------------------------------------------------------------------
-        | Heterogeneous Distributed Database Connections
+        | Heterogeneous Distributed Database Architecture
         |--------------------------------------------------------------------------
-        | Charity-Izz uses a distributed database architecture across 5 databases:
-        | - izzhilmy (PostgreSQL): User, Role, Admin
-        | - sashvini (MariaDB): Volunteer, Volunteer_skill, Skill, Event_participation
-        | - izzati (PostgreSQL): Organization, Event, Campaign, Event_role
-        | - hannah (MySQL): Donor, Donation, Donation_allocation
-        | - adam (MySQL): Public_profile, Recipient
+        | Charity-Izz uses a distributed database architecture across 5 databases
+        | with CENTRALIZED INFRASTRUCTURE.
+        |
+        | 📊 DATABASE DOMAIN DISTRIBUTION:
+        | ================================
+        |
+        | 🔵 IZZHILMY (PostgreSQL) - CENTRALIZED INFRASTRUCTURE + Authentication
+        |    Domain Tables:
+        |    - users, roles, permissions, role_has_permissions, model_has_roles, etc.
+        |
+        |    Infrastructure Tables (SHARED BY ALL DATABASES):
+        |    - sessions           → All user sessions across all 5 databases
+        |    - cache, cache_locks → All cache data across all 5 databases
+        |    - jobs, job_batches  → All queue jobs across all 5 databases
+        |    - failed_jobs        → All failed jobs across all 5 databases
+        |
+        | 🟢 SASHVINI (MariaDB) - Volunteer Domain
+        |    - volunteer, skill, volunteer_skill, event_participation
+        |    Uses Izzhilmy for: sessions, cache, queue
+        |
+        | 🟣 IZZATI (PostgreSQL) - Operations Domain
+        |    - organization, event, campaign, event_role, campaign_recipient_suggestions
+        |    Uses Izzhilmy for: sessions, cache, queue
+        |
+        | 🟡 HANNAH (MySQL) - Finance Domain
+        |    - donor, donation, donation_allocation
+        |    Uses Izzhilmy for: sessions, cache, queue
+        |
+        | 🔴 ADAM (MySQL) - Public/Recipients Domain
+        |    - public, recipient
+        |    Uses Izzhilmy for: sessions, cache, queue
+        |
+        | ⭐ KEY CONCEPT: Centralized Infrastructure
+        | ==========================================
+        | When you interact with ANY of the 5 databases, the infrastructure
+        | (sessions, cache, queue) is ALWAYS stored in and retrieved from Izzhilmy.
+        |
+        | Example:
+        | - User logs in → Session stored in Izzhilmy
+        | - Volunteer creates event participation → Uses Izzhilmy session
+        | - Campaign data cached → Cache stored in Izzhilmy
+        | - Job dispatched for donation → Job stored in Izzhilmy queue
+        |
         */
 
-        // Connection 1: Izzhilmy (PostgreSQL) - Authentication & Authorization
+        // Connection 1: Izzhilmy (PostgreSQL) - CENTRALIZED INFRASTRUCTURE + Auth
         'izzhilmy' => [
             'driver' => 'pgsql',
-            'host' => env('DB_IZZHILMY_HOST', '127.0.0.1'),
-            'port' => env('DB_IZZHILMY_PORT', 5432),
-            'database' => env('DB_IZZHILMY_DATABASE', 'charity_auth'),
-            'username' => env('DB_IZZHILMY_USERNAME', 'postgres'),
-            'password' => env('DB_IZZHILMY_PASSWORD', ''),
+            'host' => env('DB5_HOST', '127.0.0.1'),
+            'port' => env('DB5_PORT', 5432),
+            'database' => env('DB5_DATABASE', 'workshop'),
+            'username' => env('DB5_USERNAME', 'postgres'),
+            'password' => env('DB5_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
@@ -60,11 +97,11 @@ return [
         // Connection 2: Sashvini (MariaDB) - Volunteer Management
         'sashvini' => [
             'driver' => 'mariadb', // MariaDB is MySQL-compatible
-            'host' => env('DB_SASHVINI_HOST', '127.0.0.1'),
-            'port' => env('DB_SASHVINI_PORT', 3306),
-            'database' => env('DB_SASHVINI_DATABASE', 'charity_volunteers'),
-            'username' => env('DB_SASHVINI_USERNAME', 'root'),
-            'password' => env('DB_SASHVINI_PASSWORD', ''),
+            'host' => env('DB3_HOST', '127.0.0.1'),
+            'port' => env('DB3_PORT', 3306),
+            'database' => env('DB3_DATABASE', 'charityworkshop'),
+            'username' => env('DB3_USERNAME', 'root'),
+            'password' => env('DB3_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
@@ -76,11 +113,11 @@ return [
         // Connection 3: Izzati (PostgreSQL) - Campaign & Event Operations
         'izzati' => [
             'driver' => 'pgsql',
-            'host' => env('DB_IZZATI_HOST', '127.0.0.1'),
-            'port' => env('DB_IZZATI_PORT', 5432),
-            'database' => env('DB_IZZATI_DATABASE', 'charity_operations'),
-            'username' => env('DB_IZZATI_USERNAME', 'postgres'),
-            'password' => env('DB_IZZATI_PASSWORD', ''),
+            'host' => env('DB4_HOST', '127.0.0.1'),
+            'port' => env('DB4_PORT', 5432),
+            'database' => env('DB4_DATABASE', 'charityworkshop'),
+            'username' => env('DB4_USERNAME', 'postgres'),
+            'password' => env('DB4_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
@@ -91,11 +128,11 @@ return [
         // Connection 4: Hannah (MySQL) - Financial Transactions
         'hannah' => [
             'driver' => 'mysql',
-            'host' => env('DB_HANNAH_HOST', '127.0.0.1'),
-            'port' => env('DB_HANNAH_PORT', 3306),
-            'database' => env('DB_HANNAH_DATABASE', 'charity_finance'),
-            'username' => env('DB_HANNAH_USERNAME', 'root'),
-            'password' => env('DB_HANNAH_PASSWORD', ''),
+            'host' => env('DB1_HOST', '127.0.0.1'),
+            'port' => env('DB1_PORT', 3306),
+            'database' => env('DB1_DATABASE', 'charityworkshop'),
+            'username' => env('DB1_USERNAME', 'root'),
+            'password' => env('DB1_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
@@ -107,11 +144,11 @@ return [
         // Connection 5: Adam (MySQL) - Public & Recipient Data
         'adam' => [
             'driver' => 'mysql',
-            'host' => env('DB_ADAM_HOST', '127.0.0.1'),
-            'port' => env('DB_ADAM_PORT', 3306),
-            'database' => env('DB_ADAM_DATABASE', 'charity_public'),
-            'username' => env('DB_ADAM_USERNAME', 'root'),
-            'password' => env('DB_ADAM_PASSWORD', ''),
+            'host' => env('DB2_HOST', '127.0.0.1'),
+            'port' => env('DB2_PORT', 3306),
+            'database' => env('DB2_DATABASE', 'charityworkshop'),
+            'username' => env('DB2_USERNAME', 'root'),
+            'password' => env('DB2_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

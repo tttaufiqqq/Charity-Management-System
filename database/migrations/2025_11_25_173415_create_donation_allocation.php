@@ -14,6 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
+        // Only run when migrating hannah database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'hannah') {
+            return;
+        }
+
         Schema::connection('hannah')->create('donation_allocation', function (Blueprint $table) {
             // ⚠️ Cross-database reference: Recipient_ID references recipient table in adam database
             // Cannot use foreign key constraint across databases
@@ -33,6 +38,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Only run when migrating hannah database
+        if (($_ENV['MIGRATING_DATABASE'] ?? env('MIGRATING_DATABASE')) !== 'hannah') {
+            return;
+        }
+
         Schema::connection('hannah')->dropIfExists('donation_allocation');
     }
 };
