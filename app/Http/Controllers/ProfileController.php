@@ -142,7 +142,7 @@ class ProfileController extends Controller
         $organization = $request->user()->organization;
 
         if (! $organization) {
-            return redirect()->route('profile.edit')->with('error', 'Organization profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         return view('profile.edit-organizer', compact('organization'));
@@ -156,7 +156,7 @@ class ProfileController extends Controller
         $organization = $request->user()->organization;
 
         if (! $organization) {
-            return redirect()->route('profile.edit')->with('error', 'Organization profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         $validated = $request->validate([
@@ -188,7 +188,7 @@ class ProfileController extends Controller
         $donor = $request->user()->donor;
 
         if (! $donor) {
-            return redirect()->route('profile.edit')->with('error', 'Donor profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         return view('profile.edit-donor', compact('donor'));
@@ -202,7 +202,7 @@ class ProfileController extends Controller
         $donor = $request->user()->donor;
 
         if (! $donor) {
-            return redirect()->route('profile.edit')->with('error', 'Donor profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         // Donor table might not have editable fields, but we keep this for future use
@@ -219,7 +219,7 @@ class ProfileController extends Controller
         $publicProfile = $request->user()->publicProfile;
 
         if (! $publicProfile) {
-            return redirect()->route('profile.edit')->with('error', 'Public profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Public profile not found. (Database: Adam)');
         }
 
         return view('profile.edit-public', compact('publicProfile'));
@@ -233,7 +233,7 @@ class ProfileController extends Controller
         $publicProfile = $request->user()->publicProfile;
 
         if (! $publicProfile) {
-            return redirect()->route('profile.edit')->with('error', 'Public profile not found.');
+            return redirect()->route('profile.edit')->with('error', 'Public profile not found. (Database: Adam)');
         }
 
         $validated = $request->validate([

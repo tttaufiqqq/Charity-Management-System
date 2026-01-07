@@ -114,7 +114,7 @@ class DonationManagementController extends Controller
 
         $donor = Auth::user()->donor;
         if (! $donor) {
-            return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         return view('donation-management.donate', compact('campaign', 'donor'));
@@ -136,7 +136,7 @@ class DonationManagementController extends Controller
         $donor = Auth::user()->donor;
 
         if (! $donor) {
-            return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         // Check if donation would exceed campaign goal
@@ -245,7 +245,7 @@ class DonationManagementController extends Controller
         $donor = Auth::user()->donor;
 
         if (! $donor) {
-            return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         // Show all donations (Completed and Failed - no Pending exists anymore)
@@ -302,7 +302,7 @@ class DonationManagementController extends Controller
         $donor = Auth::user()->donor;
 
         if (! $donor) {
-            return redirect()->route('dashboard')->with('error', 'Donor profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Donor profile not found. (Database: Hannah)');
         }
 
         // Load donor with user relationship
@@ -376,7 +376,8 @@ class DonationManagementController extends Controller
      */
     public function publicShowEvent(Event $event)
     {
-        $volunteerCount = $event->volunteers()->count();
+        // Count volunteers (cross-database safe)
+        $volunteerCount = EventParticipation::where('Event_ID', $event->Event_ID)->count();
         $spotsLeft = $event->Capacity ? ($event->Capacity - $volunteerCount) : null;
 
         return view('donation-management.public-user.event-detail', compact('event', 'volunteerCount', 'spotsLeft'));
@@ -390,7 +391,7 @@ class DonationManagementController extends Controller
         $publicProfile = Auth::user()->publicProfile;
 
         if (! $publicProfile) {
-            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Public profile not found. (Database: Adam)');
         }
 
         return view('donation-management.public-user.recipient-create');
@@ -404,7 +405,7 @@ class DonationManagementController extends Controller
         $publicProfile = Auth::user()->publicProfile;
 
         if (! $publicProfile) {
-            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Public profile not found. (Database: Adam)');
         }
 
         $validated = $request->validate([
@@ -447,7 +448,7 @@ class DonationManagementController extends Controller
         $publicProfile = Auth::user()->publicProfile;
 
         if (! $publicProfile) {
-            return redirect()->route('dashboard')->with('error', 'Public profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Public profile not found. (Database: Adam)');
         }
 
         $recipients = Recipient::where('Public_ID', $publicProfile->Public_ID)

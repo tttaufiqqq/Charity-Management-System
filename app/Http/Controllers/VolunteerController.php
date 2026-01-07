@@ -24,7 +24,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get all upcoming and ongoing events with roles eager loaded
@@ -47,7 +47,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Load roles with volunteer counts
@@ -89,7 +89,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Validate event exists (cross-database validation: sashvini -> izzati)
@@ -166,9 +166,9 @@ class VolunteerController extends Controller
             return back()->with('error', 'You are already registered for "'.$conflictingEvent->Title.'" which overlaps with this event ('.\Carbon\Carbon::parse($conflictingEvent->Start_Date)->format('M d, Y').' - '.\Carbon\Carbon::parse($conflictingEvent->End_Date)->format('M d, Y').').');
         }
 
-        // Check capacity
+        // Check capacity (cross-database safe)
         if ($event->Capacity) {
-            $currentVolunteers = $event->volunteers()->count();
+            $currentVolunteers = EventParticipation::where('Event_ID', $event->Event_ID)->count();
             if ($currentVolunteers >= $event->Capacity) {
                 return back()->with('error', 'This event is full.');
             }
@@ -212,7 +212,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get the participation to check for role assignment
@@ -260,7 +260,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get all events the volunteer is registered for (cross-database safe)
@@ -339,7 +339,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get upcoming events (cross-database safe)
@@ -395,7 +395,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         $volunteerSkills = $volunteer->skills()->withPivot('Skill_Level')->get();
@@ -415,7 +415,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Check if skill already exists - specify table name to avoid ambiguity
@@ -443,7 +443,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Check if volunteer has this skill - specify table name to avoid ambiguity
@@ -466,7 +466,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Check if volunteer has this skill - specify table name to avoid ambiguity
@@ -488,27 +488,35 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get current month and year
         $currentMonth = request('month', now()->month);
         $currentYear = request('year', now()->year);
 
-        // Get all registered events for the selected month
-        $events = $volunteer->events()
-            ->whereYear('Start_Date', $currentYear)
-            ->whereMonth('Start_Date', $currentMonth)
-            ->orderBy('Start_Date', 'asc')
-            ->get();
+        // Get all registered events for the selected month (cross-database safe)
+        // Step 1: Get event IDs from event_participation (sashvini)
+        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
 
-        // Get upcoming events (next 30 days)
-        $upcomingEvents = $volunteer->events()
-            ->where('Start_Date', '>=', now())
-            ->where('Start_Date', '<=', now()->addDays(30))
-            ->whereIn('event.Status', ['Upcoming', 'Ongoing'])
-            ->orderBy('Start_Date', 'asc')
-            ->get();
+        // Step 2: Query events for selected month from izzati database
+        $events = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->whereYear('Start_Date', $currentYear)
+                ->whereMonth('Start_Date', $currentMonth)
+                ->orderBy('Start_Date', 'asc')
+                ->get()
+            : collect();
+
+        // Get upcoming events (next 30 days) - cross-database safe
+        $upcomingEvents = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->where('Start_Date', '>=', now())
+                ->where('Start_Date', '<=', now()->addDays(30))
+                ->whereIn('Status', ['Upcoming', 'Ongoing'])
+                ->orderBy('Start_Date', 'asc')
+                ->get()
+            : collect();
 
         // Create calendar data
         $calendar = $this->generateCalendar($currentYear, $currentMonth, $events);
@@ -565,7 +573,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         // Get statistics (cross-database safe - no JOINs)
@@ -607,7 +615,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         return view('volunteer-management.edit-profile', compact('volunteer'));
@@ -621,7 +629,7 @@ class VolunteerController extends Controller
         $volunteer = Auth::user()->volunteer;
 
         if (! $volunteer) {
-            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
         $validated = $request->validate([

@@ -29,16 +29,28 @@ class RecipientManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Get only recipients suggested by admin (Pending or Accepted, but not Rejected)
-        $recipients = Recipient::where('recipient.Status', 'Approved')
-            ->join('campaign_recipient_suggestions', 'recipient.Recipient_ID', '=', 'campaign_recipient_suggestions.Recipient_ID')
-            ->where('campaign_recipient_suggestions.Campaign_ID', $campaignId)
-            ->whereIn('campaign_recipient_suggestions.Status', ['Pending', 'Accepted'])
-            ->select('recipient.*')
-            ->with(['donationAllocations' => function ($query) use ($campaignId) {
-                $query->where('Campaign_ID', $campaignId);
-            }])
-            ->paginate(10);
+        // Get only recipients suggested by admin (Pending or Accepted, but not Rejected) - cross-database safe
+        // Step 1: Get recipient IDs from campaign_recipient_suggestions (izzati)
+        $recipientIds = CampaignRecipientSuggestion::where('Campaign_ID', $campaignId)
+            ->whereIn('Status', ['Pending', 'Accepted'])
+            ->pluck('Recipient_ID')
+            ->toArray();
+
+        // Step 2: Query recipients from adam database
+        $recipients = ! empty($recipientIds)
+            ? Recipient::where('Status', 'Approved')
+                ->whereIn('Recipient_ID', $recipientIds)
+                ->with(['donationAllocations' => function ($query) use ($campaignId) {
+                    $query->where('Campaign_ID', $campaignId);
+                }])
+                ->paginate(10)
+            : new \Illuminate\Pagination\LengthAwarePaginator(
+                [],
+                0,
+                10,
+                1,
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
 
         // Calculate total allocated for this campaign
         $totalAllocated = DonationAllocation::where('Campaign_ID', $campaignId)
@@ -160,7 +172,7 @@ class RecipientManagementController extends Controller
         $organization = Auth::user()->organization;
 
         if (! $organization) {
-            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         // Get all campaigns belonging to this organizer
@@ -221,7 +233,7 @@ class RecipientManagementController extends Controller
 
     public function myCampaigns(Request $request)
     {
-        $query = Auth::user()->organization->campaigns()->with('allocations');
+        $query = Auth::user()->organization->campaigns()->with('donationAllocations');
 
         // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
@@ -354,8 +366,8 @@ class RecipientManagementController extends Controller
     {
         $recipient = Recipient::findOrFail($id);
 
-        // Check if recipient has allocations
-        if ($recipient->allocations()->exists()) {
+        // Check if recipient has allocations (cross-database safe - uses setConnection in model)
+        if ($recipient->donationAllocations()->exists()) {
             return redirect()->back()->with('error', 'Cannot delete recipient with existing allocations.');
         }
 

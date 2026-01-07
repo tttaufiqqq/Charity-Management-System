@@ -25,7 +25,7 @@ class EventManagementController extends Controller
         $organization = Auth::user()->organization;
 
         if (! $organization) {
-            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
@@ -58,7 +58,7 @@ class EventManagementController extends Controller
         $organization = Auth::user()->organization;
 
         if (! $organization) {
-            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         $validated = $request->validate([
@@ -169,7 +169,7 @@ class EventManagementController extends Controller
         $organization = Auth::user()->organization;
 
         if (! $organization) {
-            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         $events = Event::where('Organizer_ID', $organization->Organization_ID)
@@ -196,7 +196,7 @@ class EventManagementController extends Controller
         $organization = Auth::user()->organization;
 
         if (! $organization) {
-            return redirect()->route('dashboard')->with('error', 'Organization profile not found.');
+            return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
         $validated = $request->validate([
@@ -253,19 +253,42 @@ class EventManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Load roles with volunteers
-        $event->load(['roles', 'roles.volunteers']);
+        // Load roles only (don't eager load volunteers - cross-database issue)
+        $event->load('roles');
 
         // Calculate statistics
         $totalCapacity = $event->roles->sum('Volunteers_Needed');
         $totalFilled = $event->roles->sum('Volunteers_Filled');
         $capacityPercentage = $totalCapacity > 0 ? round(($totalFilled / $totalCapacity) * 100) : 0;
 
-        // Group volunteers by role with their skills and user details
-        $volunteersByRole = $event->volunteers()
-            ->with(['user', 'skills'])
-            ->get()
-            ->groupBy('pivot.Role_ID');
+        // Group volunteers by role with their skills and user details (cross-database safe)
+        // Step 1: Get participations from sashvini
+        $participations = EventParticipation::where('Event_ID', $event->Event_ID)->get();
+
+        // Step 2: Get volunteer IDs
+        $volunteerIds = $participations->pluck('Volunteer_ID')->unique()->toArray();
+
+        // Step 3: Load volunteers with user and skills from izzhilmy/adam
+        $volunteers = ! empty($volunteerIds)
+            ? Volunteer::whereIn('Volunteer_ID', $volunteerIds)
+                ->with(['user', 'skills'])
+                ->get()
+                ->keyBy('Volunteer_ID')
+            : collect();
+
+        // Step 4: Attach pivot data and group by role
+        $volunteersByRole = $participations->map(function ($participation) use ($volunteers) {
+            $volunteer = $volunteers->get($participation->Volunteer_ID);
+            if ($volunteer) {
+                $volunteer->pivot = (object) [
+                    'Role_ID' => $participation->Role_ID,
+                    'Status' => $participation->Status,
+                    'Total_Hours' => $participation->Total_Hours,
+                ];
+            }
+
+            return $volunteer;
+        })->filter()->groupBy('pivot.Role_ID');
 
         return view('event-management.events.show', compact('event', 'volunteersByRole', 'totalCapacity', 'totalFilled', 'capacityPercentage'));
     }
@@ -349,12 +372,37 @@ class EventManagementController extends Controller
         // Load roles
         $roles = $event->roles;
 
-        // Load volunteers with role information
-        $volunteers = $event->volunteers()
-            ->withPivot('Status', 'Total_Hours', 'Role_ID', 'created_at')
-            ->with('user')
-            ->orderBy('event_participation.created_at', 'desc')
+        // Load volunteers with role information (cross-database safe)
+        // Step 1: Get participations from sashvini
+        $participations = EventParticipation::where('Event_ID', $event->Event_ID)
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        // Step 2: Get volunteer IDs
+        $volunteerIds = $participations->pluck('Volunteer_ID')->unique()->toArray();
+
+        // Step 3: Load volunteers with user from izzhilmy
+        $volunteersCollection = ! empty($volunteerIds)
+            ? Volunteer::whereIn('Volunteer_ID', $volunteerIds)
+                ->with('user')
+                ->get()
+                ->keyBy('Volunteer_ID')
+            : collect();
+
+        // Step 4: Attach pivot data to volunteers
+        $volunteers = $participations->map(function ($participation) use ($volunteersCollection) {
+            $volunteer = $volunteersCollection->get($participation->Volunteer_ID);
+            if ($volunteer) {
+                $volunteer->pivot = (object) [
+                    'Status' => $participation->Status,
+                    'Total_Hours' => $participation->Total_Hours,
+                    'Role_ID' => $participation->Role_ID,
+                    'created_at' => $participation->created_at,
+                ];
+            }
+
+            return $volunteer;
+        })->filter();
 
         // Get role statistics
         $roleStats = $volunteers->groupBy('pivot.Role_ID')->map(function ($group) {
