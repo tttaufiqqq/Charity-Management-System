@@ -33,8 +33,8 @@ class VolunteerController extends Controller
             ->orderBy('Start_Date', 'asc')
             ->paginate(12);
 
-        // Get volunteer's registered event IDs
-        $registeredEventIds = $volunteer->events()->pluck('event.Event_ID')->toArray();
+        // Get volunteer's registered event IDs (cross-database safe)
+        $registeredEventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
 
         return view('volunteer-management.events.browse', compact('events', 'registeredEventIds'));
     }
@@ -53,9 +53,9 @@ class VolunteerController extends Controller
         // Load roles with volunteer counts
         $event->load(['roles', 'organization.user']);
 
-        // Check if volunteer is already registered
-        $isRegistered = $volunteer->events()
-            ->where('event.Event_ID', $event->Event_ID)
+        // Check if volunteer is already registered (cross-database safe)
+        $isRegistered = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
+            ->where('Event_ID', $event->Event_ID)
             ->exists();
 
         // Get participation details if registered
@@ -124,34 +124,43 @@ class VolunteerController extends Controller
             return back()->with('error', 'This event is no longer accepting volunteers.');
         }
 
-        // Check if already registered
-        $alreadyRegistered = $volunteer->events()
-            ->where('event.Event_ID', $event->Event_ID)
+        // Check if already registered (cross-database safe)
+        $alreadyRegistered = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
+            ->where('Event_ID', $event->Event_ID)
             ->exists();
 
         if ($alreadyRegistered) {
             return back()->with('error', 'You are already registered for this event.');
         }
 
-        // Check for date conflicts with other registered events
-        $conflictingEvent = $volunteer->events()
-            ->where('event.Event_ID', '!=', $event->Event_ID)
-            ->where(function ($query) use ($event) {
-                $query->where(function ($q) use ($event) {
-                    // New event starts during existing event
-                    $q->where('event.Start_Date', '<=', $event->Start_Date)
-                        ->where('event.End_Date', '>=', $event->Start_Date);
-                })->orWhere(function ($q) use ($event) {
-                    // New event ends during existing event
-                    $q->where('event.Start_Date', '<=', $event->End_Date)
-                        ->where('event.End_Date', '>=', $event->End_Date);
-                })->orWhere(function ($q) use ($event) {
-                    // New event completely contains existing event
-                    $q->where('event.Start_Date', '>=', $event->Start_Date)
-                        ->where('event.End_Date', '<=', $event->End_Date);
-                });
-            })
-            ->first();
+        // Check for date conflicts with other registered events (cross-database safe)
+        // Step 1: Get event IDs from event_participation (sashvini)
+        $registeredEventIds = $volunteer->eventParticipations()
+            ->where('Event_ID', '!=', $event->Event_ID)
+            ->pluck('Event_ID')
+            ->toArray();
+
+        // Step 2: Query events from izzati database
+        $conflictingEvent = null;
+        if (! empty($registeredEventIds)) {
+            $conflictingEvent = Event::whereIn('Event_ID', $registeredEventIds)
+                ->where(function ($query) use ($event) {
+                    $query->where(function ($q) use ($event) {
+                        // New event starts during existing event
+                        $q->where('Start_Date', '<=', $event->Start_Date)
+                            ->where('End_Date', '>=', $event->Start_Date);
+                    })->orWhere(function ($q) use ($event) {
+                        // New event ends during existing event
+                        $q->where('Start_Date', '<=', $event->End_Date)
+                            ->where('End_Date', '>=', $event->End_Date);
+                    })->orWhere(function ($q) use ($event) {
+                        // New event completely contains existing event
+                        $q->where('Start_Date', '>=', $event->Start_Date)
+                            ->where('End_Date', '<=', $event->End_Date);
+                    });
+                })
+                ->first();
+        }
 
         if ($conflictingEvent) {
             return back()->with('error', 'You are already registered for "'.$conflictingEvent->Title.'" which overlaps with this event ('.\Carbon\Carbon::parse($conflictingEvent->Start_Date)->format('M d, Y').' - '.\Carbon\Carbon::parse($conflictingEvent->End_Date)->format('M d, Y').').');
@@ -254,24 +263,65 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
-        // Get all events the volunteer is registered for
-        $registeredEvents = $volunteer->events()
-            ->withPivot('Status', 'Total_Hours')
-            ->orderBy('Start_Date', 'desc')
+        // Get all events the volunteer is registered for (cross-database safe)
+        // Step 1: Get participations with pagination
+        $participations = $volunteer->eventParticipations()
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
+
+        // Step 2: Get event IDs from participations
+        $eventIds = $participations->pluck('Event_ID')->toArray();
+
+        // Step 3: Load events from izzati database
+        $events = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->orderBy('Start_Date', 'desc')
+                ->get()
+                ->keyBy('Event_ID')
+            : collect();
+
+        // Step 4: Attach pivot data to events
+        $registeredEvents = $participations->map(function ($participation) use ($events) {
+            $event = $events->get($participation->Event_ID);
+            if ($event) {
+                $event->pivot = (object) [
+                    'Status' => $participation->Status,
+                    'Total_Hours' => $participation->Total_Hours,
+                ];
+            }
+
+            return $event;
+        })->filter(); // Remove any null events
+
+        // Manually create paginator for consistent interface
+        $registeredEvents = new \Illuminate\Pagination\LengthAwarePaginator(
+            $registeredEvents,
+            $participations->total(),
+            $participations->perPage(),
+            $participations->currentPage(),
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
 
         // Calculate total hours
         $totalHours = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
             ->sum('Total_Hours');
 
-        // Count events by status
-        $upcomingCount = $volunteer->events()
-            ->whereIn('event.Status', ['Upcoming', 'Ongoing'])
-            ->count();
+        // Count events by status (cross-database safe)
+        // Get event IDs from event_participation (sashvini)
+        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
 
-        $completedCount = $volunteer->events()
-            ->where('event.Status', 'Completed')
-            ->count();
+        // Query events from izzati database
+        $upcomingCount = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->whereIn('Status', ['Upcoming', 'Ongoing'])
+                ->count()
+            : 0;
+
+        $completedCount = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->where('Status', 'Completed')
+                ->count()
+            : 0;
 
         return view('volunteer-management.events.my-events', compact(
             'registeredEvents',
@@ -292,12 +342,18 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found.');
         }
 
-        // Get upcoming events
-        $upcomingEvents = $volunteer->events()
-            ->whereIn('event.Status', ['Upcoming', 'Ongoing'])
-            ->orderBy('Start_Date', 'asc')
-            ->limit(5)
-            ->get();
+        // Get upcoming events (cross-database safe)
+        // Step 1: Get event IDs from event_participation (sashvini)
+        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
+
+        // Step 2: Query upcoming events from izzati database
+        $upcomingEvents = ! empty($eventIds)
+            ? Event::whereIn('Event_ID', $eventIds)
+                ->whereIn('Status', ['Upcoming', 'Ongoing'])
+                ->orderBy('Start_Date', 'asc')
+                ->limit(5)
+                ->get()
+            : collect();
 
         // Calculate statistics (cross-database safe - no JOINs)
         $totalHours = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)

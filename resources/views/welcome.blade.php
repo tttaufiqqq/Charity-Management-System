@@ -106,9 +106,8 @@
                     $uniqueCampaigns = $donor ? $donor->donations()->distinct('Campaign_ID')->count('Campaign_ID') : 0;
                     $lastDonation = $donor ? $donor->donations()->latest('Donation_Date')->first() : null;
                     $recentDonations = $donor ? $donor->donations()->with('campaign')->latest('Donation_Date')->take(3)->get() : collect();
-                    // Get active campaigns - query directly from database to ensure fresh data
-                    $activeCampaigns = \DB::table('campaign')
-                        ->where('Status', 'Active')
+                    // Get active campaigns - use Campaign model for correct database connection
+                    $activeCampaigns = \App\Models\Campaign::where('Status', 'Active')
                         ->orderBy('created_at', 'desc')
                         ->limit(3)
                         ->get();
