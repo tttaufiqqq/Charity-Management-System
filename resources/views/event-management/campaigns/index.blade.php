@@ -7,251 +7,283 @@
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-50">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100" x-data="{
+    activeTab: 'all',
+    viewMode: 'grid'
+}">
 <div class="min-h-screen">
     @include('navbar')
 
-    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">My Campaigns</h1>
-                <p class="text-gray-600 mt-1">Manage your fundraising campaigns</p>
+        <!-- Header with Actions -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        My Campaigns
+                    </h1>
+                    <p class="text-gray-600 mt-1">Manage your fundraising campaigns</p>
+                </div>
+
+                <!-- Action Button -->
+                <a href="{{ route('campaigns.create') }}"
+                   class="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Create Campaign
+                </a>
             </div>
-            <a href="{{ route('campaigns.create') }}" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
-                + Create Campaign
-            </a>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-                {{ session('success') }}
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-6 py-4 rounded-lg mb-6 flex items-center gap-3 shadow-sm" x-data="{ show: true }" x-show="show">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="flex-1">{{ session('success') }}</span>
+                <button @click="show = false" class="text-green-600 hover:text-green-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-800 px-6 py-4 rounded-lg mb-6 flex items-center gap-3 shadow-sm" x-data="{ show: true }" x-show="show">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="flex-1">{{ session('error') }}</span>
+                <button @click="show = false" class="text-red-600 hover:text-red-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
         @endif
 
         <!-- Pending Suggestions Alert -->
         @php
-            $totalPendingSuggestions = $campaigns->sum('pending_suggestions_count');
-            $campaignsWithSuggestions = $campaigns->where('pending_suggestions_count', '>', 0)->count();
+            $totalPendingSuggestions = $allCampaigns->sum('pending_suggestions_count');
+            $campaignsWithSuggestions = $allCampaigns->where('pending_suggestions_count', '>', 0)->count();
         @endphp
         @if($totalPendingSuggestions > 0)
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-lg">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3 flex-1">
-                        <h3 class="text-sm font-medium text-yellow-800">
-                            Recipient Suggestions Awaiting Your Review
-                        </h3>
-                        <div class="mt-2 text-sm text-yellow-700">
-                            <p>
-                                You have <strong>{{ $totalPendingSuggestions }}</strong> pending recipient suggestion{{ $totalPendingSuggestions != 1 ? 's' : '' }} across <strong>{{ $campaignsWithSuggestions }}</strong> campaign{{ $campaignsWithSuggestions != 1 ? 's' : '' }}.
-                                Administrators have recommended recipients they believe would benefit from your campaigns. Review and accept suitable recipients to allocate funds.
-                            </p>
-                        </div>
-                        <div class="mt-3">
-                            <p class="text-xs text-yellow-600">
-                                💡 <em>Look for the yellow badges in the "Suggestions" column below, or click "Suggestions" in the Actions column.</em>
-                            </p>
-                        </div>
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-lg mb-6">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <div>
+                        <h3 class="text-yellow-800 font-bold mb-1">Recipient Suggestions Awaiting Review</h3>
+                        <p class="text-yellow-700 text-sm">You have <strong>{{ $totalPendingSuggestions }}</strong> pending recipient suggestion{{ $totalPendingSuggestions != 1 ? 's' : '' }} across <strong>{{ $campaignsWithSuggestions }}</strong> campaign{{ $campaignsWithSuggestions != 1 ? 's' : '' }}. Review and accept suitable recipients to allocate funds.</p>
                     </div>
                 </div>
             </div>
         @endif
 
-        <!-- Campaigns List -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-            @if($campaigns->count() > 0)
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Campaign</th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Funding Progress</th>
-                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Suggestions</th>
-                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
-                        @foreach($campaigns as $campaign)
-                            @php
-                                $progress = $campaign->Goal_Amount > 0 ? ($campaign->Collected_Amount / $campaign->Goal_Amount) * 100 : 0;
-                            @endphp
-                            <tr class="hover:bg-indigo-50/30 transition-colors">
-                                <!-- Campaign Info -->
-                                <td class="px-6 py-5">
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4 flex-1">
-                                            <h3 class="text-sm font-semibold text-gray-900 mb-1">{{ $campaign->Title }}</h3>
-                                            <p class="text-xs text-gray-500 line-clamp-2">{{ $campaign->Description }}</p>
-                                            <div class="mt-2 flex items-center gap-3 text-xs text-gray-500">
-                                                <span class="inline-flex items-center">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                    </svg>
-                                                    {{ $campaign->Start_Date->format('M d') }} - {{ $campaign->End_Date->format('M d, Y') }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Funding Progress -->
-                                <td class="px-6 py-5">
-                                    <div class="min-w-[200px]">
-                                        <div class="flex items-baseline justify-between mb-2">
-                                            <span class="text-lg font-bold text-indigo-600">RM {{ number_format($campaign->Collected_Amount, 0) }}</span>
-                                            <span class="text-xs font-medium text-gray-500">of RM {{ number_format($campaign->Goal_Amount, 0) }}</span>
-                                        </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-                                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-300" style="width: {{ min($progress, 100) }}%"></div>
-                                        </div>
-                                        <div class="flex justify-between items-center">
-                                            <span class="text-xs font-semibold text-indigo-600">{{ number_format($progress, 1) }}%</span>
-                                            <span class="text-xs text-gray-500">{{ $campaign->Goal_Amount - $campaign->Collected_Amount > 0 ? 'RM ' . number_format($campaign->Goal_Amount - $campaign->Collected_Amount, 0) . ' remaining' : 'Goal reached!' }}</span>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                <!-- Status -->
-                                <td class="px-6 py-5 text-center">
-                                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold
-                                        {{ $campaign->Status === 'Active' ? 'bg-green-100 text-green-800 ring-1 ring-green-600/20' : '' }}
-                                        {{ $campaign->Status === 'Completed' ? 'bg-blue-100 text-blue-800 ring-1 ring-blue-600/20' : '' }}
-                                        {{ $campaign->Status === 'Cancelled' ? 'bg-red-100 text-red-800 ring-1 ring-red-600/20' : '' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full mr-1.5
-                                            {{ $campaign->Status === 'Active' ? 'bg-green-600' : '' }}
-                                            {{ $campaign->Status === 'Completed' ? 'bg-blue-600' : '' }}
-                                            {{ $campaign->Status === 'Cancelled' ? 'bg-red-600' : '' }}">
-                                        </span>
-                                        {{ $campaign->Status }}
-                                    </span>
-                                </td>
-
-                                <!-- Suggestions -->
-                                <td class="px-6 py-5 text-center">
-                                    @if($campaign->pending_suggestions_count > 0)
-                                        <a href="{{ route('campaigns.suggestions', $campaign->Campaign_ID) }}" class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-all ring-1 ring-yellow-600/20">
-                                            <svg class="w-3.5 h-3.5 mr-1.5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                            </svg>
-                                            <span class="font-bold">{{ $campaign->pending_suggestions_count }}</span> Pending
-                                        </a>
-                                    @elseif($campaign->recipient_suggestions_count > 0)
-                                        <a href="{{ route('campaigns.suggestions', $campaign->Campaign_ID) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-indigo-600 transition-colors">
-                                            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            {{ $campaign->recipient_suggestions_count }} Reviewed
-                                        </a>
-                                    @else
-                                        <span class="text-xs text-gray-400 italic">None</span>
-                                    @endif
-                                </td>
-
-                                <!-- Actions -->
-                                <td class="px-6 py-5">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('campaigns.show', $campaign->Campaign_ID) }}" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors">
-                                            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                            </svg>
-                                            View
-                                        </a>
-
-                                        <!-- Dropdown Menu -->
-                                        <div class="relative inline-block text-left" x-data="{ open: false }">
-                                            <button @click="open = !open" @click.away="open = false" type="button" class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                                                </svg>
-                                            </button>
-
-                                            <div x-show="open"
-                                                 x-transition:enter="transition ease-out duration-100"
-                                                 x-transition:enter-start="transform opacity-0 scale-95"
-                                                 x-transition:enter-end="transform opacity-100 scale-100"
-                                                 x-transition:leave="transition ease-in duration-75"
-                                                 x-transition:leave-start="transform opacity-100 scale-100"
-                                                 x-transition:leave-end="transform opacity-0 scale-95"
-                                                 class="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                                                <div class="py-1">
-                                                    @if($campaign->recipient_suggestions_count > 0)
-                                                        <a href="{{ route('campaigns.suggestions', $campaign->Campaign_ID) }}" class="flex items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50 transition-colors">
-                                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                                                            </svg>
-                                                            View Suggestions
-                                                        </a>
-                                                    @endif
-                                                    <a href="{{ route('recipients.allocate', $campaign->Campaign_ID) }}" class="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 transition-colors">
-                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                        </svg>
-                                                        Allocate Funds
-                                                    </a>
-                                                    <a href="{{ route('campaigns.edit', $campaign->Campaign_ID) }}" class="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 transition-colors">
-                                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                        </svg>
-                                                        Edit Campaign
-                                                    </a>
-                                                    <hr class="my-1">
-                                                    <form action="{{ route('campaigns.destroy', $campaign->Campaign_ID) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this campaign?');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors text-left">
-                                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                            </svg>
-                                                            Delete Campaign
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="px-6 py-4 border-t border-gray-200">
-                    {{ $campaigns->links() }}
-                </div>
-            @else
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get started by creating a new campaign.</p>
-                    <div class="mt-6">
-                        <a href="{{ route('campaigns.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                            + Create Campaign
-                        </a>
+        <!-- Statistics Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <!-- Total Campaigns -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Total</p>
+                        <p class="text-3xl font-bold text-green-600 mt-1">{{ $stats['total_campaigns'] }}</p>
+                    </div>
+                    <div class="bg-green-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                     </div>
                 </div>
-            @endif
+                <p class="text-xs text-gray-500 mt-2">All campaigns</p>
+            </div>
+
+            <!-- Approved Campaigns -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Approved</p>
+                        <p class="text-3xl font-bold text-blue-600 mt-1">{{ $stats['approved_campaigns'] }}</p>
+                    </div>
+                    <div class="bg-blue-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Live campaigns</p>
+            </div>
+
+            <!-- Pending Campaigns -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Pending</p>
+                        <p class="text-3xl font-bold text-orange-600 mt-1">{{ $stats['pending_campaigns'] }}</p>
+                    </div>
+                    <div class="bg-orange-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Awaiting approval</p>
+            </div>
+
+            <!-- Total Raised -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Total Raised</p>
+                        <p class="text-2xl font-bold text-indigo-600 mt-1">RM {{ number_format($stats['total_raised'], 2) }}</p>
+                    </div>
+                    <div class="bg-indigo-100 rounded-full p-3">
+                        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                @php
+                    $overallProgress = $stats['total_goal'] > 0 ? ($stats['total_raised'] / $stats['total_goal']) * 100 : 0;
+                @endphp
+                <p class="text-xs text-gray-500 mt-2">{{ number_format($overallProgress, 1) }}% of goal</p>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px overflow-x-auto">
+                    <button @click="activeTab = 'all'"
+                            :class="activeTab === 'all' ? 'border-green-500 text-green-600 bg-green-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                        All Campaigns
+                        <span class="ml-2 px-2 py-0.5 text-xs font-bold rounded-full bg-green-100 text-green-600">
+                            {{ $stats['total_campaigns'] }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'approved'"
+                            :class="activeTab === 'approved' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Approved
+                        <span class="ml-2 px-2 py-0.5 text-xs font-bold rounded-full bg-blue-100 text-blue-600">
+                            {{ $stats['approved_campaigns'] }}
+                        </span>
+                    </button>
+
+                    <button @click="activeTab = 'pending'"
+                            :class="activeTab === 'pending' ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Pending Approval
+                        <span class="ml-2 px-2 py-0.5 text-xs font-bold rounded-full bg-orange-100 text-orange-600">
+                            {{ $stats['pending_campaigns'] }}
+                        </span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- View Mode Toggle -->
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                <p class="text-sm text-gray-600">
+                    <span x-show="activeTab === 'all'">Showing all campaigns</span>
+                    <span x-show="activeTab === 'approved'">Showing approved campaigns</span>
+                    <span x-show="activeTab === 'pending'">Showing campaigns pending admin approval</span>
+                </p>
+                <div class="flex gap-2">
+                    <button @click="viewMode = 'grid'"
+                            :class="viewMode === 'grid' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                            class="px-3 py-1.5 rounded-lg transition-all text-sm font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                        </svg>
+                        Grid
+                    </button>
+                    <button @click="viewMode = 'table'"
+                            :class="viewMode === 'table' ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'"
+                            class="px-3 py-1.5 rounded-lg transition-all text-sm font-medium flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Table
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div>
+            <!-- All Campaigns Tab -->
+            <div x-show="activeTab === 'all'" x-transition>
+                @include('event-management.campaigns.partials.campaigns-grid', [
+                    'campaigns' => $allCampaigns
+                ])
+            </div>
+
+            <!-- Approved Tab -->
+            <div x-show="activeTab === 'approved'" x-transition>
+                @include('event-management.campaigns.partials.campaigns-grid', [
+                    'campaigns' => $approvedCampaigns
+                ])
+            </div>
+
+            <!-- Pending Tab -->
+            <div x-show="activeTab === 'pending'" x-transition>
+                @if($stats['pending_campaigns'] > 0)
+                    <div class="bg-orange-50 border-l-4 border-orange-500 p-6 rounded-lg mb-6">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <div>
+                                <h3 class="text-orange-800 font-bold mb-1">Awaiting Admin Approval</h3>
+                                <p class="text-orange-700 text-sm">These campaigns are currently under review by an administrator. You'll be notified once they're approved or if any changes are needed.</p>
+                            </div>
+                        </div>
+                    </div>
+                    @include('event-management.campaigns.partials.campaigns-grid', [
+                        'campaigns' => $pendingCampaigns,
+                        'isPending' => true
+                    ])
+                @else
+                    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+                        <div class="bg-gray-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">No Pending Campaigns</h3>
+                        <p class="text-gray-600">All your campaigns have been reviewed!</p>
+                    </div>
+                @endif
+            </div>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-600 text-sm">
+                <p>&copy; {{ date('Y') }} CharityHub. Making a difference together.</p>
+            </div>
+        </div>
+    </footer>
 </div>
 </body>
 </html>
