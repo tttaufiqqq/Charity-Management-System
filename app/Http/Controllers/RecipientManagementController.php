@@ -433,7 +433,7 @@ class RecipientManagementController extends Controller
     public function storeSuggestion(Request $request, $campaignId)
     {
         $request->validate([
-            'recipient_id' => 'required|exists:recipient,Recipient_ID',
+            'recipient_id' => 'required|integer', // recipient table is in adam database - manual validation below
             'suggestion_reason' => 'nullable|string|max:1000',
         ]);
 

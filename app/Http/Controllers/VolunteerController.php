@@ -100,7 +100,7 @@ class VolunteerController extends Controller
         $roleId = null;
         if ($event->roles()->count() > 0) {
             $validated = $request->validate([
-                'role_id' => ['required', 'exists:event_role,Role_ID'],
+                'role_id' => ['required', 'integer'], // Manual validation below (event_role is in izzati database)
             ]);
             $roleId = $validated['role_id'];
 
@@ -187,7 +187,7 @@ class VolunteerController extends Controller
 
             // Update role volunteer count if role was selected
             if ($roleId) {
-                DB::table('event_role')
+                DB::connection('izzati')->table('event_role')
                     ->where('Role_ID', $roleId)
                     ->increment('Volunteers_Filled');
             }
@@ -215,8 +215,8 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
-        // Get the participation to check for role assignment
-        $participation = DB::table('event_participation')
+        // Get the participation to check for role assignment (sashvini database)
+        $participation = DB::connection('sashvini')->table('event_participation')
             ->where('Volunteer_ID', $volunteer->Volunteer_ID)
             ->where('Event_ID', $event->Event_ID)
             ->first();
@@ -227,15 +227,15 @@ class VolunteerController extends Controller
 
         DB::beginTransaction();
         try {
-            // Decrement role volunteer count if role was assigned
+            // Decrement role volunteer count if role was assigned (izzati database)
             if ($participation->Role_ID) {
-                DB::table('event_role')
+                DB::connection('izzati')->table('event_role')
                     ->where('Role_ID', $participation->Role_ID)
                     ->decrement('Volunteers_Filled');
             }
 
-            // Delete participation
-            DB::table('event_participation')
+            // Delete participation (sashvini database)
+            DB::connection('sashvini')->table('event_participation')
                 ->where('Volunteer_ID', $volunteer->Volunteer_ID)
                 ->where('Event_ID', $event->Event_ID)
                 ->delete();

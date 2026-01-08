@@ -621,6 +621,53 @@
                         </div>
                     </div>
 
+                    <!-- Quick Create Actions -->
+                    <div class="mb-8 grid md:grid-cols-2 gap-4">
+                        <!-- Create Campaign Card -->
+                        <a href="{{ route('campaigns.create') }}" class="group block bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-6 hover:border-indigo-400 hover:shadow-lg transition-all">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-14 h-14 bg-indigo-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                </div>
+                                <svg class="w-6 h-6 text-indigo-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Create New Campaign</h4>
+                            <p class="text-sm text-gray-600 mb-3">Launch a fundraising campaign to support your cause and reach your goals</p>
+                            <div class="flex items-center text-indigo-600 font-semibold text-sm">
+                                <span>Start Fundraising</span>
+                                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </div>
+                        </a>
+
+                        <!-- Create Event Card -->
+                        <a href="{{ route('events.create') }}" class="group block bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-lg transition-all">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="w-14 h-14 bg-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                </div>
+                                <svg class="w-6 h-6 text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 mb-2">Create New Event</h4>
+                            <p class="text-sm text-gray-600 mb-3">Organize a volunteer event and mobilize your community to make an impact</p>
+                            <div class="flex items-center text-blue-600 font-semibold text-sm">
+                                <span>Schedule Event</span>
+                                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </div>
+                        </a>
+                    </div>
+
                     @if($pendingSuggestions > 0)
                         <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
                             <div class="flex items-start justify-between">

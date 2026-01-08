@@ -137,7 +137,9 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('campaigns.donate.process', $campaign->Campaign_ID) }}">
+                    <form method="POST" action="{{ route('campaigns.donate.process', $campaign->Campaign_ID) }}"
+                          x-data="{ showConfirmModal: false, donationAmount: 0 }"
+                          @submit.prevent="if (!showConfirmModal) { donationAmount = document.getElementById('amount').value; showConfirmModal = true; } else { $el.submit(); }">
                         @csrf
 
                         <!-- Donor Info Display -->
@@ -195,38 +197,61 @@
 
                         <!-- Payment Method -->
                         <div class="mb-6">
-                            <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                            <div class="relative">
-                                <input type="text" id="payment_method" name="payment_method" value="FPX Online Banking" readonly
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-medium cursor-not-allowed">
-                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-indigo-600 font-semibold">
-                                    Secure FPX Payment
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs text-gray-500">
-                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                </svg>
-                                Secured payment via ToyyibPay FPX Gateway
-                            </p>
-                            @error('payment_method')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Payment Method</label>
 
-                        <!-- Demo Mode Notice -->
-                        <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                </svg>
-                                <div class="flex-1">
-                                    <p class="text-sm text-yellow-800">
-                                        <strong>Demo Mode:</strong> This is a simulated payment system for demonstration purposes.
-                                        No real payment will be processed. Your donation will be recorded for testing.
-                                    </p>
+                            <!-- ToyyibPay Gateway Badge -->
+                            <div class="mb-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 w-10 h-10 bg-white rounded-lg shadow-sm flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-semibold text-indigo-900">Powered by ToyyibPay</p>
+                                            <p class="text-xs text-indigo-600">Secure Malaysian Payment Gateway</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="text-xs font-medium text-green-600">SSL Secured</span>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- FPX Online Banking (Single Option) -->
+                            <input type="hidden" name="payment_method" value="FPX Online Banking">
+                            <div class="relative flex items-center p-4 border-2 border-indigo-600 bg-indigo-50 rounded-lg">
+                                <div class="flex-shrink-0 w-12 h-12 bg-white rounded-lg shadow-sm flex items-center justify-center">
+                                    <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <p class="text-sm font-semibold text-gray-900">FPX Online Banking</p>
+                                    <p class="text-xs text-gray-600">Pay directly from your bank account</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Payment Security Notice -->
+                            <div class="mt-3 flex items-start text-xs text-gray-600">
+                                <svg class="w-4 h-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span>All transactions are encrypted and processed securely through ToyyibPay's PCI-DSS compliant FPX gateway. Your bank credentials are never stored on our servers.</span>
+                            </div>
+
+                            @error('payment_method')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <!-- Information Box -->
@@ -270,6 +295,97 @@
                                     class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl {{ $remainingAmount <= 0 ? 'opacity-50 cursor-not-allowed' : '' }}">
                                 Complete Donation
                             </button>
+                        </div>
+
+                        <!-- Payment Confirmation Modal -->
+                        <div x-show="showConfirmModal"
+                             x-cloak
+                             class="fixed inset-0 z-50 overflow-y-auto"
+                             style="display: none;">
+                            <!-- Backdrop -->
+                            <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+                                 @click="showConfirmModal = false"></div>
+
+                            <!-- Modal -->
+                            <div class="flex items-center justify-center min-h-screen px-4">
+                                <div class="relative bg-white rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all"
+                                     @click.away="showConfirmModal = false">
+                                    <!-- Modal Header -->
+                                    <div class="mb-6">
+                                        <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto mb-4">
+                                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-2xl font-bold text-gray-900 text-center">Confirm Your Donation</h3>
+                                        <p class="text-sm text-gray-600 text-center mt-2">Please review your donation details before proceeding to payment</p>
+                                    </div>
+
+                                    <!-- Donation Summary -->
+                                    <div class="space-y-4 mb-6">
+                                        <!-- Campaign -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <p class="text-xs text-gray-600 mb-1">Campaign</p>
+                                            <p class="font-semibold text-gray-900">{{ $campaign->Title }}</p>
+                                            <p class="text-xs text-indigo-600 mt-1">{{ $campaign->organization->user->name ?? 'N/A' }}</p>
+                                        </div>
+
+                                        <!-- Amount -->
+                                        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+                                            <p class="text-xs text-gray-600 mb-1">Donation Amount</p>
+                                            <p class="text-3xl font-bold text-indigo-900">
+                                                RM <span x-text="parseFloat(donationAmount).toFixed(2)">0.00</span>
+                                            </p>
+                                        </div>
+
+                                        <!-- Payment Method -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <p class="text-xs text-gray-600 mb-1">Payment Method</p>
+                                            <p class="font-semibold text-gray-900">FPX Online Banking</p>
+                                            <div class="flex items-center mt-2 text-xs text-green-600">
+                                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span>Secured by ToyyibPay</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Donor Info -->
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <p class="text-xs text-gray-600 mb-1">Donor</p>
+                                            <p class="font-semibold text-gray-900">{{ $donor->Full_Name }}</p>
+                                            <p class="text-xs text-gray-600">{{ auth()->user()->email }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Important Notice -->
+                                    <div class="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div class="flex items-start">
+                                            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <div class="flex-1">
+                                                <p class="text-xs text-blue-800">
+                                                    You will be redirected to ToyyibPay's secure payment page to complete this transaction. Please do not close your browser during the payment process.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Actions -->
+                                    <div class="flex gap-3">
+                                        <button type="button"
+                                                @click="showConfirmModal = false"
+                                                class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                                            Cancel
+                                        </button>
+                                        <button type="submit"
+                                                class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-lg hover:shadow-xl">
+                                            Proceed to Payment
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
 

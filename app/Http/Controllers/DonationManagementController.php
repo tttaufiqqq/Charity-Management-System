@@ -170,7 +170,7 @@ class DonationManagementController extends Controller
                     'campaign_id' => $campaign->Campaign_ID,
                     'amount' => $request->amount,
                     'receipt_no' => $receiptNo,
-                    'payment_method' => 'FPX Online Banking',
+                    'payment_method' => $request->payment_method,
                     'donation_date' => now()->toDateTimeString(),
                 ],
             ]);

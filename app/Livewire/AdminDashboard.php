@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Campaign;
 use App\Models\Donation;
+use App\Models\Donor;
 use App\Models\Event;
 use App\Models\Organization;
 use App\Models\Recipient;

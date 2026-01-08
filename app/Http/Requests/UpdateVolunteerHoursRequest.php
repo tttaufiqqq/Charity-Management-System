@@ -37,7 +37,7 @@ class UpdateVolunteerHoursRequest extends FormRequest
             ],
             'role_id' => [
                 'nullable',
-                'exists:event_role,Role_ID',
+                'integer', // event_role table is in izzati database - manual validation in controller
             ],
         ];
     }

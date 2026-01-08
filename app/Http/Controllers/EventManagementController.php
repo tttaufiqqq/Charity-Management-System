@@ -28,8 +28,8 @@ class EventManagementController extends Controller
             return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
-        $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
-            ->where('Status', 'Active')
+        // Fetch all campaigns (approved and pending)
+        $allCampaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
             ->withCount([
                 'recipientSuggestions',
                 'recipientSuggestions as pending_suggestions_count' => function ($query) {
@@ -37,9 +37,27 @@ class EventManagementController extends Controller
                 },
             ])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
-        return view('event-management.campaigns.index', compact('campaigns'));
+        // Separate by approval status
+        $approvedCampaigns = $allCampaigns->where('Status', 'Active');
+        $pendingCampaigns = $allCampaigns->where('Status', 'Pending');
+
+        // Statistics
+        $stats = [
+            'total_campaigns' => $allCampaigns->count(),
+            'approved_campaigns' => $approvedCampaigns->count(),
+            'pending_campaigns' => $pendingCampaigns->count(),
+            'total_raised' => $allCampaigns->sum('Collected_Amount'),
+            'total_goal' => $allCampaigns->sum('Goal_Amount'),
+        ];
+
+        return view('event-management.campaigns.index', compact(
+            'allCampaigns',
+            'approvedCampaigns',
+            'pendingCampaigns',
+            'stats'
+        ));
     }
 
     /**
@@ -172,12 +190,28 @@ class EventManagementController extends Controller
             return redirect()->route('dashboard')->with('error', 'Organization profile not found. (Database: Izzati)');
         }
 
-        $events = Event::where('Organizer_ID', $organization->Organization_ID)
-            ->where('Status', 'Upcoming')
-            ->orderBy('Start_Date', 'desc')
-            ->paginate(10);
+        // Fetch all events (approved and pending)
+        $allEvents = Event::where('Organizer_ID', $organization->Organization_ID)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        return view('event-management.events.index', compact('events'));
+        // Separate by approval status
+        $approvedEvents = $allEvents->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed']);
+        $pendingEvents = $allEvents->where('Status', 'Pending');
+
+        // Statistics
+        $stats = [
+            'total_events' => $allEvents->count(),
+            'approved_events' => $approvedEvents->count(),
+            'pending_events' => $pendingEvents->count(),
+        ];
+
+        return view('event-management.events.index', compact(
+            'allEvents',
+            'approvedEvents',
+            'pendingEvents',
+            'stats'
+        ));
     }
 
     /**
@@ -430,7 +464,7 @@ class EventManagementController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'in:Registered,Attended,No-Show,Cancelled'],
             'total_hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
-            'role_id' => ['nullable', 'exists:event_role,Role_ID'],
+            'role_id' => ['nullable', 'integer'], // event_role is in izzati database - manual validation below
         ]);
 
         // Additional validation: If status is "Attended", hours must be provided and greater than 0
@@ -626,7 +660,7 @@ class EventManagementController extends Controller
         }
 
         $validated = $request->validate([
-            'role_id' => ['required', 'exists:event_role,Role_ID'],
+            'role_id' => ['required', 'integer'], // event_role is in izzati database - manual validation below
         ]);
 
         $newRole = EventRole::findOrFail($validated['role_id']);
