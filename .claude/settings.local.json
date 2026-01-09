@@ -61,7 +61,9 @@
       "Bash(git push)",
       "Bash(composer clear-cache:*)",
       "Bash(composer cache-clear:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(timeout:*)"
     ]
   }
 }

@@ -92,6 +92,7 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'connect_timeout' => 5, // Fail fast if DB unreachable (5 seconds)
         ],
 
         // Connection 2: Sashvini (MariaDB) - Volunteer Management
@@ -123,6 +124,7 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => 'prefer',
+            'connect_timeout' => 5,
         ],
 
         // Connection 4: Hannah (MySQL) - Financial Transactions
