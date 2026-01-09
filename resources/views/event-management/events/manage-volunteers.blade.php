@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Volunteers - {{ $event->Title }}</title>
+    <title>Volunteer Attendance - {{ $event->Title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -37,7 +37,7 @@
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Manage Volunteers</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">Volunteer Attendance</h1>
                     <p class="text-gray-600">{{ $event->Title }}</p>
                 </div>
                 @if($event->Status === 'Completed')
@@ -96,7 +96,7 @@
                                 </select>
                             </div>
                             <div>
-                                <input type="number" name="hours" id="bulkHours" placeholder="Hours (required for Attended)" step="0.5" min="0" max="24"
+                                <input type="number" name="hours" id="bulkHours" placeholder="Hours (required for Attended)" step="1" min="0" max="24"
                                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-48">
                                 <p class="text-xs text-gray-500 mt-1" id="bulkHoursHint">Enter hours for attended volunteers</p>
                                 @error('hours')
@@ -220,7 +220,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Total Hours <span id="hoursRequired" class="text-red-500">*</span>
                 </label>
-                <input type="number" name="total_hours" id="editHours" step="0.5" min="0" max="24"
+                <input type="number" name="total_hours" id="editHours" step="1" min="0" max="24"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                 <p class="mt-1 text-xs text-gray-500" id="hoursHint">
                     Hours must be greater than 0 for "Attended" status
@@ -257,7 +257,7 @@
         if (status === 'Attended') {
             hoursInput.disabled = false;
             hoursInput.required = true;
-            hoursInput.min = '0.1';
+            hoursInput.min = '1';
             hoursInput.value = '';
             hoursInput.placeholder = 'Hours (required)';
             hoursHint.textContent = 'Hours are required for marking as Attended';
@@ -325,7 +325,7 @@
         if (status === 'Attended') {
             hoursInput.disabled = false;
             hoursInput.required = true;
-            hoursInput.min = '0.1';
+            hoursInput.min = '1';
             hoursRequired.classList.remove('hidden');
             hoursHint.textContent = 'Hours must be greater than 0 for "Attended" status';
             hoursHint.classList.remove('text-gray-500');

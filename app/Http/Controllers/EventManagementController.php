@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Event;
+use App\Models\EventParticipation;
 use App\Models\EventRole;
+use App\Models\Volunteer;
 use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +31,7 @@ class EventManagementController extends Controller
         }
 
         // Fetch all campaigns (approved and pending)
-        $allCampaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
+        $campaigns = Campaign::where('Organization_ID', $organization->Organization_ID)
             ->withCount([
                 'recipientSuggestions',
                 'recipientSuggestions as pending_suggestions_count' => function ($query) {
@@ -37,27 +39,9 @@ class EventManagementController extends Controller
                 },
             ])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
-        // Separate by approval status
-        $approvedCampaigns = $allCampaigns->where('Status', 'Active');
-        $pendingCampaigns = $allCampaigns->where('Status', 'Pending');
-
-        // Statistics
-        $stats = [
-            'total_campaigns' => $allCampaigns->count(),
-            'approved_campaigns' => $approvedCampaigns->count(),
-            'pending_campaigns' => $pendingCampaigns->count(),
-            'total_raised' => $allCampaigns->sum('Collected_Amount'),
-            'total_goal' => $allCampaigns->sum('Goal_Amount'),
-        ];
-
-        return view('event-management.campaigns.index', compact(
-            'allCampaigns',
-            'approvedCampaigns',
-            'pendingCampaigns',
-            'stats'
-        ));
+        return view('event-management.campaigns.index', compact('campaigns'));
     }
 
     /**
@@ -463,7 +447,7 @@ class EventManagementController extends Controller
         // Base validation
         $validated = $request->validate([
             'status' => ['required', 'in:Registered,Attended,No-Show,Cancelled'],
-            'total_hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
+            'total_hours' => ['nullable', 'integer', 'min:0', 'max:24'],
             'role_id' => ['nullable', 'integer'], // event_role is in izzati database - manual validation below
         ]);
 
@@ -489,8 +473,8 @@ class EventManagementController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get current participation
-            $participation = DB::table('event_participation')
+            // Get current participation (sashvini database)
+            $participation = DB::connection('sashvini')->table('event_participation')
                 ->where('Event_ID', $event->Event_ID)
                 ->where('Volunteer_ID', $volunteerId)
                 ->first();
@@ -525,16 +509,16 @@ class EventManagementController extends Controller
                         }
                     }
 
-                    // Decrement old role count
+                    // Decrement old role count (izzati database)
                     if ($oldRoleId) {
-                        DB::table('event_role')
+                        DB::connection('izzati')->table('event_role')
                             ->where('Role_ID', $oldRoleId)
                             ->decrement('Volunteers_Filled');
                     }
 
-                    // Increment new role count
+                    // Increment new role count (izzati database)
                     if ($newRoleId) {
-                        DB::table('event_role')
+                        DB::connection('izzati')->table('event_role')
                             ->where('Role_ID', $newRoleId)
                             ->increment('Volunteers_Filled');
                     }
@@ -543,8 +527,8 @@ class EventManagementController extends Controller
                 }
             }
 
-            // Update volunteer participation
-            DB::table('event_participation')
+            // Update volunteer participation (sashvini database)
+            DB::connection('sashvini')->table('event_participation')
                 ->where('Event_ID', $event->Event_ID)
                 ->where('Volunteer_ID', $volunteerId)
                 ->update($updateData);
@@ -584,7 +568,7 @@ class EventManagementController extends Controller
         $eventHours = $event->Start_Date->diffInHours($event->End_Date);
 
         // Cross-database: Update volunteer participation records in Sashvini
-        $updated = DB::table('event_participation')
+        $updated = DB::connection('sashvini')->table('event_participation')
             ->where('Event_ID', $event->Event_ID)
             ->whereIn('Status', ['Registered', 'Attended'])
             ->update([
@@ -611,7 +595,7 @@ class EventManagementController extends Controller
             'volunteer_ids' => ['required', 'array'],
             'volunteer_ids.*' => ['required', 'integer'],
             'status' => ['required', 'in:Attended,No-Show'],
-            'hours' => ['nullable', 'numeric', 'min:0', 'max:24'],
+            'hours' => ['nullable', 'integer', 'min:0', 'max:24'],
         ]);
 
         // Validate: If status is "Attended", hours must be provided
@@ -634,7 +618,8 @@ class EventManagementController extends Controller
 
         $hours = $validated['hours'] ?? 0;
 
-        DB::table('event_participation')
+        // Update event_participation in sashvini database
+        DB::connection('sashvini')->table('event_participation')
             ->where('Event_ID', $event->Event_ID)
             ->whereIn('Volunteer_ID', $validated['volunteer_ids'])
             ->update([
@@ -678,8 +663,8 @@ class EventManagementController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get current participation
-            $participation = DB::table('event_participation')
+            // Get current participation (sashvini database)
+            $participation = DB::connection('sashvini')->table('event_participation')
                 ->where('Event_ID', $event->Event_ID)
                 ->where('Volunteer_ID', $volunteerId)
                 ->first();
@@ -690,21 +675,21 @@ class EventManagementController extends Controller
 
             $oldRoleId = $participation->Role_ID;
 
-            // Decrement old role count
+            // Decrement old role count (izzati database)
             if ($oldRoleId) {
-                DB::table('event_role')
+                DB::connection('izzati')->table('event_role')
                     ->where('Role_ID', $oldRoleId)
                     ->decrement('Volunteers_Filled');
             }
 
-            // Update participation
-            DB::table('event_participation')
+            // Update participation (sashvini database)
+            DB::connection('sashvini')->table('event_participation')
                 ->where('Event_ID', $event->Event_ID)
                 ->where('Volunteer_ID', $volunteerId)
                 ->update(['Role_ID' => $validated['role_id']]);
 
-            // Increment new role count
-            DB::table('event_role')
+            // Increment new role count (izzati database)
+            DB::connection('izzati')->table('event_role')
                 ->where('Role_ID', $validated['role_id'])
                 ->increment('Volunteers_Filled');
 
