@@ -29,10 +29,10 @@ class RecipientManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Get only recipients suggested by admin (Pending or Accepted, but not Rejected) - cross-database safe
+        // Get only recipients whose suggestions have been ACCEPTED by organizer - cross-database safe
         // Step 1: Get recipient IDs from campaign_recipient_suggestions (izzati)
         $recipientIds = CampaignRecipientSuggestion::where('Campaign_ID', $campaignId)
-            ->whereIn('Status', ['Pending', 'Accepted'])
+            ->where('Status', 'Accepted')
             ->pluck('Recipient_ID')
             ->toArray();
 
