@@ -94,7 +94,7 @@
                                             @php
                                                 $endDate = $campaign->End_Date->startOfDay();
                                                 $today = now()->startOfDay();
-                                                $daysLeft = $today->diffInDays($endDate, false);
+                                                $daysLeft = (int) $today->diffInDays($endDate, false);
                                                 $isExpired = $daysLeft < 0;
                                                 $daysLeft = abs($daysLeft);
                                             @endphp

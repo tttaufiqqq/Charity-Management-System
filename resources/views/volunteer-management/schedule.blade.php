@@ -85,34 +85,77 @@
         <div class="grid lg:grid-cols-3 gap-6">
             <!-- Calendar -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden">
-                <!-- Month Navigation -->
+                <!-- Month Navigation with Dropdown Calendar -->
                 <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
-                    <div class="flex justify-between items-center">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                             {{ \Carbon\Carbon::create($currentYear, $currentMonth)->format('F Y') }}
                         </h2>
-                        <div class="flex gap-2">
-                            <a href="{{ route('volunteer.schedule', ['month' => $currentMonth == 1 ? 12 : $currentMonth - 1, 'year' => $currentMonth == 1 ? $currentYear - 1 : $currentYear]) }}"
-                               class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Prev</span>
-                            </a>
-                            <a href="{{ route('volunteer.schedule') }}"
-                               class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium">
-                                Today
-                            </a>
-                            <a href="{{ route('volunteer.schedule', ['month' => $currentMonth == 12 ? 1 : $currentMonth + 1, 'year' => $currentMonth == 12 ? $currentYear + 1 : $currentYear]) }}"
-                               class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-1">
-                                <span class="hidden sm:inline">Next</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </a>
+
+                        <!-- Dropdown Calendar Selector -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Month Dropdown -->
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open" type="button"
+                                        class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 min-w-[140px] justify-between">
+                                    <span>{{ \Carbon\Carbon::create($currentYear, $currentMonth)->format('F') }}</span>
+                                    <svg class="w-4 h-4" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" @click.away="open = false" x-transition
+                                     class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50 max-h-64 overflow-y-auto">
+                                    @foreach(range(1, 12) as $month)
+                                        <a href="{{ route('volunteer.schedule', ['month' => $month, 'year' => $currentYear]) }}"
+                                           class="block px-4 py-2 text-sm hover:bg-indigo-50 transition-colors {{ $month == $currentMonth ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700' }}">
+                                            {{ \Carbon\Carbon::create(null, $month)->format('F') }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Year Dropdown -->
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open" type="button"
+                                        class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-between">
+                                    <span>{{ $currentYear }}</span>
+                                    <svg class="w-4 h-4" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div x-show="open" @click.away="open = false" x-transition
+                                     class="absolute left-0 mt-2 w-32 bg-white rounded-lg shadow-xl py-2 z-50 max-h-64 overflow-y-auto">
+                                    @foreach(range(now()->year - 2, now()->year + 2) as $year)
+                                        <a href="{{ route('volunteer.schedule', ['month' => $currentMonth, 'year' => $year]) }}"
+                                           class="block px-4 py-2 text-sm hover:bg-indigo-50 transition-colors {{ $year == $currentYear ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-gray-700' }}">
+                                            {{ $year }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Quick Navigation Buttons -->
+                            <div class="flex gap-1">
+                                <a href="{{ route('volunteer.schedule', ['month' => $currentMonth == 1 ? 12 : $currentMonth - 1, 'year' => $currentMonth == 1 ? $currentYear - 1 : $currentYear]) }}"
+                                   class="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200" title="Previous Month">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                    </svg>
+                                </a>
+                                <a href="{{ route('volunteer.schedule') }}"
+                                   class="px-3 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium text-sm">
+                                    Today
+                                </a>
+                                <a href="{{ route('volunteer.schedule', ['month' => $currentMonth == 12 ? 1 : $currentMonth + 1, 'year' => $currentMonth == 12 ? $currentYear + 1 : $currentYear]) }}"
+                                   class="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200" title="Next Month">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

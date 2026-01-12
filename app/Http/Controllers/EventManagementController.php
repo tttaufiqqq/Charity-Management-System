@@ -121,14 +121,26 @@ class EventManagementController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Security: Get minimum goal amount (must be at least the collected amount)
+        $minGoalAmount = $campaign->Collected_Amount;
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'goal_amount' => ['required', 'numeric', 'min:0'],
+            'goal_amount' => ['required', 'numeric', 'min:'.$minGoalAmount],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'status' => ['required', 'in:Active,Completed,Cancelled'],
+        ], [
+            'goal_amount.min' => 'Goal amount cannot be less than the collected amount (RM '.number_format($minGoalAmount, 2).').',
         ]);
+
+        // Security: Double-check goal amount constraint
+        if ($validated['goal_amount'] < $campaign->Collected_Amount) {
+            return redirect()->back()
+                ->with('error', 'Security Error: Goal amount cannot be reduced below collected donations.')
+                ->withInput();
+        }
 
         $campaign->update([
             'Title' => $validated['title'],
@@ -151,6 +163,24 @@ class EventManagementController extends Controller
         // Check if user owns this campaign
         if ($campaign->Organization_ID !== Auth::user()->organization->Organization_ID) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // Security: Prevent deletion of campaigns with donations
+        if ($campaign->Collected_Amount > 0) {
+            return redirect()->back()
+                ->with('error', 'Cannot delete campaign with donations. Collected amount: RM '.number_format($campaign->Collected_Amount, 2));
+        }
+
+        // Security: Prevent deletion of campaigns with existing donations records
+        if ($campaign->donations()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Cannot delete campaign that has received donations.');
+        }
+
+        // Security: Prevent deletion of campaigns with fund allocations
+        if ($campaign->donationAllocations()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Cannot delete campaign with existing fund allocations.');
         }
 
         $campaign->delete();

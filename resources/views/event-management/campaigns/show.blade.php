@@ -20,6 +20,13 @@
             </div>
         @endif
 
+        <!-- Error Message -->
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Campaign Header -->
         <div class="bg-white rounded-lg shadow-sm p-8 mb-6">
             <div class="flex justify-between items-start mb-6">
@@ -39,13 +46,21 @@
                     <a href="{{ route('campaigns.edit', $campaign->Campaign_ID) }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         Edit
                     </a>
-                    <form action="{{ route('campaigns.destroy', $campaign->Campaign_ID) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this campaign?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    @if($campaign->Collected_Amount > 0 || $campaign->donations->count() > 0)
+                        <button type="button" disabled
+                                class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-60"
+                                title="Cannot delete campaign with donations">
                             Delete
                         </button>
-                    </form>
+                    @else
+                        <form action="{{ route('campaigns.destroy', $campaign->Campaign_ID) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this campaign?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                Delete
+                            </button>
+                        </form>
+                    @endif
                 </div>
             </div>
 

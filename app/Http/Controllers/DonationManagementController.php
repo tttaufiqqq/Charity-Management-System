@@ -9,7 +9,9 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Event;
+use App\Models\EventParticipation;
 use App\Models\Recipient;
+use App\Models\Volunteer;
 use App\Traits\ValidatesCrossDatabaseReferences;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -364,11 +366,20 @@ class DonationManagementController extends Controller
      */
     public function publicBrowseEvents()
     {
-        $events = Event::whereIn('Status', ['Upcoming', 'Ongoing'])
+        $events = Event::with('organization.user')
+            ->whereIn('Status', ['Upcoming', 'Ongoing'])
             ->orderBy('Start_Date', 'asc')
             ->paginate(12);
 
-        return view('donation-management.public-user.event-browse', compact('events'));
+        // Get volunteer counts for all events (cross-database safe)
+        $eventIds = $events->pluck('Event_ID')->toArray();
+        $volunteerCounts = EventParticipation::whereIn('Event_ID', $eventIds)
+            ->selectRaw('Event_ID, COUNT(*) as volunteer_count')
+            ->groupBy('Event_ID')
+            ->pluck('volunteer_count', 'Event_ID')
+            ->toArray();
+
+        return view('donation-management.public-user.event-browse', compact('events', 'volunteerCounts'));
     }
 
     /**
@@ -376,11 +387,24 @@ class DonationManagementController extends Controller
      */
     public function publicShowEvent(Event $event)
     {
-        // Count volunteers (cross-database safe)
+        // Load organization relationship (same database - izzati)
+        $event->load('organization.user');
+
+        // Count volunteers (cross-database safe - event_participation is in sashvini)
         $volunteerCount = EventParticipation::where('Event_ID', $event->Event_ID)->count();
         $spotsLeft = $event->Capacity ? ($event->Capacity - $volunteerCount) : null;
 
-        return view('donation-management.public-user.event-detail', compact('event', 'volunteerCount', 'spotsLeft'));
+        // Get volunteer IDs from event_participation (sashvini database)
+        $volunteerIds = EventParticipation::where('Event_ID', $event->Event_ID)
+            ->pluck('Volunteer_ID')
+            ->toArray();
+
+        // Get volunteers with their user info (sashvini database)
+        $volunteers = ! empty($volunteerIds)
+            ? Volunteer::with('user')->whereIn('Volunteer_ID', $volunteerIds)->get()
+            : collect([]);
+
+        return view('donation-management.public-user.event-detail', compact('event', 'volunteerCount', 'spotsLeft', 'volunteers'));
     }
 
     /**

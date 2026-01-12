@@ -41,6 +41,16 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <ul class="list-disc list-inside text-sm text-red-600">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Campaign Fund Summary -->
         <div class="grid md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow-lg p-6">
@@ -207,12 +217,13 @@
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-green-600">
             </div>
 
-            <div class="mb-6">
+            <div class="mb-2">
                 <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount to Allocate (RM)</label>
                 <input type="number" name="amount" id="amount" required min="1" step="0.01"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                        placeholder="0.00">
             </div>
+            <p id="amount_error" class="text-sm text-red-600 mb-4 hidden"></p>
 
             <div class="flex gap-3">
                 <button type="button" onclick="closeAllocateModal()"
@@ -229,19 +240,63 @@
 </div>
 
 <script>
+    let currentAvailableFunds = 0;
+
     function openAllocateModal(recipientId, recipientName, availableFunds) {
+        currentAvailableFunds = availableFunds;
         document.getElementById('modal_recipient_id').value = recipientId;
         document.getElementById('modal_recipient_name').value = recipientName;
         document.getElementById('modal_available_funds').value = 'RM ' + availableFunds.toFixed(2);
         document.getElementById('allocateForm').action = '{{ route("recipients.allocate.store", $campaign->Campaign_ID) }}';
         document.getElementById('allocateModal').classList.remove('hidden');
         document.getElementById('amount').value = '';
+        document.getElementById('amount').max = availableFunds;
+        document.getElementById('amount_error').classList.add('hidden');
         document.getElementById('amount').focus();
     }
 
     function closeAllocateModal() {
         document.getElementById('allocateModal').classList.add('hidden');
+        document.getElementById('amount_error').classList.add('hidden');
     }
+
+    // Validate amount on input
+    document.getElementById('amount').addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        const errorEl = document.getElementById('amount_error');
+        const submitBtn = document.querySelector('#allocateForm button[type="submit"]');
+
+        if (amount > currentAvailableFunds) {
+            errorEl.textContent = 'Amount exceeds available funds (RM ' + currentAvailableFunds.toFixed(2) + ')';
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else if (amount <= 0) {
+            errorEl.textContent = 'Amount must be greater than 0';
+            errorEl.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
+    // Form submission validation
+    document.getElementById('allocateForm').addEventListener('submit', function(e) {
+        const amount = parseFloat(document.getElementById('amount').value) || 0;
+        if (amount > currentAvailableFunds) {
+            e.preventDefault();
+            alert('Cannot allocate more than available funds (RM ' + currentAvailableFunds.toFixed(2) + ')');
+            return false;
+        }
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('Amount must be greater than 0');
+            return false;
+        }
+    });
 
     // Close modal on ESC key
     document.addEventListener('keydown', function(event) {

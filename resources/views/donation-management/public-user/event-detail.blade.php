@@ -137,7 +137,7 @@
                             </div>
                         </div>
                         @php
-                            $daysUntil = now()->diffInDays($event->Start_Date, false);
+                            $daysUntil = (int) now()->diffInDays($event->Start_Date, false);
                         @endphp
                         @if($daysUntil >= 0)
                             <div class="flex items-start">
@@ -193,14 +193,14 @@
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Registered Volunteers ({{ $volunteerCount }})</h2>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($event->volunteers->take(6) as $volunteer)
+                    @foreach($volunteers->take(6) as $volunteer)
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
-                                <span class="text-indigo-600 font-semibold">{{ strtoupper(substr($volunteer->user->name, 0, 1)) }}</span>
+                                <span class="text-indigo-600 font-semibold">{{ strtoupper(substr($volunteer->user->name ?? 'V', 0, 1)) }}</span>
                             </div>
                             <div>
-                                <p class="font-medium text-gray-900 text-sm">{{ $volunteer->user->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $volunteer->City }}</p>
+                                <p class="font-medium text-gray-900 text-sm">{{ $volunteer->user->name ?? 'Volunteer' }}</p>
+                                <p class="text-xs text-gray-500">{{ $volunteer->City ?? '' }}</p>
                             </div>
                         </div>
                     @endforeach

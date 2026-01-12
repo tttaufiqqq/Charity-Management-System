@@ -84,7 +84,7 @@
                                     <!-- Volunteers -->
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
-                                            $currentVolunteers = $event->volunteers->count();
+                                            $currentVolunteers = $volunteerCounts[$event->Event_ID] ?? 0;
                                             $capacity = $event->Capacity ?? 0;
                                             $capacityPercent = $capacity > 0 ? ($currentVolunteers / $capacity) * 100 : 0;
                                         @endphp
