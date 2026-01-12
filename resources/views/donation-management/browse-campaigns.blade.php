@@ -141,6 +141,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         @php
                                             $goalReached = $campaign->Collected_Amount >= $campaign->Goal_Amount;
+                                            $campaignEnded = \Carbon\Carbon::parse($campaign->End_Date)->startOfDay()->lt(now()->startOfDay());
                                         @endphp
                                         <div class="flex items-center justify-end gap-2">
                                             <a href="{{ route('campaigns.show.donate', $campaign->Campaign_ID) }}"
@@ -151,7 +152,13 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                 </svg>
                                             </a>
-                                            @if($goalReached)
+                                            @if($campaignEnded)
+                                                <button disabled
+                                                        class="inline-flex items-center px-4 py-2 bg-red-400 text-white rounded-lg cursor-not-allowed opacity-60"
+                                                        title="Campaign Ended">
+                                                    Campaign Ended
+                                                </button>
+                                            @elseif($goalReached)
                                                 <button disabled
                                                         class="inline-flex items-center px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed opacity-60"
                                                         title="Goal Reached">

@@ -75,6 +75,16 @@ trait ValidatesCrossDatabaseReferences
             ]);
         }
 
+        // Check if campaign has ended
+        $endDate = \Carbon\Carbon::parse($campaign->End_Date)->startOfDay();
+        $today = now()->startOfDay();
+
+        if ($endDate->lt($today)) {
+            throw ValidationException::withMessages([
+                $fieldName => 'This campaign has ended and is no longer accepting donations.',
+            ]);
+        }
+
         return $campaign;
     }
 

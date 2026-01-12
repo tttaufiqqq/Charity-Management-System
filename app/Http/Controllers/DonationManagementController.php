@@ -114,6 +114,19 @@ class DonationManagementController extends Controller
             return redirect()->back()->with('error', 'This campaign is not accepting donations.');
         }
 
+        // Check if campaign has ended
+        $endDate = \Carbon\Carbon::parse($campaign->End_Date)->startOfDay();
+        $today = now()->startOfDay();
+
+        if ($endDate->lt($today)) {
+            return redirect()->back()->with('error', 'This campaign has ended and is no longer accepting donations.');
+        }
+
+        // Check if goal has been reached
+        if ($campaign->Collected_Amount >= $campaign->Goal_Amount) {
+            return redirect()->back()->with('error', 'This campaign has already reached its funding goal.');
+        }
+
         $donor = Auth::user()->donor;
         if (! $donor) {
             return redirect()->route('dashboard')->with('error', 'Donor profile not found. (Database: Hannah)');
