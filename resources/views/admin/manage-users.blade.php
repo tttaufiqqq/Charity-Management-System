@@ -19,7 +19,13 @@
         </div>
 
         <!-- Filters and Stats -->
-        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <!-- Public Users - First/Top -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="text-sm text-gray-600 mb-1">Public Users</div>
+                <div class="text-2xl font-bold text-teal-600">{{ $roleStats['public'] ?? 0 }}</div>
+            </div>
+
             <!-- Total Users -->
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="text-sm text-gray-600 mb-1">Total Users</div>

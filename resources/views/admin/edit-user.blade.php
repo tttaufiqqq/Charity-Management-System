@@ -96,16 +96,6 @@
                                 <span class="font-medium">{{ $user->created_at->format('M d, Y') }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span>Email Verified:</span>
-                                <span class="font-medium">
-                                    @if($user->email_verified_at)
-                                        <span class="text-green-600">Yes</span>
-                                    @else
-                                        <span class="text-red-600">No</span>
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="flex justify-between">
                                 <span>Last Updated:</span>
                                 <span class="font-medium">{{ $user->updated_at->format('M d, Y') }}</span>
                             </div>

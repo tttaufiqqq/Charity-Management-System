@@ -14,7 +14,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -198,5 +198,15 @@ Route::middleware(['auth'])->group(function () {
 
 // ToyyibPay Callback (No auth middleware - called by ToyyibPay server)
 Route::post('/donation/payment/callback', [DonationManagementController::class, 'paymentCallback'])->name('donation.payment.callback');
+
+/* Stored Procedure Testing Routes (Admin Only) */
+Route::middleware(['auth', 'role:admin'])->prefix('admin/procedures')->name('procedures.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ProcedureTestController::class, 'index'])->name('index');
+    Route::get('/user-role-stats', [App\Http\Controllers\ProcedureTestController::class, 'userRoleStats'])->name('user-role-stats');
+    Route::match(['get', 'post'], '/campaign-collected', [App\Http\Controllers\ProcedureTestController::class, 'campaignCollectedAmount'])->name('campaign-collected');
+    Route::get('/donation-stats', [App\Http\Controllers\ProcedureTestController::class, 'donationStats'])->name('donation-stats');
+    Route::get('/volunteer-hours', [App\Http\Controllers\ProcedureTestController::class, 'volunteerHours'])->name('volunteer-hours');
+    Route::get('/recipient-summary', [App\Http\Controllers\ProcedureTestController::class, 'recipientSummary'])->name('recipient-summary');
+});
 
 require __DIR__.'/auth.php';

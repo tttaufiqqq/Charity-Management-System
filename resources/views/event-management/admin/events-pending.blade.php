@@ -113,7 +113,7 @@
                                             </button>
                                         </form>
                                         <button
-                                            @click="$dispatch('reject-event-{{ $event->Event_ID }}')"
+                                            onclick="openRejectModal({{ $event->Event_ID }}, '{{ addslashes($event->Title) }}', '{{ addslashes($event->organization->user->name) }}')"
                                             class="inline-flex items-center text-red-600 hover:text-red-900 text-sm font-medium transition-colors">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -123,96 +123,6 @@
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Hidden details for modal -->
-                            <div id="event-{{ $event->Event_ID }}" class="hidden">
-                                <div class="space-y-6">
-                                    <!-- Event Description -->
-                                    <div>
-                                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Description</h4>
-                                        <p class="text-sm text-gray-600 leading-relaxed">{{ $event->Description ?? 'No description provided' }}</p>
-                                    </div>
-
-                                    <!-- Event Location -->
-                                    <div>
-                                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Location</h4>
-                                        <p class="text-sm text-gray-600">{{ $event->Location }}</p>
-                                    </div>
-
-                                    <!-- Event Details -->
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Start Date</h4>
-                                            <p class="text-sm text-gray-600">{{ $event->Start_Date->format('F d, Y g:i A') }}</p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">End Date</h4>
-                                            <p class="text-sm text-gray-600">{{ $event->End_Date->format('F d, Y g:i A') }}</p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Capacity</h4>
-                                            <p class="text-sm text-gray-600">
-                                                @if($event->roles->count() > 0)
-                                                    {{ $event->roles->sum('Volunteers_Needed') }} volunteers (across {{ $event->roles->count() }} roles)
-                                                @else
-                                                    {{ $event->Capacity ?? 'Unlimited' }} volunteers
-                                                @endif
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Duration</h4>
-                                            <p class="text-sm text-gray-600">{{ $event->Start_Date->diffInDays($event->End_Date) + 1 }} day{{ $event->Start_Date->diffInDays($event->End_Date) !== 0 ? 's' : '' }}</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Organization Details -->
-                                    <div class="border-t border-gray-200 pt-4">
-                                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Organization Details</h4>
-                                        <div class="space-y-2">
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Name:</span>
-                                                <span class="text-sm text-gray-900">{{ $event->organization->user->name }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Registration No:</span>
-                                                <span class="text-sm text-gray-900">{{ $event->organization->Register_No }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Phone:</span>
-                                                <span class="text-sm text-gray-900">{{ $event->organization->Phone_No }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Address:</span>
-                                                <span class="text-sm text-gray-900">{{ $event->organization->Address }}, {{ $event->organization->City }}, {{ $event->organization->State }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Event Roles -->
-                                    <x-admin.event-roles :roles="$event->roles" />
-
-                                    <!-- Organizer History -->
-                                    <x-admin.organizer-history :stats="$event->organizerStats" itemType="event" />
-                                </div>
-                            </div>
-
-                            <!-- Reject Modal -->
-                            <x-admin.reject-modal
-                                itemType="event"
-                                :itemName="$event->Title"
-                                :organizerName="$event->organization->user->name"
-                                :itemId="$event->Event_ID"
-                            >
-                                <form action="{{ route('admin.events.reject', $event->Event_ID) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button
-                                        type="submit"
-                                        class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto"
-                                    >
-                                        Confirm Rejection
-                                    </button>
-                                </form>
-                            </x-admin.reject-modal>
                         @endforeach
                         </tbody>
                     </table>
@@ -245,6 +155,80 @@
     </main>
 </div>
 
+<!-- Hidden details for view modal -->
+@foreach($events as $event)
+    <div id="event-{{ $event->Event_ID }}" class="hidden">
+        <div class="space-y-6">
+            <!-- Event Description -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Description</h4>
+                <p class="text-sm text-gray-600 leading-relaxed">{{ $event->Description ?? 'No description provided' }}</p>
+            </div>
+
+            <!-- Event Location -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Location</h4>
+                <p class="text-sm text-gray-600">{{ $event->Location }}</p>
+            </div>
+
+            <!-- Event Details -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Start Date</h4>
+                    <p class="text-sm text-gray-600">{{ $event->Start_Date->format('F d, Y g:i A') }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">End Date</h4>
+                    <p class="text-sm text-gray-600">{{ $event->End_Date->format('F d, Y g:i A') }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Capacity</h4>
+                    <p class="text-sm text-gray-600">
+                        @if($event->roles->count() > 0)
+                            {{ $event->roles->sum('Volunteers_Needed') }} volunteers (across {{ $event->roles->count() }} roles)
+                        @else
+                            {{ $event->Capacity ?? 'Unlimited' }} volunteers
+                        @endif
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Duration</h4>
+                    <p class="text-sm text-gray-600">{{ $event->Start_Date->diffInDays($event->End_Date) + 1 }} day{{ $event->Start_Date->diffInDays($event->End_Date) !== 0 ? 's' : '' }}</p>
+                </div>
+            </div>
+
+            <!-- Organization Details -->
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Organization Details</h4>
+                <div class="space-y-2">
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Name:</span>
+                        <span class="text-sm text-gray-900">{{ $event->organization->user->name }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Registration No:</span>
+                        <span class="text-sm text-gray-900">{{ $event->organization->Register_No }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Phone:</span>
+                        <span class="text-sm text-gray-900">{{ $event->organization->Phone_No }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Address:</span>
+                        <span class="text-sm text-gray-900">{{ $event->organization->Address }}, {{ $event->organization->City }}, {{ $event->organization->State }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Roles -->
+            <x-admin.event-roles :roles="$event->roles" />
+
+            <!-- Organizer History -->
+            <x-admin.organizer-history :stats="$event->organizerStats" itemType="event" />
+        </div>
+    </div>
+@endforeach
+
 <!-- Detail Modal -->
 <div id="detailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-3xl shadow-lg rounded-lg bg-white my-10">
@@ -260,6 +244,53 @@
     </div>
 </div>
 
+<!-- Reject Modal -->
+<div id="rejectModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-11/12 max-w-md shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center">
+                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+            </div>
+            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:text-left">
+            <h3 class="text-lg font-semibold leading-6 text-gray-900">Confirm Rejection</h3>
+            <div class="mt-2">
+                <p class="text-sm text-gray-500">Are you sure you want to reject this event? This action cannot be undone.</p>
+                <div class="mt-3 space-y-1">
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Event:</span>
+                        <span id="reject_event_name" class="text-gray-900"></span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Organizer:</span>
+                        <span id="reject_organizer_name" class="text-gray-900"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-5 sm:mt-4 flex gap-3">
+            <button type="button" onclick="closeRejectModal()" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Cancel
+            </button>
+            <form id="rejectForm" method="POST" action="" class="flex-1">
+                @csrf
+                <button type="submit" class="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                    Confirm Rejection
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     function openModal(eventId, title) {
         document.getElementById('modalTitle').textContent = title;
@@ -271,13 +302,31 @@
         document.getElementById('detailModal').classList.add('hidden');
     }
 
+    function openRejectModal(eventId, eventName, organizerName) {
+        document.getElementById('reject_event_name').textContent = eventName;
+        document.getElementById('reject_organizer_name').textContent = organizerName;
+        document.getElementById('rejectForm').action = '/admin/events/' + eventId + '/reject';
+        document.getElementById('rejectModal').classList.remove('hidden');
+    }
+
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.add('hidden');
+    }
+
     document.getElementById('detailModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
 
-    // Close modal on Escape key
+    document.getElementById('rejectModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRejectModal();
+    });
+
+    // Close modals on Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') {
+            closeModal();
+            closeRejectModal();
+        }
     });
 </script>
 </body>

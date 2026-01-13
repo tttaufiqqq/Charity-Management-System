@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventParticipation;
 use App\Models\EventRole;
 use App\Models\Skill;
+use App\Models\Views\VolunteerHoursSummary;
 use App\Models\Volunteer;
 use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
@@ -342,6 +343,9 @@ class VolunteerController extends Controller
             return redirect()->route('dashboard')->with('error', 'Volunteer profile not found. (Database: Sashvini)');
         }
 
+        // Get volunteer statistics from vw_volunteer_hours_summary view (sashvini database)
+        $volunteerStats = VolunteerHoursSummary::where('Volunteer_ID', $volunteer->Volunteer_ID)->first();
+
         // Get upcoming events (cross-database safe)
         // Step 1: Get event IDs from event_participation (sashvini)
         $eventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
@@ -355,19 +359,12 @@ class VolunteerController extends Controller
                 ->get()
             : collect();
 
-        // Calculate statistics (cross-database safe - no JOINs)
-        $totalHours = EventParticipation::where('Volunteer_ID', $volunteer->Volunteer_ID)
-            ->sum('Total_Hours');
-
-        // Get event IDs from event_participation (sashvini database)
-        $eventIds = $volunteer->eventParticipations()->pluck('Event_ID');
-
-        // Query events directly (izzati database)
-        $totalEvents = Event::whereIn('Event_ID', $eventIds)->count();
-
-        $completedEvents = Event::whereIn('Event_ID', $eventIds)
-            ->where('Status', 'Completed')
-            ->count();
+        // Get statistics from view (more efficient than multiple queries)
+        $totalHours = $volunteerStats->verified_hours ?? 0;
+        $totalEvents = $volunteerStats->total_events ?? 0;
+        $completedEvents = $volunteerStats->attended_count ?? 0;
+        $volunteerTier = $volunteerStats->volunteer_tier ?? 'New';
+        $attendanceRate = $volunteerStats->attendance_rate ?? 0;
 
         // Get recent event participations with event details
         $recentParticipations = $volunteer->eventParticipations()
@@ -385,7 +382,9 @@ class VolunteerController extends Controller
             'totalHours',
             'totalEvents',
             'completedEvents',
-            'recentEvents'
+            'recentEvents',
+            'volunteerTier',
+            'attendanceRate'
         ));
     }
 

@@ -10,6 +10,7 @@ use App\Models\Campaign;
 use App\Models\CampaignRecipientSuggestion;
 use App\Models\DonationAllocation;
 use App\Models\Recipient;
+use App\Models\Views\RecipientStatusSummary;
 use App\Traits\ValidatesCrossDatabaseReferences;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -250,21 +251,33 @@ class RecipientManagementController extends Controller
      */
     public function pendingRecipients(Request $request)
     {
-        $query = Recipient::with('publicProfile.user')->where('Status', 'Pending');
+        // Use view model for enhanced data including review_priority
+        $query = RecipientStatusSummary::pending();
 
-        // Search filter
+        // Search filter (uses LIKE for MySQL compatibility)
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('Name', 'ILIKE', "%{$search}%")
-                    ->orWhere('Contact', 'ILIKE', "%{$search}%")
-                    ->orWhere('Address', 'ILIKE', "%{$search}%");
+                $q->where('recipient_name', 'LIKE', "%{$search}%")
+                    ->orWhere('recipient_contact', 'LIKE', "%{$search}%")
+                    ->orWhere('recipient_address', 'LIKE', "%{$search}%");
             });
         }
 
-        $recipients = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Order by review priority (overdue first) then by application date
+        $recipients = $query->orderByRaw("
+            CASE review_priority
+                WHEN 'Overdue' THEN 1
+                WHEN 'Needs Attention' THEN 2
+                WHEN 'In Review' THEN 3
+                ELSE 4
+            END
+        ")->orderBy('application_submitted_at', 'asc')->paginate(10);
 
-        return view('recipient-management.admin.pending', compact('recipients'));
+        // Get stats for header display
+        $stats = RecipientStatusSummary::getStats();
+
+        return view('recipient-management.admin.pending', compact('recipients', 'stats'));
     }
 
     /**
@@ -272,32 +285,37 @@ class RecipientManagementController extends Controller
      */
     public function allRecipients(Request $request)
     {
-        $query = Recipient::with('publicProfile.user');
+        // Use view model for enhanced data including review_priority
+        $query = RecipientStatusSummary::query();
 
         // Status filter
         if ($request->has('status') && $request->status != '') {
-            $query->where('Status', $request->status);
+            $query->where('application_status', $request->status);
         }
 
-        // Search filter
+        // Search filter (uses LIKE for MySQL compatibility)
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('Name', 'ILIKE', "%{$search}%")
-                    ->orWhere('Contact', 'ILIKE', "%{$search}%")
-                    ->orWhere('Address', 'ILIKE', "%{$search}%");
+                $q->where('recipient_name', 'LIKE', "%{$search}%")
+                    ->orWhere('recipient_contact', 'LIKE', "%{$search}%")
+                    ->orWhere('recipient_address', 'LIKE', "%{$search}%");
             });
         }
 
-        $recipients = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Order by review priority (overdue first) then by application date
+        $recipients = $query->orderByRaw("
+            CASE review_priority
+                WHEN 'Overdue' THEN 1
+                WHEN 'Needs Attention' THEN 2
+                WHEN 'In Review' THEN 3
+                WHEN 'Active' THEN 4
+                ELSE 5
+            END
+        ")->orderBy('application_submitted_at', 'desc')->paginate(15);
 
-        // Statistics
-        $stats = [
-            'total' => Recipient::count(),
-            'pending' => Recipient::where('Status', 'Pending')->count(),
-            'approved' => Recipient::where('Status', 'Approved')->count(),
-            'rejected' => Recipient::where('Status', 'Rejected')->count(),
-        ];
+        // Statistics from vw_recipient_status_summary view (adam database)
+        $stats = RecipientStatusSummary::getStats();
 
         return view('recipient-management.admin.all', compact('recipients', 'stats'));
     }

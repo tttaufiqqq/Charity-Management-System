@@ -12,11 +12,12 @@ use App\Models\Event;
 use App\Models\EventParticipation;
 use App\Models\Recipient;
 use App\Models\Volunteer;
+use App\Services\DatabaseProcedureService;
 use App\Traits\ValidatesCrossDatabaseReferences;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB; // You'll need: composer require barryvdh/laravel-dompdf
+use Illuminate\Support\Facades\DB;
 
 class DonationManagementController extends Controller
 {
@@ -636,11 +637,34 @@ class DonationManagementController extends Controller
                     'Transaction_ID' => $request->input('transaction_id') ?? 'TOYYIB-'.strtoupper(uniqid()),
                 ]);
 
-                // Update campaign total
-                $campaign->increment('Collected_Amount', $donation->Amount);
+                // Update campaign total using stored procedure (izzati database)
+                // sp_update_campaign_collected_amount provides atomic updates with validation
+                try {
+                    $result = DatabaseProcedureService::updateCampaignCollectedAmount(
+                        $campaign->Campaign_ID,
+                        $donation->Amount,
+                        'ADD'
+                    );
 
-                // Update donor total
-                $donor->increment('Total_Donated', $donation->Amount);
+                    if (! $result || ! $result->success) {
+                        // Fallback to direct increment if procedure fails
+                        \Log::warning('Campaign update procedure failed, using fallback: '.($result->message ?? 'Unknown error'));
+                        $campaign->increment('Collected_Amount', $donation->Amount);
+                    } else {
+                        \Log::info('Campaign collected amount updated via procedure', [
+                            'campaign_id' => $campaign->Campaign_ID,
+                            'new_amount' => $result->new_collected_amount,
+                            'progress' => $result->progress_percentage.'%',
+                        ]);
+                    }
+                } catch (\Exception $procedureException) {
+                    // Fallback to direct increment if procedure throws exception
+                    \Log::warning('Campaign update procedure exception, using fallback: '.$procedureException->getMessage());
+                    $campaign->increment('Collected_Amount', $donation->Amount);
+                }
+
+                // Note: donor.Total_Donated is automatically updated by database trigger
+                // (trg_update_donor_total_insert on hannah.donation table)
 
                 DB::commit();
 
@@ -720,8 +744,23 @@ class DonationManagementController extends Controller
                             'Transaction_ID' => $successfulTransaction['billpaymentInvoiceNo'] ?? 'TOYYIB-'.strtoupper(uniqid()),
                         ]);
 
-                        $campaign->increment('Collected_Amount', $donation->Amount);
-                        $donor->increment('Total_Donated', $donation->Amount);
+                        // Update campaign total using stored procedure (izzati database)
+                        try {
+                            $result = DatabaseProcedureService::updateCampaignCollectedAmount(
+                                $campaign->Campaign_ID,
+                                $donation->Amount,
+                                'ADD'
+                            );
+
+                            if (! $result || ! $result->success) {
+                                \Log::warning('Campaign update procedure failed (API verification), using fallback');
+                                $campaign->increment('Collected_Amount', $donation->Amount);
+                            }
+                        } catch (\Exception $procedureException) {
+                            \Log::warning('Campaign update procedure exception (API verification), using fallback: '.$procedureException->getMessage());
+                            $campaign->increment('Collected_Amount', $donation->Amount);
+                        }
+                        // Note: donor.Total_Donated is automatically updated by database trigger
 
                         DB::commit();
                         session()->forget('pending_donation');

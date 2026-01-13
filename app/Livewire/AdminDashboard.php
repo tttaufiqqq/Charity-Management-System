@@ -9,7 +9,9 @@ use App\Models\Event;
 use App\Models\Organization;
 use App\Models\Recipient;
 use App\Models\User;
+use App\Models\Views\DonorDonationSummary;
 use App\Models\Volunteer;
+use App\Services\DatabaseProcedureService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -75,6 +77,9 @@ class AdminDashboard extends Component
 
     public $campaignStatusChart;
 
+    // Procedure-based stats
+    public $userRoleStats;
+
     public function mount()
     {
         $this->loadStatistics();
@@ -111,6 +116,15 @@ class AdminDashboard extends Component
             'events' => Event::where('Status', 'Pending')->count(),
             'recipients' => Recipient::where('Status', 'Pending')->count(),
         ];
+
+        // Load user role statistics using stored procedure
+        try {
+            $this->userRoleStats = DatabaseProcedureService::getUserRoleStats();
+        } catch (\Exception $e) {
+            // Fallback if procedure is not available yet
+            $this->userRoleStats = [];
+            \Log::warning('User role stats procedure not available: '.$e->getMessage());
+        }
 
         // Load advanced analytics based on active tab
         $this->loadAdvancedAnalytics();
@@ -181,34 +195,22 @@ class AdminDashboard extends Component
             ->take(10)
             ->values();
 
-        // Donor Insights - Cross-database query (hannah + izzhilmy)
-        // TODO: Refactor with proper application-level joins for production
-        $this->donorInsights = Donor::with('user')
-            ->limit(20)
+        // Donor Insights - Using vw_donor_donation_summary view (hannah database)
+        $this->donorInsights = DonorDonationSummary::topDonors(10)
             ->get()
             ->map(function ($donor) {
-                $donations = Donation::where('Donor_ID', $donor->Donor_ID)->get();
-                $donationCount = $donations->count();
-                $totalDonated = $donations->sum('Amount');
-                $avgDonation = $donationCount > 0 ? $totalDonated / $donationCount : 0;
-                $firstDonation = $donations->min('Donation_Date');
-                $lastDonation = $donations->max('Donation_Date');
-                $campaignsSupported = $donations->unique('Campaign_ID')->count();
-
                 return (object) [
-                    'donor_name' => $donor->user->name ?? 'Unknown',
-                    'email' => $donor->user->email ?? '',
-                    'donation_count' => $donationCount,
-                    'total_donated' => $totalDonated,
-                    'avg_donation' => round($avgDonation, 2),
-                    'first_donation' => $firstDonation,
-                    'last_donation' => $lastDonation,
-                    'campaigns_supported' => $campaignsSupported,
+                    'donor_name' => $donor->donor_name,
+                    'email' => '', // Email not in view, would need join with izzhilmy.users
+                    'donation_count' => $donor->completed_donation_count,
+                    'total_donated' => $donor->cached_total_donated,
+                    'avg_donation' => round($donor->avg_donation_amount ?? 0, 2),
+                    'first_donation' => $donor->first_donation_date,
+                    'last_donation' => $donor->last_donation_date,
+                    'campaigns_supported' => $donor->campaigns_supported,
+                    'donor_tier' => $donor->donor_tier,
                 ];
-            })
-            ->sortByDesc('total_donated')
-            ->take(10)
-            ->values();
+            });
 
         // Event Metrics - Cross-database query (izzati + izzhilmy + sashvini)
         // TODO: Refactor with proper application-level joins for production

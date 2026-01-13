@@ -93,7 +93,7 @@
                                             </button>
                                         </form>
                                         <button
-                                            @click="$dispatch('reject-campaign-{{ $campaign->Campaign_ID }}')"
+                                            onclick="openRejectModal({{ $campaign->Campaign_ID }}, '{{ addslashes($campaign->Title) }}', '{{ addslashes($campaign->organization->user->name) }}')"
                                             class="inline-flex items-center text-red-600 hover:text-red-900 text-sm font-medium transition-colors">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -103,81 +103,6 @@
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Hidden details for modal -->
-                            <div id="campaign-{{ $campaign->Campaign_ID }}" class="hidden">
-                                <div class="space-y-6">
-                                    <!-- Campaign Description -->
-                                    <div>
-                                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Description</h4>
-                                        <p class="text-sm text-gray-600 leading-relaxed">{{ $campaign->Description ?? 'No description provided' }}</p>
-                                    </div>
-
-                                    <!-- Campaign Details -->
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Start Date</h4>
-                                            <p class="text-sm text-gray-600">{{ $campaign->Start_Date->format('F d, Y') }}</p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">End Date</h4>
-                                            <p class="text-sm text-gray-600">{{ $campaign->End_Date->format('F d, Y') }}</p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Goal Amount</h4>
-                                            <p class="text-sm text-gray-600 font-semibold">RM {{ number_format($campaign->Goal_Amount, 2) }}</p>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-gray-700 mb-1">Duration</h4>
-                                            <p class="text-sm text-gray-600">{{ $campaign->Start_Date->diffInDays($campaign->End_Date) }} days</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Organization Details -->
-                                    <div class="border-t border-gray-200 pt-4">
-                                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Organization Details</h4>
-                                        <div class="space-y-2">
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Name:</span>
-                                                <span class="text-sm text-gray-900">{{ $campaign->organization->user->name }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Registration No:</span>
-                                                <span class="text-sm text-gray-900">{{ $campaign->organization->Register_No }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Phone:</span>
-                                                <span class="text-sm text-gray-900">{{ $campaign->organization->Phone_No }}</span>
-                                            </div>
-                                            <div class="flex items-start">
-                                                <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Address:</span>
-                                                <span class="text-sm text-gray-900">{{ $campaign->organization->Address }}, {{ $campaign->organization->City }}, {{ $campaign->organization->State }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Organizer History -->
-                                    <x-admin.organizer-history :stats="$campaign->organizerStats" itemType="campaign" />
-                                </div>
-                            </div>
-
-                            <!-- Reject Modal -->
-                            <x-admin.reject-modal
-                                itemType="campaign"
-                                :itemName="$campaign->Title"
-                                :organizerName="$campaign->organization->user->name"
-                                :itemId="$campaign->Campaign_ID"
-                            >
-                                <form action="{{ route('admin.campaigns.reject', $campaign->Campaign_ID) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button
-                                        type="submit"
-                                        class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:w-auto"
-                                    >
-                                        Confirm Rejection
-                                    </button>
-                                </form>
-                            </x-admin.reject-modal>
                         @endforeach
                         </tbody>
                     </table>
@@ -210,6 +135,65 @@
     </main>
 </div>
 
+<!-- Hidden details for view modal -->
+@foreach($campaigns as $campaign)
+    <div id="campaign-{{ $campaign->Campaign_ID }}" class="hidden">
+        <div class="space-y-6">
+            <!-- Campaign Description -->
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Description</h4>
+                <p class="text-sm text-gray-600 leading-relaxed">{{ $campaign->Description ?? 'No description provided' }}</p>
+            </div>
+
+            <!-- Campaign Details -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Start Date</h4>
+                    <p class="text-sm text-gray-600">{{ $campaign->Start_Date->format('F d, Y') }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">End Date</h4>
+                    <p class="text-sm text-gray-600">{{ $campaign->End_Date->format('F d, Y') }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Goal Amount</h4>
+                    <p class="text-sm text-gray-600 font-semibold">RM {{ number_format($campaign->Goal_Amount, 2) }}</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1">Duration</h4>
+                    <p class="text-sm text-gray-600">{{ $campaign->Start_Date->diffInDays($campaign->End_Date) }} days</p>
+                </div>
+            </div>
+
+            <!-- Organization Details -->
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Organization Details</h4>
+                <div class="space-y-2">
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Name:</span>
+                        <span class="text-sm text-gray-900">{{ $campaign->organization->user->name }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Registration No:</span>
+                        <span class="text-sm text-gray-900">{{ $campaign->organization->Register_No }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Phone:</span>
+                        <span class="text-sm text-gray-900">{{ $campaign->organization->Phone_No }}</span>
+                    </div>
+                    <div class="flex items-start">
+                        <span class="text-sm font-medium text-gray-500 w-32 flex-shrink-0">Address:</span>
+                        <span class="text-sm text-gray-900">{{ $campaign->organization->Address }}, {{ $campaign->organization->City }}, {{ $campaign->organization->State }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organizer History -->
+            <x-admin.organizer-history :stats="$campaign->organizerStats" itemType="campaign" />
+        </div>
+    </div>
+@endforeach
+
 <!-- Detail Modal -->
 <div id="detailModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-6 border w-11/12 max-w-3xl shadow-lg rounded-lg bg-white my-10">
@@ -225,6 +209,53 @@
     </div>
 </div>
 
+<!-- Reject Modal -->
+<div id="rejectModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-6 border w-11/12 max-w-md shadow-lg rounded-lg bg-white">
+        <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center">
+                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                </div>
+            </div>
+            <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:text-left">
+            <h3 class="text-lg font-semibold leading-6 text-gray-900">Confirm Rejection</h3>
+            <div class="mt-2">
+                <p class="text-sm text-gray-500">Are you sure you want to reject this campaign? This action cannot be undone.</p>
+                <div class="mt-3 space-y-1">
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Campaign:</span>
+                        <span id="reject_campaign_name" class="text-gray-900"></span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Organizer:</span>
+                        <span id="reject_organizer_name" class="text-gray-900"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-5 sm:mt-4 flex gap-3">
+            <button type="button" onclick="closeRejectModal()" class="flex-1 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                Cancel
+            </button>
+            <form id="rejectForm" method="POST" action="" class="flex-1">
+                @csrf
+                <button type="submit" class="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500">
+                    Confirm Rejection
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     function openModal(campaignId, title) {
         document.getElementById('modalTitle').textContent = title;
@@ -236,13 +267,31 @@
         document.getElementById('detailModal').classList.add('hidden');
     }
 
+    function openRejectModal(campaignId, campaignName, organizerName) {
+        document.getElementById('reject_campaign_name').textContent = campaignName;
+        document.getElementById('reject_organizer_name').textContent = organizerName;
+        document.getElementById('rejectForm').action = '/admin/campaigns/' + campaignId + '/reject';
+        document.getElementById('rejectModal').classList.remove('hidden');
+    }
+
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.add('hidden');
+    }
+
     document.getElementById('detailModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
 
-    // Close modal on Escape key
+    document.getElementById('rejectModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRejectModal();
+    });
+
+    // Close modals on Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') {
+            closeModal();
+            closeRejectModal();
+        }
     });
 </script>
 </body>

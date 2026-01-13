@@ -147,14 +147,6 @@
                         </div>
                     @endif
 
-                    <!-- Delete Button -->
-                    @if($recipient->donationAllocations->count() === 0)
-                        <div class="mt-4">
-                            <button onclick="confirmDelete()" class="text-red-600 hover:text-red-700 text-sm font-medium">
-                                Delete Recipient
-                            </button>
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>
@@ -170,53 +162,6 @@
     </footer>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-900">Delete Recipient</h3>
-            <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-
-        <p class="text-gray-600 mb-6">Are you sure you want to permanently delete this recipient? This action cannot be undone.</p>
-
-        <form method="POST" action="{{ route('admin.recipients.delete', $recipient->Recipient_ID) }}">
-            @csrf
-            @method('DELETE')
-
-            <div class="flex gap-3">
-                <button type="button" onclick="closeDeleteModal()"
-                        class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors">
-                    Delete
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    function confirmDelete() {
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-    }
-
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeDeleteModal();
-        }
-    });
-</script>
 
 </body>
 </html>

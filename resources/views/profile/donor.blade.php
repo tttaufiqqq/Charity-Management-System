@@ -18,33 +18,82 @@
             </div>
         @endif
 
-        <!-- Profile Header -->
-        <div class="bg-gradient-to-r from-rose-600 to-pink-600 rounded-lg shadow-lg p-8 mb-6">
+        <!-- Profile Header with Donor Tier -->
+        @php
+            $tierColors = [
+                'Platinum' => ['bg' => 'from-gray-700 to-gray-900', 'badge' => 'bg-gradient-to-r from-gray-300 to-gray-100 text-gray-800', 'icon' => 'text-gray-300'],
+                'Gold' => ['bg' => 'from-yellow-500 to-amber-600', 'badge' => 'bg-gradient-to-r from-yellow-300 to-amber-200 text-amber-900', 'icon' => 'text-yellow-300'],
+                'Silver' => ['bg' => 'from-gray-400 to-gray-500', 'badge' => 'bg-gradient-to-r from-gray-200 to-gray-100 text-gray-700', 'icon' => 'text-gray-200'],
+                'Bronze' => ['bg' => 'from-orange-600 to-amber-700', 'badge' => 'bg-gradient-to-r from-orange-300 to-amber-200 text-orange-900', 'icon' => 'text-orange-300'],
+                'Supporter' => ['bg' => 'from-rose-600 to-pink-600', 'badge' => 'bg-white/20 text-white', 'icon' => 'text-rose-200'],
+            ];
+            $tierDescriptions = [
+                'Platinum' => 'Elite donor - RM10,000+ donated',
+                'Gold' => 'Major donor - RM5,000+ donated',
+                'Silver' => 'Generous donor - RM1,000+ donated',
+                'Bronze' => 'Regular donor - RM100+ donated',
+                'Supporter' => 'New donor - Every contribution counts!',
+            ];
+            $currentTier = $donorTier ?? 'Supporter';
+            $tierStyle = $tierColors[$currentTier] ?? $tierColors['Supporter'];
+        @endphp
+        <div class="bg-gradient-to-r {{ $tierStyle['bg'] }} rounded-lg shadow-lg p-8 mb-6">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div class="flex items-center space-x-6">
-                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                        <svg class="w-14 h-14 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg relative">
+                        <svg class="w-14 h-14 {{ $currentTier === 'Platinum' ? 'text-gray-700' : ($currentTier === 'Gold' ? 'text-yellow-500' : ($currentTier === 'Silver' ? 'text-gray-400' : ($currentTier === 'Bronze' ? 'text-orange-600' : 'text-rose-600'))) }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
+                        @if($currentTier === 'Platinum' || $currentTier === 'Gold')
+                        <div class="absolute -top-1 -right-1 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                        @endif
                     </div>
                     <div class="text-white">
                         <h1 class="text-3xl font-bold mb-2">{{ $donor->user->name }}</h1>
-                        <p class="text-rose-100 mb-1 flex items-center gap-2">
+                        <p class="text-white/80 mb-1 flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                             </svg>
                             {{ $donor->user->email }}
                         </p>
-                        <span class="inline-block mt-2 px-3 py-1 bg-white/20 text-white rounded-full text-sm font-medium">Generous Donor</span>
+                        <div class="flex items-center gap-3 mt-3">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 {{ $tierStyle['badge'] }} rounded-full text-sm font-bold shadow-lg">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                                {{ $currentTier }} Donor
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <a href="{{ route('profile.donor.edit') }}"
-                   class="px-6 py-3 bg-white text-rose-600 rounded-lg hover:bg-rose-50 transition-colors font-medium shadow-lg flex items-center gap-2">
+                   class="px-6 py-3 bg-white text-gray-800 rounded-lg hover:bg-gray-50 transition-colors font-medium shadow-lg flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
                     Edit Profile
                 </a>
+            </div>
+            <!-- Tier Description -->
+            <div class="mt-4 p-3 bg-white/10 rounded-lg text-white/90 text-sm">
+                <p class="flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {{ $tierDescriptions[$currentTier] ?? 'Thank you for your generosity!' }}
+                    @if($currentTier !== 'Platinum')
+                        • <strong>Next tier:</strong>
+                        @if($currentTier === 'Supporter') Bronze at RM100
+                        @elseif($currentTier === 'Bronze') Silver at RM1,000
+                        @elseif($currentTier === 'Silver') Gold at RM5,000
+                        @elseif($currentTier === 'Gold') Platinum at RM10,000
+                        @endif
+                    @endif
+                </p>
             </div>
         </div>
 

@@ -2,18 +2,25 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Event;
-use App\Models\EventParticipation;
-use Illuminate\Support\Facades\DB;
+use App\Models\Views\VolunteerHoursSummary;
+use Livewire\Component;
 
 class EventAnalytics extends Component
 {
     public $topEvents;
+
     public $eventsByStatus;
+
     public $totalVolunteerHours;
+
     public $averageVolunteersPerEvent;
+
     public $totalEventParticipations;
+
+    public $volunteerTierBreakdown;
+
+    public $topVolunteers;
 
     public function mount()
     {
@@ -36,11 +43,10 @@ class EventAnalytics extends Component
             ->pluck('count', 'Status')
             ->toArray();
 
-        // Volunteer statistics
-        // Using Laravel's sum() method which handles column names across all RDBMS
-        $this->totalVolunteerHours = EventParticipation::sum('Total_Hours') ?? 0;
+        // Volunteer statistics - Using vw_volunteer_hours_summary view (sashvini database)
+        $this->totalVolunteerHours = VolunteerHoursSummary::sum('verified_hours') ?? 0;
 
-        $this->totalEventParticipations = EventParticipation::count();
+        $this->totalEventParticipations = VolunteerHoursSummary::sum('total_events') ?? 0;
 
         // Average volunteers per event - calculate at PHP level for better cross-database compatibility
         $eventVolunteerCounts = Event::withCount('volunteers')->get();
@@ -53,6 +59,16 @@ class EventAnalytics extends Component
         } else {
             $this->averageVolunteersPerEvent = 0;
         }
+
+        // Volunteer tier breakdown - new metric from view
+        $this->volunteerTierBreakdown = VolunteerHoursSummary::selectRaw('volunteer_tier, COUNT(*) as count')
+            ->groupBy('volunteer_tier')
+            ->get()
+            ->pluck('count', 'volunteer_tier')
+            ->toArray();
+
+        // Top volunteers by hours
+        $this->topVolunteers = VolunteerHoursSummary::topVolunteers(5)->get();
     }
 
     public function render()

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Views\DonorDonationSummary;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -64,13 +65,15 @@ class ProfileController extends Controller
                 return view('profile.edit', ['user' => $user]);
             }
 
-            // Calculate statistics
-            $totalDonations = $donor->donations()->count();
-            $totalAmount = $donor->donations()->sum('Amount');
-            $campaignsSupported = $donor->donations()->distinct('Campaign_ID')->count('Campaign_ID');
+            // Get statistics from vw_donor_donation_summary view (hannah database)
+            $donorStats = DonorDonationSummary::where('Donor_ID', $donor->Donor_ID)->first();
+            $totalDonations = $donorStats->completed_donation_count ?? 0;
+            $totalAmount = $donorStats->cached_total_donated ?? 0;
+            $campaignsSupported = $donorStats->campaigns_supported ?? 0;
+            $donorTier = $donorStats->donor_tier ?? 'Supporter';
             $recentDonations = $donor->donations()->with('campaign')->latest()->take(5)->get();
 
-            return view('profile.donor', compact('donor', 'totalDonations', 'totalAmount', 'campaignsSupported', 'recentDonations'));
+            return view('profile.donor', compact('donor', 'totalDonations', 'totalAmount', 'campaignsSupported', 'recentDonations', 'donorTier'));
         }
 
         if ($user->hasRole('public')) {

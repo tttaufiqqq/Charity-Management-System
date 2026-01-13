@@ -6,16 +6,24 @@
 
 namespace App\Livewire;
 
+use App\Models\Views\CampaignProgress;
 use Livewire\Component;
-use App\Models\Campaign;
 
 class CampaignAnalytics extends Component
 {
     public $topCampaigns;
+
     public $campaignsByStatus;
+
     public $averageProgress;
+
     public $totalGoal;
+
     public $totalCollected;
+
+    public $fundingStatusBreakdown;
+
+    public $campaignsNeedingAttention;
 
     public function mount()
     {
@@ -24,28 +32,34 @@ class CampaignAnalytics extends Component
 
     public function loadAnalytics()
     {
-        // Top campaigns by amount raised - using orderByDesc for better readability
-        $this->topCampaigns = Campaign::orderByDesc('Collected_Amount')
-            ->limit(10)
-            ->get();
+        // Top campaigns - Using vw_campaign_progress view (izzati database)
+        $this->topCampaigns = CampaignProgress::topPerforming(10)->get();
 
-        // Campaigns by status - using Laravel's query builder
-        $campaignGroups = Campaign::select('Status')
-            ->groupBy('Status')
+        // Campaigns by status - using view
+        $this->campaignsByStatus = CampaignProgress::selectRaw('campaign_status, COUNT(*) as count')
+            ->groupBy('campaign_status')
             ->get()
-            ->countBy('Status')
+            ->pluck('count', 'campaign_status')
             ->toArray();
 
-        $this->campaignsByStatus = $campaignGroups;
+        // Financial summary - using view's aggregated data
+        $this->totalGoal = CampaignProgress::sum('Goal_Amount') ?? 0;
+        $this->totalCollected = CampaignProgress::sum('Collected_Amount') ?? 0;
 
-        // Financial summary - using Laravel's sum() method which handles cross-database compatibility
-        $this->totalGoal = Campaign::sum('Goal_Amount') ?? 0;
-        $this->totalCollected = Campaign::sum('Collected_Amount') ?? 0;
+        // Calculate average progress from view
+        $this->averageProgress = CampaignProgress::avg('progress_percentage') ?? 0;
 
-        // Calculate average progress
-        $this->averageProgress = $this->totalGoal > 0
-            ? ($this->totalCollected / $this->totalGoal) * 100
-            : 0;
+        // Funding status breakdown - new metric from view
+        $this->fundingStatusBreakdown = CampaignProgress::selectRaw('funding_status, COUNT(*) as count')
+            ->groupBy('funding_status')
+            ->get()
+            ->pluck('count', 'funding_status')
+            ->toArray();
+
+        // Campaigns needing attention (low progress, ending soon)
+        $this->campaignsNeedingAttention = CampaignProgress::needingAttention()
+            ->limit(5)
+            ->get();
     }
 
     public function render()
