@@ -97,7 +97,7 @@ return [
 
         // Connection 2: Sashvini (MariaDB) - Volunteer Management
         'sashvini' => [
-            'driver' => 'mariadb', // MariaDB is MySQL-compatible
+            'driver' => 'mariadb',
             'host' => env('DB3_HOST', '127.0.0.1'),
             'port' => env('DB3_PORT', 3306),
             'database' => env('DB3_DATABASE', 'charityworkshop'),
@@ -109,6 +109,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            'options' => [
+                PDO::ATTR_TIMEOUT => 5, // Connection timeout in seconds
+            ],
         ],
 
         // Connection 3: Izzati (PostgreSQL) - Campaign & Event Operations
@@ -141,6 +144,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            'options' => [
+                PDO::ATTR_TIMEOUT => 5, // Connection timeout in seconds
+            ],
         ],
 
         // Connection 5: Adam (MySQL) - Public & Recipient Data
@@ -157,6 +163,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            'options' => [
+                PDO::ATTR_TIMEOUT => 5, // Connection timeout in seconds
+            ],
         ],
 
         'sqlite' => [

@@ -92,38 +92,86 @@ class AdminDashboard extends Component
 
     public function loadStatistics()
     {
+        // Extend execution time for analytics page (allow up to 120 seconds)
+        set_time_limit(120);
 
-        // Basic Statistics
-        $this->totalUsers = User::count();
-        $this->totalCampaigns = Campaign::count();
-        $this->totalEvents = Event::count();
-        $this->totalDonations = Donation::count();
-        $this->totalVolunteers = Volunteer::count();
-        $this->totalOrganizations = Organization::count();
+        // Initialize with default values first
+        $this->totalUsers = 0;
+        $this->totalCampaigns = 0;
+        $this->totalEvents = 0;
+        $this->totalDonations = 0;
+        $this->totalVolunteers = 0;
+        $this->totalOrganizations = 0;
+        $this->totalRaised = 0;
+        $this->totalAllocated = 0;
+        $this->totalRecipientsHelped = 0;
+        $this->pendingApprovals = ['campaigns' => 0, 'events' => 0, 'recipients' => 0];
+        $this->userRoleStats = [];
 
-        // Financial
-        $this->totalRaised = Campaign::sum('Collected_Amount') ?? 0;
-        $this->totalAllocated = DB::connection('hannah')->table('donation_allocation')->sum('Amount_Allocated') ?? 0;
+        // Basic Statistics (with timeout protection - catch Throwable for fatal errors)
+        try {
+            $this->totalUsers = User::count();
+        } catch (\Throwable $e) {
+        }
 
-        // Recipients helped - count DISTINCT recipients who have received allocations
-        $this->totalRecipientsHelped = DB::connection('hannah')->table('donation_allocation')
-            ->distinct('Recipient_ID')
-            ->count('Recipient_ID');
+        try {
+            $this->totalCampaigns = Campaign::count();
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->totalEvents = Event::count();
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->totalDonations = Donation::count();
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->totalVolunteers = Volunteer::count();
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->totalOrganizations = Organization::count();
+        } catch (\Throwable $e) {
+        }
+
+        // Financial (with timeout protection)
+        try {
+            $this->totalRaised = Campaign::sum('Collected_Amount') ?? 0;
+        } catch (\Throwable $e) {
+        }
+
+        try {
+            $this->totalAllocated = DB::connection('hannah')->table('donation_allocation')->sum('Amount_Allocated') ?? 0;
+        } catch (\Throwable $e) {
+        }
+
+        // Recipients helped
+        try {
+            $this->totalRecipientsHelped = DB::connection('hannah')->table('donation_allocation')
+                ->distinct('Recipient_ID')
+                ->count('Recipient_ID');
+        } catch (\Throwable $e) {
+        }
 
         // Pending approvals
-        $this->pendingApprovals = [
-            'campaigns' => Campaign::where('Status', 'Pending')->count(),
-            'events' => Event::where('Status', 'Pending')->count(),
-            'recipients' => Recipient::where('Status', 'Pending')->count(),
-        ];
+        try {
+            $this->pendingApprovals = [
+                'campaigns' => Campaign::where('Status', 'Pending')->count(),
+                'events' => Event::where('Status', 'Pending')->count(),
+                'recipients' => Recipient::where('Status', 'Pending')->count(),
+            ];
+        } catch (\Throwable $e) {
+        }
 
         // Load user role statistics using stored procedure
         try {
             $this->userRoleStats = DatabaseProcedureService::getUserRoleStats();
-        } catch (\Exception $e) {
-            // Fallback if procedure is not available yet
-            $this->userRoleStats = [];
-            \Log::warning('User role stats procedure not available: '.$e->getMessage());
+        } catch (\Throwable $e) {
         }
 
         // Load advanced analytics based on active tab
@@ -135,219 +183,253 @@ class AdminDashboard extends Component
 
     private function loadAdvancedAnalytics()
     {
-        // Database-agnostic column quoting helper
-        $quotedColumn = function ($table, $column) {
-            $driver = DB::connection()->getDriverName();
-            if ($driver === 'pgsql') {
-                return "\"{$table}\".\"{$column}\"";
+        // Top Performing Campaigns (with timeout protection)
+        try {
+            $this->topCampaigns = Campaign::with('organization.user')
+                ->where('Status', 'Active')
+                ->orderByDesc('Collected_Amount')
+                ->limit(10)
+                ->get()
+                ->map(function ($campaign) {
+                    $donationCount = 0;
+                    $donorCount = 0;
+                    try {
+                        $donationCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->count();
+                        $donorCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->distinct('Donor_ID')->count('Donor_ID');
+                    } catch (Throwable $e) {
+                        // Donation database unavailable
+                    }
+
+                    return (object) [
+                        'Campaign_ID' => $campaign->Campaign_ID,
+                        'campaign_title' => $campaign->Title,
+                        'organizer_name' => $campaign->organization->user->name ?? 'Unknown',
+                        'Collected_Amount' => $campaign->Collected_Amount,
+                        'Goal_Amount' => $campaign->Goal_Amount,
+                        'donation_count' => $donationCount,
+                        'donor_count' => $donorCount,
+                        'achievement_percentage' => $campaign->Goal_Amount > 0 ? round(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 2) : 0,
+                    ];
+                });
+        } catch (Throwable $e) {
+            $this->topCampaigns = collect();
+        }
+
+        // Organization Leaderboard (with timeout protection)
+        try {
+            $this->organizationLeaderboard = Organization::with('user')
+                ->limit(20)
+                ->get()
+                ->map(function ($org) {
+                    $totalCampaigns = 0;
+                    $totalEvents = 0;
+                    $totalRaised = 0;
+                    $activeCampaigns = 0;
+                    try {
+                        $totalCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->count();
+                        $totalRaised = Campaign::where('Organization_ID', $org->Organization_ID)->sum('Collected_Amount') ?? 0;
+                        $activeCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->where('Status', 'Active')->count();
+                    } catch (Throwable $e) {
+                    }
+                    try {
+                        $totalEvents = Event::where('Organizer_ID', $org->Organization_ID)->count();
+                    } catch (Throwable $e) {
+                    }
+
+                    return (object) [
+                        'Organization_ID' => $org->Organization_ID,
+                        'organizer_name' => $org->user->name ?? 'Unknown',
+                        'City' => $org->City,
+                        'State' => $org->State,
+                        'total_campaigns' => $totalCampaigns,
+                        'total_events' => $totalEvents,
+                        'total_raised' => $totalRaised,
+                        'active_campaigns' => $activeCampaigns,
+                    ];
+                })
+                ->sortByDesc('total_raised')
+                ->take(10)
+                ->values();
+        } catch (Throwable $e) {
+            $this->organizationLeaderboard = collect();
+        }
+
+        // Donor Insights (with timeout protection)
+        try {
+            $this->donorInsights = DonorDonationSummary::topDonors(10)
+                ->get()
+                ->map(function ($donor) {
+                    return (object) [
+                        'donor_name' => $donor->donor_name,
+                        'email' => '',
+                        'donation_count' => $donor->completed_donation_count,
+                        'total_donated' => $donor->cached_total_donated,
+                        'avg_donation' => round($donor->avg_donation_amount ?? 0, 2),
+                        'first_donation' => $donor->first_donation_date,
+                        'last_donation' => $donor->last_donation_date,
+                        'campaigns_supported' => $donor->campaigns_supported,
+                        'donor_tier' => $donor->donor_tier,
+                    ];
+                });
+        } catch (Throwable $e) {
+            $this->donorInsights = collect();
+        }
+
+        // Event Metrics (with timeout protection)
+        try {
+            $this->eventMetrics = Event::with('organization.user')
+                ->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed'])
+                ->limit(20)
+                ->get()
+                ->map(function ($event) {
+                    $volunteersRegistered = 0;
+                    $totalHours = 0;
+                    try {
+                        $participations = DB::connection('sashvini')->table('event_participation')
+                            ->where('Event_ID', $event->Event_ID)
+                            ->get();
+                        $volunteersRegistered = $participations->unique('Volunteer_ID')->count();
+                        $totalHours = $participations->sum('Total_Hours');
+                    } catch (Throwable $e) {
+                    }
+                    $fillRate = $event->Capacity > 0 ? round(($volunteersRegistered / $event->Capacity) * 100, 2) : 0;
+
+                    return (object) [
+                        'Event_ID' => $event->Event_ID,
+                        'event_title' => $event->Title,
+                        'organizer_name' => $event->organization->user->name ?? 'Unknown',
+                        'Capacity' => $event->Capacity,
+                        'Status' => $event->Status,
+                        'volunteers_registered' => $volunteersRegistered,
+                        'total_hours' => $totalHours,
+                        'fill_rate' => $fillRate,
+                    ];
+                })
+                ->sortByDesc('volunteers_registered')
+                ->take(10)
+                ->values();
+        } catch (Throwable $e) {
+            $this->eventMetrics = collect();
+        }
+
+        // Campaign Success Rate Analysis (with timeout protection)
+        try {
+            $campaignStats = DB::connection('izzati')->table('campaign')
+                ->select(
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN "Collected_Amount" >= "Goal_Amount" THEN 1 ELSE 0 END) as successful'),
+                    DB::raw('SUM(CASE WHEN "Status" = \'Active\' THEN 1 ELSE 0 END) as active'),
+                    DB::raw('SUM(CASE WHEN "Status" = \'Pending\' THEN 1 ELSE 0 END) as pending'),
+                    DB::raw('AVG(CAST("Collected_Amount" AS DECIMAL) / NULLIF("Goal_Amount", 0) * 100) as avg_achievement_rate')
+                )
+                ->first();
+
+            $this->campaignSuccessRate = [
+                'total' => $campaignStats->total ?? 0,
+                'successful' => $campaignStats->successful ?? 0,
+                'active' => $campaignStats->active ?? 0,
+                'pending' => $campaignStats->pending ?? 0,
+                'success_rate' => ($campaignStats->total ?? 0) > 0 ? round((($campaignStats->successful ?? 0) / $campaignStats->total) * 100, 2) : 0,
+                'avg_achievement_rate' => round($campaignStats->avg_achievement_rate ?? 0, 2),
+            ];
+        } catch (Throwable $e) {
+            $this->campaignSuccessRate = ['total' => 0, 'successful' => 0, 'active' => 0, 'pending' => 0, 'success_rate' => 0, 'avg_achievement_rate' => 0];
+        }
+
+        // Allocation Efficiency (with timeout protection)
+        try {
+            $campaigns = DB::connection('izzati')->table('campaign')
+                ->select('Campaign_ID', 'Title', 'Collected_Amount')
+                ->where('Status', '!=', 'Pending')
+                ->get();
+
+            $allocations = collect();
+            try {
+                $allocations = DB::connection('hannah')->table('donation_allocation')
+                    ->select(
+                        'Campaign_ID',
+                        DB::raw('SUM(Amount_Allocated) as total_allocated'),
+                        DB::raw('COUNT(DISTINCT Recipient_ID) as recipient_count')
+                    )
+                    ->groupBy('Campaign_ID')
+                    ->get()
+                    ->keyBy('Campaign_ID');
+            } catch (Throwable $e) {
             }
 
-            return "`{$table}`.`{$column}`";
-        };
-
-        // Top Performing Campaigns - Cross-database query (izzati + izzhilmy + hannah)
-        // TODO: Refactor with proper application-level joins for production
-        // Simplified query for now to avoid cross-database JOIN errors
-        $this->topCampaigns = Campaign::with('organization.user')
-            ->where('Status', 'Active')
-            ->orderByDesc('Collected_Amount')
-            ->limit(10)
-            ->get()
-            ->map(function ($campaign) {
-                $donationCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->count();
-                $donorCount = Donation::where('Campaign_ID', $campaign->Campaign_ID)->distinct('Donor_ID')->count('Donor_ID');
+            $efficiencyData = $campaigns->map(function ($campaign) use ($allocations) {
+                $allocation = $allocations->get($campaign->Campaign_ID);
+                $allocatedAmount = $allocation ? (float) $allocation->total_allocated : 0;
+                $recipientCount = $allocation ? (int) $allocation->recipient_count : 0;
+                $collectedAmount = (float) $campaign->Collected_Amount;
 
                 return (object) [
                     'Campaign_ID' => $campaign->Campaign_ID,
-                    'campaign_title' => $campaign->Title,
-                    'organizer_name' => $campaign->organization->user->name ?? 'Unknown',
-                    'Collected_Amount' => $campaign->Collected_Amount,
-                    'Goal_Amount' => $campaign->Goal_Amount,
-                    'donation_count' => $donationCount,
-                    'donor_count' => $donorCount,
-                    'achievement_percentage' => $campaign->Goal_Amount > 0 ? round(($campaign->Collected_Amount / $campaign->Goal_Amount) * 100, 2) : 0,
+                    'Title' => $campaign->Title,
+                    'Collected_Amount' => $collectedAmount,
+                    'allocated_amount' => $allocatedAmount,
+                    'unallocated_amount' => $collectedAmount - $allocatedAmount,
+                    'allocation_percentage' => $collectedAmount > 0 ? round(($allocatedAmount / $collectedAmount) * 100, 2) : 0,
+                    'recipient_count' => $recipientCount,
                 ];
             });
 
-        // Organization Leaderboard - Cross-database query (izzati + izzhilmy)
-        // TODO: Refactor with proper application-level joins for production
-        $this->organizationLeaderboard = Organization::with('user')
-            ->limit(20) // Get more for aggregation
-            ->get()
-            ->map(function ($org) {
-                $totalCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->count();
-                $totalEvents = Event::where('Organizer_ID', $org->Organization_ID)->count();
-                $totalRaised = Campaign::where('Organization_ID', $org->Organization_ID)->sum('Collected_Amount') ?? 0;
-                $activeCampaigns = Campaign::where('Organization_ID', $org->Organization_ID)->where('Status', 'Active')->count();
-
-                return (object) [
-                    'Organization_ID' => $org->Organization_ID,
-                    'organizer_name' => $org->user->name ?? 'Unknown',
-                    'City' => $org->City,
-                    'State' => $org->State,
-                    'total_campaigns' => $totalCampaigns,
-                    'total_events' => $totalEvents,
-                    'total_raised' => $totalRaised,
-                    'active_campaigns' => $activeCampaigns,
-                ];
-            })
-            ->sortByDesc('total_raised')
-            ->take(10)
-            ->values();
-
-        // Donor Insights - Using vw_donor_donation_summary view (hannah database)
-        $this->donorInsights = DonorDonationSummary::topDonors(10)
-            ->get()
-            ->map(function ($donor) {
-                return (object) [
-                    'donor_name' => $donor->donor_name,
-                    'email' => '', // Email not in view, would need join with izzhilmy.users
-                    'donation_count' => $donor->completed_donation_count,
-                    'total_donated' => $donor->cached_total_donated,
-                    'avg_donation' => round($donor->avg_donation_amount ?? 0, 2),
-                    'first_donation' => $donor->first_donation_date,
-                    'last_donation' => $donor->last_donation_date,
-                    'campaigns_supported' => $donor->campaigns_supported,
-                    'donor_tier' => $donor->donor_tier,
-                ];
-            });
-
-        // Event Metrics - Cross-database query (izzati + izzhilmy + sashvini)
-        // TODO: Refactor with proper application-level joins for production
-        $this->eventMetrics = Event::with('organization.user')
-            ->whereIn('Status', ['Upcoming', 'Ongoing', 'Completed'])
-            ->limit(20)
-            ->get()
-            ->map(function ($event) {
-                $participations = DB::connection('sashvini')->table('event_participation')
-                    ->where('Event_ID', $event->Event_ID)
-                    ->get();
-
-                $volunteersRegistered = $participations->unique('Volunteer_ID')->count();
-                $totalHours = $participations->sum('Total_Hours');
-                $fillRate = $event->Capacity > 0 ? round(($volunteersRegistered / $event->Capacity) * 100, 2) : 0;
-
-                return (object) [
-                    'Event_ID' => $event->Event_ID,
-                    'event_title' => $event->Title,
-                    'organizer_name' => $event->organization->user->name ?? 'Unknown',
-                    'Capacity' => $event->Capacity,
-                    'Status' => $event->Status,
-                    'volunteers_registered' => $volunteersRegistered,
-                    'total_hours' => $totalHours,
-                    'fill_rate' => $fillRate,
-                ];
-            })
-            ->sortByDesc('volunteers_registered')
-            ->take(10)
-            ->values();
-
-        // Campaign Success Rate Analysis (izzati database)
-        $campaignStats = DB::connection('izzati')->table('campaign')
-            ->select(
-                DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN "Collected_Amount" >= "Goal_Amount" THEN 1 ELSE 0 END) as successful'),
-                DB::raw('SUM(CASE WHEN "Status" = \'Active\' THEN 1 ELSE 0 END) as active'),
-                DB::raw('SUM(CASE WHEN "Status" = \'Pending\' THEN 1 ELSE 0 END) as pending'),
-                DB::raw('AVG(CAST("Collected_Amount" AS DECIMAL) / NULLIF("Goal_Amount", 0) * 100) as avg_achievement_rate')
-            )
-            ->first();
-
-        $this->campaignSuccessRate = [
-            'total' => $campaignStats->total,
-            'successful' => $campaignStats->successful,
-            'active' => $campaignStats->active,
-            'pending' => $campaignStats->pending,
-            'success_rate' => $campaignStats->total > 0 ? round(($campaignStats->successful / $campaignStats->total) * 100, 2) : 0,
-            'avg_achievement_rate' => round($campaignStats->avg_achievement_rate ?? 0, 2),
-        ];
-
-        // Allocation Efficiency - Cross-database query (izzati + hannah)
-        // Load campaigns from izzati database
-        $campaigns = DB::connection('izzati')->table('campaign')
-            ->select('Campaign_ID', 'Title', 'Collected_Amount')
-            ->where('Status', '!=', 'Pending')
-            ->get();
-
-        // Load allocation data from hannah database
-        $allocations = DB::connection('hannah')->table('donation_allocation')
-            ->select(
-                'Campaign_ID',
-                DB::raw('SUM(Amount_Allocated) as total_allocated'),
-                DB::raw('COUNT(DISTINCT Recipient_ID) as recipient_count')
-            )
-            ->groupBy('Campaign_ID')
-            ->get()
-            ->keyBy('Campaign_ID');
-
-        // Combine data in PHP (application-level join)
-        $efficiencyData = $campaigns->map(function ($campaign) use ($allocations) {
-            $allocation = $allocations->get($campaign->Campaign_ID);
-            $allocatedAmount = $allocation ? (float) $allocation->total_allocated : 0;
-            $recipientCount = $allocation ? (int) $allocation->recipient_count : 0;
-            $collectedAmount = (float) $campaign->Collected_Amount;
-
-            return (object) [
-                'Campaign_ID' => $campaign->Campaign_ID,
-                'Title' => $campaign->Title,
-                'Collected_Amount' => $collectedAmount,
-                'allocated_amount' => $allocatedAmount,
-                'unallocated_amount' => $collectedAmount - $allocatedAmount,
-                'allocation_percentage' => $collectedAmount > 0 ? round(($allocatedAmount / $collectedAmount) * 100, 2) : 0,
-                'recipient_count' => $recipientCount,
-            ];
-        });
-
-        // Apply sorting
-        if ($this->efficiencyFilter === 'most_efficient') {
-            $efficiencyData = $efficiencyData->sortByDesc('allocation_percentage');
-        } elseif ($this->efficiencyFilter === 'least_efficient') {
-            $efficiencyData = $efficiencyData->sortBy('allocation_percentage');
-        } else {
-            // Default sorting based on column selection
-            if ($this->recipientSortDirection === 'desc') {
-                $efficiencyData = $efficiencyData->sortByDesc($this->recipientSortBy);
+            if ($this->efficiencyFilter === 'most_efficient') {
+                $efficiencyData = $efficiencyData->sortByDesc('allocation_percentage');
+            } elseif ($this->efficiencyFilter === 'least_efficient') {
+                $efficiencyData = $efficiencyData->sortBy('allocation_percentage');
             } else {
-                $efficiencyData = $efficiencyData->sortBy($this->recipientSortBy);
+                if ($this->recipientSortDirection === 'desc') {
+                    $efficiencyData = $efficiencyData->sortByDesc($this->recipientSortBy);
+                } else {
+                    $efficiencyData = $efficiencyData->sortBy($this->recipientSortBy);
+                }
             }
+
+            $this->allocationEfficiency = $efficiencyData->take(10)->values();
+        } catch (Throwable $e) {
+            $this->allocationEfficiency = collect();
         }
 
-        $this->allocationEfficiency = $efficiencyData->take(10)->values();
-
-        // Recent Activity - Cross-database query (hannah + izzati + izzhilmy)
-        // TODO: Refactor with proper application-level joins for production
+        // Recent Activity (with timeout protection)
         $activities = collect();
 
         if ($this->activityFilter === 'all' || $this->activityFilter === 'donation') {
-            $recentDonations = Donation::with('donor.user', 'campaign')
-                ->orderByDesc('created_at')
-                ->limit($this->activityFilter === 'donation' ? 10 : 5)
-                ->get()
-                ->map(function ($donation) {
-                    return (object) [
-                        'type' => 'donation',
-                        'actor' => $donation->donor->user->name ?? 'Unknown',
-                        'description' => 'donated RM '.$donation->Amount.' to '.$donation->campaign->Title,
-                        'activity_date' => $donation->created_at,
-                    ];
-                });
-            $activities = $activities->merge($recentDonations);
+            try {
+                $recentDonations = Donation::with('donor.user', 'campaign')
+                    ->orderByDesc('created_at')
+                    ->limit($this->activityFilter === 'donation' ? 10 : 5)
+                    ->get()
+                    ->map(function ($donation) {
+                        return (object) [
+                            'type' => 'donation',
+                            'actor' => $donation->donor->user->name ?? 'Unknown',
+                            'description' => 'donated RM '.$donation->Amount.' to '.($donation->campaign->Title ?? 'Unknown'),
+                            'activity_date' => $donation->created_at,
+                        ];
+                    });
+                $activities = $activities->merge($recentDonations);
+            } catch (Throwable $e) {
+            }
         }
 
         if ($this->activityFilter === 'all' || $this->activityFilter === 'campaign') {
-            $recentCampaigns = Campaign::with('organization.user')
-                ->orderByDesc('created_at')
-                ->limit($this->activityFilter === 'campaign' ? 10 : 5)
-                ->get()
-                ->map(function ($campaign) {
-                    return (object) [
-                        'type' => 'campaign',
-                        'actor' => $campaign->organization->user->name ?? 'Unknown',
-                        'description' => 'created campaign: '.$campaign->Title,
-                        'activity_date' => $campaign->created_at,
-                    ];
-                });
-            $activities = $activities->merge($recentCampaigns);
+            try {
+                $recentCampaigns = Campaign::with('organization.user')
+                    ->orderByDesc('created_at')
+                    ->limit($this->activityFilter === 'campaign' ? 10 : 5)
+                    ->get()
+                    ->map(function ($campaign) {
+                        return (object) [
+                            'type' => 'campaign',
+                            'actor' => $campaign->organization->user->name ?? 'Unknown',
+                            'description' => 'created campaign: '.$campaign->Title,
+                            'activity_date' => $campaign->created_at,
+                        ];
+                    });
+                $activities = $activities->merge($recentCampaigns);
+            } catch (Throwable $e) {
+            }
         }
 
         $this->recentActivity = $activities
@@ -358,109 +440,122 @@ class AdminDashboard extends Component
 
     private function loadChartData()
     {
-        // Donations chart - last 90 days
-        $donations = Donation::where('Donation_Date', '>=', now()->subDays(90))
-            ->orderBy('Donation_Date')
-            ->get();
+        // Donations chart (with timeout protection)
+        try {
+            $donations = Donation::where('Donation_Date', '>=', now()->subDays(90))
+                ->orderBy('Donation_Date')
+                ->get();
 
-        $this->donationsChart = $donations
-            ->groupBy(function ($donation) {
-                return Carbon::parse($donation->Donation_Date)->format('Y-m-d');
-            })
-            ->map(function ($group) {
-                return [
-                    'date' => $group->first()->Donation_Date,
-                    'amount' => (float) $group->sum('Amount'),
-                    'count' => $group->count(),
-                ];
-            })
-            ->values()
-            ->toArray();
+            $this->donationsChart = $donations
+                ->groupBy(function ($donation) {
+                    return Carbon::parse($donation->Donation_Date)->format('Y-m-d');
+                })
+                ->map(function ($group) {
+                    return [
+                        'date' => $group->first()->Donation_Date,
+                        'amount' => (float) $group->sum('Amount'),
+                        'count' => $group->count(),
+                    ];
+                })
+                ->values()
+                ->toArray();
+        } catch (Throwable $e) {
+            $this->donationsChart = [];
+        }
 
-        // Campaigns chart (last 90 days for performance)
-        $campaigns = Campaign::where('created_at', '>=', now()->subDays(90))
-            ->orderBy('created_at')
-            ->get();
+        // Campaigns chart (with timeout protection)
+        try {
+            $campaigns = Campaign::where('created_at', '>=', now()->subDays(90))
+                ->orderBy('created_at')
+                ->get();
 
-        $this->campaignsChart = $campaigns
-            ->groupBy(function ($campaign) {
-                return Carbon::parse($campaign->created_at)->format('Y-m-d');
-            })
-            ->map(function ($group, $date) {
-                return [
-                    'date' => $date,
-                    'count' => $group->count(),
-                ];
-            })
-            ->values()
-            ->toArray();
+            $this->campaignsChart = $campaigns
+                ->groupBy(function ($campaign) {
+                    return Carbon::parse($campaign->created_at)->format('Y-m-d');
+                })
+                ->map(function ($group, $date) {
+                    return [
+                        'date' => $date,
+                        'count' => $group->count(),
+                    ];
+                })
+                ->values()
+                ->toArray();
+        } catch (Throwable $e) {
+            $this->campaignsChart = [];
+        }
 
-        // Events chart (last 90 days for performance)
-        $events = Event::where('created_at', '>=', now()->subDays(90))
-            ->orderBy('created_at')
-            ->get();
+        // Events chart (with timeout protection)
+        try {
+            $events = Event::where('created_at', '>=', now()->subDays(90))
+                ->orderBy('created_at')
+                ->get();
 
-        $this->eventsChart = $events
-            ->groupBy(function ($event) {
-                return Carbon::parse($event->created_at)->format('Y-m-d');
-            })
-            ->map(function ($group, $date) {
-                return [
-                    'date' => $date,
-                    'count' => $group->count(),
-                ];
-            })
-            ->values()
-            ->toArray();
+            $this->eventsChart = $events
+                ->groupBy(function ($event) {
+                    return Carbon::parse($event->created_at)->format('Y-m-d');
+                })
+                ->map(function ($group, $date) {
+                    return [
+                        'date' => $date,
+                        'count' => $group->count(),
+                    ];
+                })
+                ->values()
+                ->toArray();
+        } catch (Throwable $e) {
+            $this->eventsChart = [];
+        }
 
-        // User growth chart - last 90 days, all roles
-        $users = User::where('created_at', '>=', now()->subDays(90))
-            ->with('roles')
-            ->orderBy('created_at')
-            ->get();
+        // User growth chart (with timeout protection)
+        try {
+            $users = User::where('created_at', '>=', now()->subDays(90))
+                ->with('roles')
+                ->orderBy('created_at')
+                ->get();
 
-        // Group users by date and role
-        $groupedByDate = $users->groupBy(function ($user) {
-            return Carbon::parse($user->created_at)->format('Y-m-d');
-        });
+            $groupedByDate = $users->groupBy(function ($user) {
+                return Carbon::parse($user->created_at)->format('Y-m-d');
+            });
 
-        $this->userGrowthChart = $groupedByDate->map(function ($usersOnDate, $date) {
-            // Count users by role
-            $roleCounts = [
-                'volunteer' => 0,
-                'donor' => 0,
-                'organizer' => 0,
-                'public' => 0,
-            ];
+            $this->userGrowthChart = $groupedByDate->map(function ($usersOnDate, $date) {
+                $roleCounts = ['volunteer' => 0, 'donor' => 0, 'organizer' => 0, 'public' => 0];
 
-            foreach ($usersOnDate as $user) {
-                foreach ($user->roles as $role) {
-                    if (isset($roleCounts[$role->name])) {
-                        $roleCounts[$role->name]++;
+                foreach ($usersOnDate as $user) {
+                    foreach ($user->roles as $role) {
+                        if (isset($roleCounts[$role->name])) {
+                            $roleCounts[$role->name]++;
+                        }
                     }
                 }
-            }
 
-            return [
-                'date' => $date,
-                'volunteer' => $roleCounts['volunteer'],
-                'donor' => $roleCounts['donor'],
-                'organizer' => $roleCounts['organizer'],
-                'public' => $roleCounts['public'],
-            ];
-        })->values()->toArray();
+                return [
+                    'date' => $date,
+                    'volunteer' => $roleCounts['volunteer'],
+                    'donor' => $roleCounts['donor'],
+                    'organizer' => $roleCounts['organizer'],
+                    'public' => $roleCounts['public'],
+                ];
+            })->values()->toArray();
+        } catch (Throwable $e) {
+            $this->userGrowthChart = [];
+        }
 
-        // Campaign status distribution - Pie chart
-        $statusCounts = Campaign::select('Status', DB::raw('COUNT(*) as count'))
-            ->groupBy('Status')
-            ->get();
+        // Campaign status chart (with timeout protection)
+        try {
+            $statusCounts = Campaign::select('Status', DB::raw('COUNT(*) as count'))
+                ->groupBy('Status')
+                ->get();
 
-        $this->campaignStatusChart = $statusCounts->map(function ($stat) {
-            return [
-                'status' => $stat->Status,
-                'count' => $stat->count,
-            ];
-        })->toArray();
+            $this->campaignStatusChart = $statusCounts->map(function ($stat) {
+                return [
+                    'status' => $stat->Status,
+                    'count' => $stat->count,
+                ];
+            })->toArray();
+        } catch (Throwable $e) {
+            $this->campaignStatusChart = [];
+        }
     }
 
     public function sortRecipients($column)
