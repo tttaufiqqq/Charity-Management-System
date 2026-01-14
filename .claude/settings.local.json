@@ -65,7 +65,8 @@
       "Bash(git ls-tree:*)",
       "Bash(timeout:*)",
       "Bash(C:)",
-      "Bash(vendorbinpint:*)"
+      "Bash(vendorbinpint:*)",
+      "Bash(.vendorbinpint --dirty)"
     ]
   }
 }

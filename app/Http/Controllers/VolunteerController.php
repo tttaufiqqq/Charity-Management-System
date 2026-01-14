@@ -407,7 +407,7 @@ class VolunteerController extends Controller
     public function storeSkill(Request $request)
     {
         $request->validate([
-            'skill_id' => 'required|exists:skill,Skill_ID',
+            'skill_id' => 'required|exists:sashvini.skill,Skill_ID',
             'skill_level' => 'required|in:Beginner,Intermediate,Advanced,Expert',
         ]);
 
