@@ -57,9 +57,12 @@
         return filtered;
     }
 }" x-init="
-    // Initialize events data
+    // Initialize events data (using pre-calculated stats)
     window.eventsData = [
         @foreach($events as $event)
+        @php
+            $jsStats = $eventStats[$event->Event_ID] ?? ['capacity' => 0, 'currentVolunteers' => 0];
+        @endphp
         {
             id: {{ $event->Event_ID }},
             title: '{{ addslashes($event->Title) }}',
@@ -68,10 +71,10 @@
             status: '{{ $event->Status }}',
             startDate: '{{ $event->Start_Date->format('Y-m-d') }}',
             endDate: '{{ $event->End_Date->format('Y-m-d') }}',
-            currentVolunteers: {{ $event->getTotalVolunteersFilled() }},
-            capacity: {{ $event->getTotalVolunteerCapacity() }},
+            currentVolunteers: {{ $jsStats['currentVolunteers'] }},
+            capacity: {{ $jsStats['capacity'] }},
             isRegistered: {{ in_array($event->Event_ID, $registeredEventIds) ? 'true' : 'false' }},
-            daysUntil: {{ now()->diffInDays($event->Start_Date, false) }}
+            daysUntil: {{ (int) now()->diffInDays($event->Start_Date, false) }}
         },
         @endforeach
     ];
@@ -106,9 +109,7 @@
                         <div class="text-xs text-gray-600">Registered</div>
                     </div>
                     <div class="bg-white rounded-lg shadow-sm px-4 py-3 border-l-4 border-blue-500">
-                        <div class="text-2xl font-bold text-blue-600">
-                            {{ $events->filter(fn($e) => $e->getTotalVolunteersFilled() < $e->getTotalVolunteerCapacity())->count() }}
-                        </div>
+                        <div class="text-2xl font-bold text-blue-600">{{ $availableCount }}</div>
                         <div class="text-xs text-gray-600">Available</div>
                     </div>
                 </div>
@@ -243,12 +244,14 @@
         <div :class="viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'">
             @foreach($events as $event)
                 @php
-                    $currentVolunteers = $event->getTotalVolunteersFilled();
-                    $capacity = $event->getTotalVolunteerCapacity();
+                    // Use pre-calculated stats to avoid N+1 queries
+                    $stats = $eventStats[$event->Event_ID] ?? ['capacity' => 0, 'currentVolunteers' => 0, 'isFull' => true];
+                    $currentVolunteers = $stats['currentVolunteers'];
+                    $capacity = $stats['capacity'];
                     $capacityPercent = $capacity > 0 ? ($currentVolunteers / $capacity) * 100 : 0;
                     $isRegistered = in_array($event->Event_ID, $registeredEventIds);
-                    $isFull = $currentVolunteers >= $capacity;
-                    $daysUntil = now()->diffInDays($event->Start_Date, false);
+                    $isFull = $stats['isFull'];
+                    $daysUntil = (int) now()->diffInDays($event->Start_Date, false);
                 @endphp
 
                 <div x-show="filterEvents(window.eventsData).find(e => e.id === {{ $event->Event_ID }})"

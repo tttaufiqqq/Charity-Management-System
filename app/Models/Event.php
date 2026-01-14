@@ -59,27 +59,23 @@ class Event extends Model
 
     /**
      * Get all event participations for this event (sashvini database - MariaDB)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - use separate query instead of Eloquent relationship
+     * DO NOT use setConnection() as it mutates the model's connection
      */
     public function eventParticipations()
     {
-        return $this->setConnection('sashvini')
-            ->hasMany(EventParticipation::class, 'Event_ID', 'Event_ID');
+        // Return a query builder for event_participation on sashvini
+        // This avoids the setConnection() issue that corrupts the model
+        return EventParticipation::where('Event_ID', $this->Event_ID);
     }
 
     /**
-     * Get all volunteers for this event through event_participation (sashvini database - MariaDB)
-     * ⚠️ Cross-database relationship with pivot in sashvini database
+     * Get volunteer count for this event (cross-database safe)
+     * Uses direct query instead of relationship to avoid connection mutation
      */
-    public function volunteers()
+    public function getVolunteerCount(): int
     {
-        return $this->setConnection('sashvini')
-            ->belongsToMany(
-                Volunteer::class,
-                'event_participation',
-                'Event_ID',
-                'Volunteer_ID'
-            )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
+        return EventParticipation::where('Event_ID', $this->Event_ID)->count();
     }
 
     /**
@@ -109,11 +105,30 @@ class Event extends Model
     // Helper methods for volunteer counts
     public function getTotalVolunteerCapacity()
     {
+        // Use cached roles if already loaded, otherwise query
+        if ($this->relationLoaded('roles')) {
+            return $this->roles->sum('Volunteers_Needed') ?: $this->Capacity;
+        }
+
         return $this->roles()->sum('Volunteers_Needed') ?: $this->Capacity;
     }
 
     public function getTotalVolunteersFilled()
     {
-        return $this->roles()->sum('Volunteers_Filled') ?: $this->volunteers()->count();
+        // Use cached roles if already loaded
+        if ($this->relationLoaded('roles')) {
+            $rolesFilled = $this->roles->sum('Volunteers_Filled');
+            if ($rolesFilled > 0) {
+                return $rolesFilled;
+            }
+        } else {
+            $rolesFilled = $this->roles()->sum('Volunteers_Filled');
+            if ($rolesFilled > 0) {
+                return $rolesFilled;
+            }
+        }
+
+        // Fallback to counting event participations (cross-database safe)
+        return $this->getVolunteerCount();
     }
 }

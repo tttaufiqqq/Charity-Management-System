@@ -37,7 +37,40 @@ class VolunteerController extends Controller
         // Get volunteer's registered event IDs (cross-database safe)
         $registeredEventIds = $volunteer->eventParticipations()->pluck('Event_ID')->toArray();
 
-        return view('volunteer-management.events.browse', compact('events', 'registeredEventIds'));
+        // Pre-calculate volunteer counts for all events to avoid N+1 queries
+        $eventIds = $events->pluck('Event_ID')->toArray();
+        $volunteerCounts = [];
+        if (! empty($eventIds)) {
+            $volunteerCounts = DB::connection('sashvini')
+                ->table('event_participation')
+                ->whereIn('Event_ID', $eventIds)
+                ->selectRaw('Event_ID, COUNT(*) as count')
+                ->groupBy('Event_ID')
+                ->pluck('count', 'Event_ID')
+                ->toArray();
+        }
+
+        // Pre-calculate event stats to avoid N+1 in view
+        $eventStats = [];
+        $availableCount = 0;
+        foreach ($events as $event) {
+            // Use roles if loaded (sum from cached data)
+            $capacity = $event->roles->sum('Volunteers_Needed') ?: $event->Capacity;
+            $rolesFilled = $event->roles->sum('Volunteers_Filled');
+            $currentVolunteers = $rolesFilled > 0 ? $rolesFilled : ($volunteerCounts[$event->Event_ID] ?? 0);
+
+            $eventStats[$event->Event_ID] = [
+                'capacity' => $capacity,
+                'currentVolunteers' => $currentVolunteers,
+                'isFull' => $currentVolunteers >= $capacity,
+            ];
+
+            if ($currentVolunteers < $capacity) {
+                $availableCount++;
+            }
+        }
+
+        return view('volunteer-management.events.browse', compact('events', 'registeredEventIds', 'eventStats', 'availableCount'));
     }
 
     /**

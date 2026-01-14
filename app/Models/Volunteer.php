@@ -38,12 +38,20 @@ class Volunteer extends Model
 
     /**
      * Get the user account for this volunteer (izzhilmy database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - uses separate query to avoid connection mutation
      */
     public function user()
     {
-        return $this->setConnection('izzhilmy')
-            ->belongsTo(User::class, 'User_ID');
+        // Direct query to avoid setConnection() mutation issue
+        return User::where('id', $this->User_ID);
+    }
+
+    /**
+     * Get the user object directly (cross-database safe)
+     */
+    public function getUser()
+    {
+        return User::find($this->User_ID);
     }
 
     /**
@@ -68,17 +76,26 @@ class Volunteer extends Model
     }
 
     /**
-     * Get all events for this volunteer through event_participation (izzati database - PostgreSQL)
-     * ⚠️ Cross-database relationship with pivot in sashvini database
+     * Get event IDs for this volunteer (cross-database safe)
+     * DO NOT use setConnection() as it mutates the model's connection
      */
-    public function events()
+    public function getEventIds(): array
     {
-        return $this->setConnection('izzati')
-            ->belongsToMany(
-                Event::class,
-                'event_participation',
-                'Volunteer_ID',
-                'Event_ID'
-            )->withPivot('Status', 'Total_Hours', 'Role_ID')->withTimestamps();
+        return $this->eventParticipations()->pluck('Event_ID')->toArray();
+    }
+
+    /**
+     * Get events for this volunteer (cross-database safe)
+     * Uses separate queries instead of belongsToMany to avoid connection mutation
+     */
+    public function getEvents()
+    {
+        $eventIds = $this->getEventIds();
+
+        if (empty($eventIds)) {
+            return collect();
+        }
+
+        return Event::whereIn('Event_ID', $eventIds)->get();
     }
 }
