@@ -36,12 +36,11 @@ class Organization extends Model
 
     /**
      * Get the user who owns this organization (izzhilmy database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - User model has its own $connection property
      */
     public function user()
     {
-        return $this->setConnection('izzhilmy')
-            ->belongsTo(User::class, 'Organizer_ID');
+        return $this->belongsTo(User::class, 'Organizer_ID');
     }
 
     /**

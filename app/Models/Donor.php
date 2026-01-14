@@ -37,12 +37,11 @@ class Donor extends Model
 
     /**
      * Get the user account for this donor (izzhilmy database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - User model has its own $connection property
      */
     public function user()
     {
-        return $this->setConnection('izzhilmy')
-            ->belongsTo(User::class, 'User_ID');
+        return $this->belongsTo(User::class, 'User_ID');
     }
 
     /**

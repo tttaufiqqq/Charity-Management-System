@@ -38,14 +38,14 @@ class User extends Authenticatable
 
     // Cross-Database Relationships
     // ⚠️ These relationships span different database connections
+    // Each related model has its own $connection property, so Laravel handles cross-DB queries automatically
 
     /**
      * Get the donor profile (hannah database - MySQL)
      */
     public function donor()
     {
-        return $this->setConnection('hannah')
-            ->hasOne(Donor::class, 'User_ID');
+        return $this->hasOne(Donor::class, 'User_ID');
     }
 
     /**
@@ -53,8 +53,7 @@ class User extends Authenticatable
      */
     public function publicProfile()
     {
-        return $this->setConnection('adam')
-            ->hasOne(PublicProfile::class, 'User_ID');
+        return $this->hasOne(PublicProfile::class, 'User_ID');
     }
 
     /**
@@ -62,8 +61,7 @@ class User extends Authenticatable
      */
     public function organization()
     {
-        return $this->setConnection('izzati')
-            ->hasOne(Organization::class, 'Organizer_ID');
+        return $this->hasOne(Organization::class, 'Organizer_ID');
     }
 
     /**
@@ -71,7 +69,6 @@ class User extends Authenticatable
      */
     public function volunteer()
     {
-        return $this->setConnection('sashvini')
-            ->hasOne(Volunteer::class, 'User_ID');
+        return $this->hasOne(Volunteer::class, 'User_ID');
     }
 }

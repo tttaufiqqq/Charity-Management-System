@@ -35,22 +35,20 @@ class CampaignRecipientSuggestion extends Model
 
     /**
      * Get the recipient for this suggestion (adam database - MySQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - Recipient model has its own $connection property
      */
     public function recipient()
     {
-        return $this->setConnection('adam')
-            ->belongsTo(Recipient::class, 'Recipient_ID', 'Recipient_ID');
+        return $this->belongsTo(Recipient::class, 'Recipient_ID', 'Recipient_ID');
     }
 
     /**
      * Get the user who suggested this recipient (izzhilmy database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - User model has its own $connection property
      */
     public function suggestedBy()
     {
-        return $this->setConnection('izzhilmy')
-            ->belongsTo(User::class, 'Suggested_By');
+        return $this->belongsTo(User::class, 'Suggested_By');
     }
 
     // Scopes

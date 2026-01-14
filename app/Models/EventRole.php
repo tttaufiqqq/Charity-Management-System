@@ -44,18 +44,34 @@ class EventRole extends Model
     }
 
     /**
-     * Get all volunteers for this role through event_participation (sashvini database - MariaDB)
-     * ⚠️ Cross-database relationship with pivot in sashvini database
+     * Get event participations for this role (sashvini database - MariaDB)
+     * ⚠️ Cross-database relationship - use hasMany instead of belongsToMany
      */
-    public function volunteers()
+    public function eventParticipations()
     {
-        return $this->setConnection('sashvini')
-            ->belongsToMany(
-                Volunteer::class,
-                'event_participation',
-                'Role_ID',
-                'Volunteer_ID'
-            )->withPivot('Status', 'Total_Hours', 'Event_ID')->withTimestamps();
+        return $this->hasMany(EventParticipation::class, 'Role_ID', 'Role_ID');
+    }
+
+    /**
+     * Get volunteer IDs for this role (cross-database safe helper)
+     */
+    public function getVolunteerIds(): array
+    {
+        return $this->eventParticipations()->pluck('Volunteer_ID')->toArray();
+    }
+
+    /**
+     * Get volunteers for this role (cross-database safe helper)
+     */
+    public function getVolunteers()
+    {
+        $volunteerIds = $this->getVolunteerIds();
+
+        if (empty($volunteerIds)) {
+            return collect();
+        }
+
+        return Volunteer::whereIn('Volunteer_ID', $volunteerIds)->get();
     }
 
     // Check if role is full

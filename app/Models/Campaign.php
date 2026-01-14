@@ -52,37 +52,42 @@ class Campaign extends Model
 
     /**
      * Get all donations for this campaign (hannah database - MySQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - Donation model has its own $connection property
      */
     public function donations()
     {
-        return $this->setConnection('hannah')
-            ->hasMany(Donation::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->hasMany(Donation::class, 'Campaign_ID', 'Campaign_ID');
     }
 
     /**
      * Get all donation allocations for this campaign (hannah database - MySQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - DonationAllocation model has its own $connection property
      */
     public function donationAllocations()
     {
-        return $this->setConnection('hannah')
-            ->hasMany(DonationAllocation::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->hasMany(DonationAllocation::class, 'Campaign_ID', 'Campaign_ID');
     }
 
     /**
-     * Get recipients through donation allocations (adam database - MySQL)
-     * ⚠️ Cross-database relationship with pivot in hannah database
+     * Get recipient IDs for this campaign (cross-database safe helper)
      */
-    public function recipients()
+    public function getRecipientIds(): array
     {
-        return $this->setConnection('hannah')
-            ->belongsToMany(
-                Recipient::class,
-                'donation_allocation',
-                'Campaign_ID',
-                'Recipient_ID'
-            )->withPivot('Amount_Allocated', 'Allocated_At')->withTimestamps();
+        return $this->donationAllocations()->pluck('Recipient_ID')->unique()->toArray();
+    }
+
+    /**
+     * Get recipients for this campaign (cross-database safe helper)
+     */
+    public function getRecipients()
+    {
+        $recipientIds = $this->getRecipientIds();
+
+        if (empty($recipientIds)) {
+            return collect();
+        }
+
+        return Recipient::whereIn('Recipient_ID', $recipientIds)->get();
     }
 
     /**

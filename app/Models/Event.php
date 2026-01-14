@@ -59,23 +59,19 @@ class Event extends Model
 
     /**
      * Get all event participations for this event (sashvini database - MariaDB)
-     * ⚠️ Cross-database relationship - use separate query instead of Eloquent relationship
-     * DO NOT use setConnection() as it mutates the model's connection
+     * ⚠️ Cross-database relationship - EventParticipation model has its own $connection property
      */
     public function eventParticipations()
     {
-        // Return a query builder for event_participation on sashvini
-        // This avoids the setConnection() issue that corrupts the model
-        return EventParticipation::where('Event_ID', $this->Event_ID);
+        return $this->hasMany(EventParticipation::class, 'Event_ID', 'Event_ID');
     }
 
     /**
      * Get volunteer count for this event (cross-database safe)
-     * Uses direct query instead of relationship to avoid connection mutation
      */
     public function getVolunteerCount(): int
     {
-        return EventParticipation::where('Event_ID', $this->Event_ID)->count();
+        return $this->eventParticipations()->count();
     }
 
     /**

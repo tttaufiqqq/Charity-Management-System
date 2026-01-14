@@ -47,19 +47,19 @@ class EventParticipation extends Model
 
     /**
      * Get the event for this participation (izzati database - PostgreSQL)
-     * ⚠️ Cross-database relationship - uses separate query to avoid connection mutation
+     * ⚠️ Cross-database relationship - Event model has its own $connection property
      */
     public function event()
     {
-        // Direct query to avoid setConnection() mutation issue
-        return Event::where('Event_ID', $this->Event_ID);
+        return $this->belongsTo(Event::class, 'Event_ID', 'Event_ID');
     }
 
     /**
-     * Get the event object directly (cross-database safe)
+     * Get the role for this participation (izzati database - PostgreSQL)
+     * ⚠️ Cross-database relationship - EventRole model has its own $connection property
      */
-    public function getEvent()
+    public function role()
     {
-        return Event::find($this->Event_ID);
+        return $this->belongsTo(EventRole::class, 'Role_ID', 'Role_ID');
     }
 }

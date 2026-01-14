@@ -46,27 +46,33 @@ class Recipient extends Model
 
     /**
      * Get all donation allocations for this recipient (hannah database - MySQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - DonationAllocation model has its own $connection property
      */
     public function donationAllocations()
     {
-        return $this->setConnection('hannah')
-            ->hasMany(DonationAllocation::class, 'Recipient_ID', 'Recipient_ID');
+        return $this->hasMany(DonationAllocation::class, 'Recipient_ID', 'Recipient_ID');
     }
 
     /**
-     * Get all campaigns that allocated funds to this recipient (izzati database - PostgreSQL)
-     * ⚠️ Cross-database relationship with pivot in hannah database
+     * Get campaign IDs that allocated funds to this recipient (cross-database safe helper)
      */
-    public function campaigns()
+    public function getCampaignIds(): array
     {
-        return $this->setConnection('hannah')
-            ->belongsToMany(
-                Campaign::class,
-                'donation_allocation',
-                'Recipient_ID',
-                'Campaign_ID'
-            )->withPivot('Amount_Allocated', 'Allocated_At')->withTimestamps();
+        return $this->donationAllocations()->pluck('Campaign_ID')->unique()->toArray();
+    }
+
+    /**
+     * Get campaigns that allocated funds to this recipient (cross-database safe helper)
+     */
+    public function getCampaigns()
+    {
+        $campaignIds = $this->getCampaignIds();
+
+        if (empty($campaignIds)) {
+            return collect();
+        }
+
+        return Campaign::whereIn('Campaign_ID', $campaignIds)->get();
     }
 
     // Scopes

@@ -38,20 +38,11 @@ class Volunteer extends Model
 
     /**
      * Get the user account for this volunteer (izzhilmy database - PostgreSQL)
-     * ⚠️ Cross-database relationship - uses separate query to avoid connection mutation
+     * ⚠️ Cross-database relationship - User model has its own $connection property
      */
     public function user()
     {
-        // Direct query to avoid setConnection() mutation issue
-        return User::where('id', $this->User_ID);
-    }
-
-    /**
-     * Get the user object directly (cross-database safe)
-     */
-    public function getUser()
-    {
-        return User::find($this->User_ID);
+        return $this->belongsTo(User::class, 'User_ID');
     }
 
     /**

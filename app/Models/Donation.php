@@ -60,11 +60,10 @@ class Donation extends Model
 
     /**
      * Get the campaign this donation belongs to (izzati database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - Campaign model has its own $connection property
      */
     public function campaign()
     {
-        return $this->setConnection('izzati')
-            ->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
     }
 }

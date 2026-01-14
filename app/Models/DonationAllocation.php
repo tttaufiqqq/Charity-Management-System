@@ -37,24 +37,23 @@ class DonationAllocation extends Model
 
     // Cross-Database Relationships
     // ⚠️ Both relationships span different database connections
+    // Each related model has its own $connection property
 
     /**
      * Get the recipient for this allocation (adam database - MySQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - Recipient model has its own $connection property
      */
     public function recipient()
     {
-        return $this->setConnection('adam')
-            ->belongsTo(Recipient::class, 'Recipient_ID', 'Recipient_ID');
+        return $this->belongsTo(Recipient::class, 'Recipient_ID', 'Recipient_ID');
     }
 
     /**
      * Get the campaign for this allocation (izzati database - PostgreSQL)
-     * ⚠️ Cross-database relationship
+     * ⚠️ Cross-database relationship - Campaign model has its own $connection property
      */
     public function campaign()
     {
-        return $this->setConnection('izzati')
-            ->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
+        return $this->belongsTo(Campaign::class, 'Campaign_ID', 'Campaign_ID');
     }
 }
